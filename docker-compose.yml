@@ -8,7 +8,8 @@ services:
     ports:
       - '5433:5432'
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql
+      - ./docker/postgres-init:/docker-entrypoint-initdb.d
     healthcheck:
       test: [CMD-SHELL, 'pg_isready -U ${POSTGRES_USER:-nuxt} -d ${POSTGRES_DB:-nuxt_app}']
       interval: 5s
@@ -44,6 +45,27 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
+
+  drizzle-studio:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+      target: development
+    restart: unless-stopped
+    command: pnpm --filter @nuxt-app/db exec drizzle-kit studio --host 0.0.0.0 --port 4983
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-nuxt}:${POSTGRES_PASSWORD:-nuxt}@postgres:5432/${POSTGRES_DB:-nuxt_app}
+    ports:
+      - '127.0.0.1:4983:4983'
+    volumes:
+      - ./packages/db/src:/repo/packages/db/src
+      - ./packages/db/drizzle.config.ts:/repo/packages/db/drizzle.config.ts
+    depends_on:
+      postgres:
+        condition: service_healthy
 
   app:
     build:

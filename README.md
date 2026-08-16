@@ -47,30 +47,19 @@ nuxt-app/
 │   ├── Dockerfile.nuxt
 │   └── Dockerfile.static
 ├── docker-compose.yml
+├── DOCKER.md
 ├── package.json
 ├── pnpm-workspace.yaml
 └── turbo.json
 ```
 
-## Quick Start (Docker)
+## Quick start
+
+See [DOCKER.md](./DOCKER.md) for Compose commands, ports, and images.
 
 ```bash
 cp .env.example .env
 pnpm docker:up
-```
-
-- App: http://localhost:3000
-- API: http://localhost:3001
-- Admin: http://localhost:3002
-- Site: http://localhost:3003
-- Postgres: localhost:5433 (container port 5432)
-
-The API applies Drizzle migrations on boot.
-
-Seed an admin user:
-
-```bash
-docker compose exec api pnpm exec tsx src/seed.ts
 ```
 
 ## Lint
@@ -84,10 +73,9 @@ pnpm lint:fix
 
 ## Local development (apps on the host)
 
-Start only Postgres:
+Start Postgres with Compose (see [DOCKER.md](./DOCKER.md)), then:
 
 ```bash
-docker compose up postgres -d
 cp .env.example .env
 pnpm install
 pnpm db:migrate
@@ -137,6 +125,5 @@ UPDATE users SET role = 'admin' WHERE email = 'you@example.com';
 
 ## Notes
 
-- The API container talks to Postgres at `postgres:5432`. Compose publishes that database on **localhost:5433** so it does not collide with a local Postgres on 5432.
 - Cookies work across subdomains when `COOKIE_DOMAIN=.nuxt-app.com`
 - For local development, `COOKIE_DOMAIN` can stay `localhost`

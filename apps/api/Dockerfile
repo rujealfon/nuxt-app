@@ -8,13 +8,16 @@ COPY apps ./apps
 COPY packages ./packages
 RUN pnpm install --frozen-lockfile
 
-FROM node:24-alpine AS runner
+FROM build AS development
 WORKDIR /repo
+
+FROM base AS runner
 ENV NODE_ENV=production
 COPY --from=build /repo/package.json /repo/pnpm-lock.yaml /repo/pnpm-workspace.yaml ./
 COPY --from=build /repo/node_modules ./node_modules
 COPY --from=build /repo/packages ./packages
 COPY --from=build /repo/apps/api/package.json ./apps/api/package.json
+COPY --from=build /repo/apps/api/tsconfig.json ./apps/api/tsconfig.json
 COPY --from=build /repo/apps/api/node_modules ./apps/api/node_modules
 COPY --from=build /repo/apps/api/src ./apps/api/src
 WORKDIR /repo/apps/api

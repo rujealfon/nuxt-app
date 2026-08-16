@@ -10,17 +10,18 @@ pnpm dev:api          # single app: turbo run dev --filter=@nuxt-app/api (also d
 pnpm build            # turbo run build (respects dependsOn: ["^build"])
 pnpm type-check       # turbo run type-check
 pnpm lint / lint:fix  # eslint . (root-level flat config, applies repo-wide)
-pnpm --filter @nuxt-app/api test  # vitest via app.request() — no live server
+pnpm test             # turbo run test (API vitest via app.request(); uses nuxt_app_test)
 pnpm db:generate      # drizzle-kit generate (run after editing packages/db/src/schema/)
 pnpm db:migrate       # applies migrations (also runs automatically on API boot, see apps/api/src/index.ts)
-pnpm db:studio        # drizzle-kit studio
+pnpm db:studio        # drizzle-kit studio on the host
 pnpm db:seed          # seed an admin user, tsx apps/api/src/seed.ts
-pnpm docker:up        # full stack via docker-compose (Postgres + all apps)
 ```
 
-API tests live in `apps/api/test/` and call the mounted Hono app via `app.request()` (no HTTP server).
+Docker: [DOCKER.md](DOCKER.md) (`pnpm docker:up`, ports, images, Postgres 5433).
 
-Local dev without Docker: `docker compose up postgres -d`, copy `.env.example` to `.env`, `pnpm install`, `pnpm db:migrate`, then `pnpm dev`. Postgres runs on host port 5433 via Compose (5432 if run locally) to avoid colliding with a local Postgres install.
+API tests live in `apps/api/test/` and call the mounted Hono app via `app.request()` (no HTTP server). They use database `nuxt_app_test` on the same Postgres as `DATABASE_URL` (override with `DATABASE_URL_TEST`). Setup creates that database and runs migrations.
+
+Local host apps: Compose Postgres only (see [DOCKER.md](DOCKER.md)), then `pnpm install`, `pnpm db:migrate`, `pnpm dev`.
 
 ## Architecture
 

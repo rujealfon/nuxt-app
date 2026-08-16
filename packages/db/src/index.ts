@@ -1,3 +1,5 @@
 export { db, pool } from './client'
+export { ensureDatabase } from './ensure-database'
 export { runMigrations } from './migrate'
 export * from './schema'
+export { replaceDatabaseName, resolveDatabaseUrl, TEST_DATABASE_NAME } from './url'

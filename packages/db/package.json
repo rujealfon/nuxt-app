@@ -4,7 +4,8 @@
   "version": "0.0.0",
   "private": true,
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./url": "./src/url.ts"
   },
   "scripts": {
     "generate": "drizzle-kit generate",
