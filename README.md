@@ -25,8 +25,8 @@ Nuxt apps extend shared layers:
 - **API**: Hono
 - **Auth**: Custom session-based (httpOnly cookies)
 - **DB**: PostgreSQL via Drizzle
-- **Runtime**: Docker Compose (Postgres + Redis + SRH + all apps)
-- **Rate limit**: `@upstash/redis` + `hono-rate-limiter` RedisStore (in-memory in tests)
+- **Runtime**: Docker Compose (Postgres + Redis + all apps)
+- **Rate limit**: `redis` (node-redis) + `hono-rate-limiter` RedisStore (in-memory in tests)
 
 ## Structure
 
@@ -74,7 +74,7 @@ pnpm lint:fix
 
 ## Local development (apps on the host)
 
-Start Postgres, Redis, and SRH with Compose (see [DOCKER.md](./DOCKER.md)), then:
+Start Postgres and Redis with Compose (see [DOCKER.md](./DOCKER.md)), then:
 
 ```bash
 cp .env.example .env

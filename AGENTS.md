@@ -17,17 +17,17 @@ pnpm db:studio        # drizzle-kit studio on the host
 pnpm db:seed          # seed an admin user, tsx apps/api/src/seed.ts
 ```
 
-Docker: [DOCKER.md](DOCKER.md) (`pnpm docker:up`, ports, images, Postgres 5433, Redis 6380, SRH 8079).
+Docker: [DOCKER.md](DOCKER.md) (`pnpm docker:up`, ports, images, Postgres 5433, Redis 6380).
 
 API tests live in `apps/api/test/` and call the mounted Hono app via `app.request()` (no HTTP server). They use database `nuxt_app_test` on the same Postgres as `DATABASE_URL` (override with `DATABASE_URL_TEST`). Setup creates that database and runs migrations. Rate limiting uses an in-memory store in tests (no Redis).
 
-Local host apps: Compose Postgres + Redis + SRH (see [DOCKER.md](DOCKER.md)), then `pnpm install`, `pnpm db:migrate`, `pnpm dev`.
+Local host apps: Compose Postgres + Redis (see [DOCKER.md](DOCKER.md)), then `pnpm install`, `pnpm db:migrate`, `pnpm dev`.
 
 ## Architecture
 
 pnpm + Turborepo monorepo, three layers: `apps/*` (deployables), `layers/*` (Nuxt layers, extended by apps), `packages/*` (plain TS packages, no Nuxt).
 
-- **apps/api** — Hono server (not Nuxt). Feature modules live under `src/modules/*` and are mounted from `src/app.ts` with `app.route()`. Talks directly to `@nuxt-app/db`. A new API feature is a new `src/modules/<name>/` folder: define `createRoute` + `createRouter().openapi()` in `routes.ts` so the spec stays generated. Cross-cutting middleware stays in `src/middleware/`. Env is parsed once in `src/env.ts`. Logging is pino via `hono-pino` (`c.var.logger`, `LOG_LEVEL`). Scalar is at `http://localhost:3001/` when `NODE_ENV=development` (Compose API uses that). Spec: `/openapi.json` (generated from routes, not hand-written). Rate limit uses `hono-rate-limiter` `RedisStore` + `@upstash/redis` (global skip `/`, `/health`, `OPTIONS`; tighter cap on `POST /auth/login` and `POST /auth/register`). Local Redis is TCP; SRH (`hiett/serverless-redis-http`) exposes the Upstash REST API. Production sets `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` to a real Upstash database.
+- **apps/api** — Hono server (not Nuxt). Feature modules live under `src/modules/*` and are mounted from `src/app.ts` with `app.route()`. Talks directly to `@nuxt-app/db`. A new API feature is a new `src/modules/<name>/` folder: define `createRoute` + `createRouter().openapi()` in `routes.ts` so the spec stays generated. Cross-cutting middleware stays in `src/middleware/`. Env is parsed once in `src/env.ts`. Logging is pino via `hono-pino` (`c.var.logger`, `LOG_LEVEL`). Scalar is at `http://localhost:3001/` when `NODE_ENV=development` (Compose API uses that). Spec: `/openapi.json` (generated from routes, not hand-written). Rate limit uses `hono-rate-limiter` `RedisStore` + node-redis over `REDIS_URL` (global skip `/`, `/health`, `OPTIONS`; tighter cap on `POST /auth/login` and `POST /auth/register`).
 - **apps/app** — Nuxt 4 SPA (`ssr: false`) for the authenticated product. Extends `layer-auth` + `layer-base`.
 - **apps/admin** — Nuxt 4 SPA (`ssr: false`) for admins. Extends `layer-auth` + `layer-base`.
 - **apps/web** — Nuxt 4 SSG marketing site (`nuxt generate`, `nitro.preset: 'static'`). Extends `layer-base` only. Prefer prerender; do not add a Node server unless a page needs per-request data.
@@ -50,6 +50,6 @@ Imports:
 
 When changing a shared package's public surface (`packages/*/src/index.ts` exports), check all consuming apps/layers, not just the one you're editing.
 
-Env vars are shared across all apps from repo-root `.env` (see `.env.example`): `DATABASE_URL`, `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`, `SESSION_SECRET`, `COOKIE_DOMAIN`, per-app `*_URL` vars used both for CORS allowlisting in `apps/api/src/app.ts` and for cross-subdomain cookie config in production. Rate-limit knobs: `RATE_LIMIT_MAX`, `RATE_LIMIT_WINDOW_MS`, `AUTH_RATE_LIMIT_MAX`. Log level: `LOG_LEVEL` (pino; tests use `silent`). A reverse proxy should overwrite `X-Forwarded-For`.
+Env vars are shared across all apps from repo-root `.env` (see `.env.example`): `DATABASE_URL`, `REDIS_URL`, `SESSION_SECRET`, `COOKIE_DOMAIN`, per-app `*_URL` vars used both for CORS allowlisting in `apps/api/src/app.ts` and for cross-subdomain cookie config in production. Rate-limit knobs: `RATE_LIMIT_MAX`, `RATE_LIMIT_WINDOW_MS`, `AUTH_RATE_LIMIT_MAX`. Log level: `LOG_LEVEL` (pino; tests use `silent`). A reverse proxy should overwrite `X-Forwarded-For`.
 
 Lint: `@antfu/eslint-config` (Vue + TypeScript + formatters) at repo root — no per-package eslint config.

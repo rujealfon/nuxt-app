@@ -1,5 +1,6 @@
 import app from '@api/app.js'
 import { env, isDev } from '@api/env.js'
+import { connectRedis } from '@api/redis.js'
 import { serve } from '@hono/node-server'
 import { runMigrations } from '@nuxt-app/db'
 
@@ -8,6 +9,7 @@ const hostname = env.API_HOST
 
 async function main() {
   await runMigrations()
+  await connectRedis()
 
   const host = hostname === '0.0.0.0' ? 'localhost' : hostname
   // eslint-disable-next-line no-console

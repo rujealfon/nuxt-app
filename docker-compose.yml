@@ -26,19 +26,6 @@ services:
       timeout: 3s
       retries: 10
 
-  # HTTP proxy so @upstash/redis can talk to local Redis (https://upstash.com/docs/redis/sdks/ts/developing)
-  srh:
-    image: hiett/serverless-redis-http:latest
-    ports:
-      - '8079:80'
-    environment:
-      SRH_MODE: env
-      SRH_TOKEN: ${UPSTASH_REDIS_REST_TOKEN:-local}
-      SRH_CONNECTION_STRING: redis://redis:6379
-    depends_on:
-      redis:
-        condition: service_healthy
-
   api:
     build:
       context: .
@@ -55,15 +42,12 @@ services:
       APP_URL: ${APP_URL:-http://localhost:3000}
       ADMIN_URL: ${ADMIN_URL:-http://localhost:3002}
       WEB_URL: ${WEB_URL:-http://localhost:3003}
-      UPSTASH_REDIS_REST_URL: http://srh:80
-      UPSTASH_REDIS_REST_TOKEN: ${UPSTASH_REDIS_REST_TOKEN:-local}
+      REDIS_URL: redis://redis:6379
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
-      srh:
-        condition: service_started
     healthcheck:
       test:
         - CMD

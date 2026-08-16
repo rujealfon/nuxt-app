@@ -1,6 +1,7 @@
 import type { Context } from 'hono'
+import type { Store } from 'hono-rate-limiter'
 import { env } from '@api/env.js'
-import { redis } from '@api/redis.js'
+import { rateLimitRedis } from '@api/redis.js'
 import { getConnInfo } from '@hono/node-server/conninfo'
 import { MemoryStore, rateLimiter, RedisStore } from 'hono-rate-limiter'
 import * as HttpStatusPhrases from 'stoker/http-status-phrases'
@@ -34,10 +35,34 @@ function skipPublic(c: Context) {
   return path === '/' || path === '/health'
 }
 
+function createRedisStore(prefix: string): Store {
+  let inner: RedisStore | undefined
+  let initOptions: Parameters<RedisStore['init']>[0] | undefined
+
+  function store() {
+    if (!inner) {
+      inner = new RedisStore({ client: rateLimitRedis, prefix })
+      if (initOptions)
+        inner.init(initOptions)
+    }
+    return inner
+  }
+
+  return {
+    init(options) {
+      initOptions = options
+    },
+    increment: key => store().increment(key),
+    decrement: key => store().decrement(key),
+    resetKey: key => store().resetKey(key),
+    get: key => store().get(key),
+  }
+}
+
 function createStore(prefix: string) {
   if (env.NODE_ENV === 'test')
     return new MemoryStore()
-  return new RedisStore({ client: redis, prefix })
+  return createRedisStore(prefix)
 }
 
 export function createRateLimit(options: {
@@ -45,7 +70,7 @@ export function createRateLimit(options: {
   windowMs?: number
   prefix?: string
   skip?: (c: Context) => boolean
-  store?: MemoryStore | RedisStore
+  store?: MemoryStore | RedisStore | Store
 }) {
   return rateLimiter({
     windowMs: options.windowMs ?? env.RATE_LIMIT_WINDOW_MS,
