@@ -94,10 +94,23 @@ describe('api', () => {
     ]))
   })
 
-  it('validates uuid path params', () => {
-    expect(idParamsSchema.parse({ id: '4651e634-a530-4484-9b09-9616a28f35e3' })).toEqual({
-      id: '4651e634-a530-4484-9b09-9616a28f35e3',
+  it('validates nanoid path params', () => {
+    expect(idParamsSchema.parse({ id: 'V1StGXR8_Z5jdHi6B-myT' })).toEqual({
+      id: 'V1StGXR8_Z5jdHi6B-myT',
     })
-    expect(idParamsSchema.safeParse({ id: 'not-a-uuid' }).success).toBe(false)
+    expect(idParamsSchema.safeParse({ id: 'not a nanoid' }).success).toBe(false)
+  })
+
+  it('returns public_id as user.id and never the uuid pk', async () => {
+    const email = `pub-${Date.now()}@example.com`
+    const { res, body } = await json('/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password: 'password12', name: 'Pub' }),
+    })
+    expect(res.status).toBe(200)
+    const user = body.user as { id: string }
+    expect(user.id).toMatch(/^[\w-]{21}$/)
+    expect(user.id).not.toMatch(/^[0-9a-f-]{36}$/i)
   })
 })

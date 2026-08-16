@@ -4,7 +4,7 @@ import getParamsSchema from 'stoker/openapi/schemas/get-params-schema'
 
 export const idParamsSchema = getParamsSchema({
   name: 'id',
-  validator: 'uuid',
+  validator: 'nanoid',
 })
 
 export const authUserSchema = authUserSelectSchema

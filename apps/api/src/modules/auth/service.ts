@@ -8,6 +8,15 @@ import * as HttpStatusCodes from 'stoker/http-status-codes'
 const SESSION_DURATION_MS = 1000 * 60 * 60 * 24 * 7
 const SALT_ROUNDS = 12
 
+function toAuthUser(user: { publicId: string, email: string, name: string, role: string }): AuthUser {
+  return {
+    id: user.publicId,
+    email: user.email,
+    name: user.name,
+    role: user.role as 'user' | 'admin',
+  }
+}
+
 export async function hashPassword(password: string): Promise<string> {
   return bcrypt.hash(password, SALT_ROUNDS)
 }
@@ -40,18 +49,13 @@ export async function createUser(data: {
     createdAt: now,
     updatedAt: now,
   }).returning({
-    id: users.id,
+    publicId: users.publicId,
     email: users.email,
     name: users.name,
     role: users.role,
   })
 
-  return {
-    id: row.id,
-    email: row.email,
-    name: row.name,
-    role: row.role as 'user' | 'admin',
-  }
+  return toAuthUser(row)
 }
 
 export async function createUserAndSession(data: {
@@ -81,6 +85,7 @@ export async function createUserAndSession(data: {
       updatedAt: now,
     }).returning({
       id: users.id,
+      publicId: users.publicId,
       email: users.email,
       name: users.name,
       role: users.role,
@@ -93,18 +98,16 @@ export async function createUserAndSession(data: {
     }).returning({ id: sessions.id })
 
     return {
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        role: user.role as 'user' | 'admin',
-      },
+      user: toAuthUser(user),
       sessionId: session.id,
     }
   })
 }
 
-export async function authenticateUser(email: string, password: string): Promise<AuthUser> {
+export async function authenticateUser(email: string, password: string): Promise<{
+  user: AuthUser
+  userId: string
+}> {
   const user = await db.query.users.findFirst({
     where: eq(users.email, email.toLowerCase()),
   })
@@ -119,10 +122,8 @@ export async function authenticateUser(email: string, password: string): Promise
   }
 
   return {
-    id: user.id,
-    email: user.email,
-    name: user.name,
-    role: user.role as 'user' | 'admin',
+    user: toAuthUser(user),
+    userId: user.id,
   }
 }
 
@@ -143,7 +144,7 @@ export async function getSessionUser(sessionId: string): Promise<AuthUser | null
 
   const result = await db
     .select({
-      userId: users.id,
+      publicId: users.publicId,
       email: users.email,
       name: users.name,
       role: users.role,
@@ -158,12 +159,7 @@ export async function getSessionUser(sessionId: string): Promise<AuthUser | null
   if (!row)
     return null
 
-  return {
-    id: row.userId,
-    email: row.email,
-    name: row.name,
-    role: row.role as 'user' | 'admin',
-  }
+  return toAuthUser(row)
 }
 
 export async function deleteSession(sessionId: string) {

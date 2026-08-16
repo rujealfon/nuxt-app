@@ -101,8 +101,8 @@ export const authRoutes = createRouter()
   })
   .openapi(login, async (c) => {
     const { email, password } = c.req.valid('json')
-    const user = await authenticateUser(email, password)
-    const sessionId = await createSession(user.id)
+    const { user, userId } = await authenticateUser(email, password)
+    const sessionId = await createSession(userId)
     setSessionCookie(c, sessionId)
 
     return c.json({
