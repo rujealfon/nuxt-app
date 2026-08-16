@@ -6,6 +6,6 @@ export const onError: ErrorHandler = (err, c) => {
     return c.json({ error: err.message || 'Request failed' }, err.status)
   }
 
-  console.error(err)
+  c.var.logger?.error(err)
   return c.json({ error: 'Internal Server Error' }, 500)
 }

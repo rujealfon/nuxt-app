@@ -34,5 +34,6 @@
     "less",
     "scss",
     "postcss"
-  ]
+  ],
+  "js/ts.tsdk.path": "node_modules/typescript/lib"
 }

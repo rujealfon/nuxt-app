@@ -16,6 +16,7 @@ export default defineConfig({
     setupFiles: ['./test/setup.ts'],
     env: {
       NODE_ENV: 'test',
+      LOG_LEVEL: 'silent',
       RATE_LIMIT_MAX: '10000',
       AUTH_RATE_LIMIT_MAX: '10000',
     },

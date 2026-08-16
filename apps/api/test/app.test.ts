@@ -72,4 +72,20 @@ describe('api', () => {
     expect(res.status).toBe(401)
     expect(body).toEqual({ error: 'Unauthorized' })
   })
+
+  it('generates an OpenAPI spec from registered routes', async () => {
+    const document = app.getOpenAPI31Document({
+      openapi: '3.1.0',
+      info: { title: 'nuxt-app API', version: '0.0.0' },
+    })
+    const paths = Object.keys(document.paths ?? {})
+    expect(paths).toEqual(expect.arrayContaining([
+      '/health',
+      '/auth/register',
+      '/auth/login',
+      '/auth/logout',
+      '/auth/me',
+      '/admin/dashboard',
+    ]))
+  })
 })

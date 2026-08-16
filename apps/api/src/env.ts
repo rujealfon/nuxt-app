@@ -3,6 +3,7 @@ import { z } from 'zod'
 
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
+  LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
   API_PORT: z.coerce.number().default(3001),
   API_HOST: z.string().default('0.0.0.0'),
   API_URL: z.url().default('http://localhost:3001'),
@@ -18,7 +19,15 @@ const envSchema = z.object({
   AUTH_RATE_LIMIT_MAX: z.coerce.number().int().positive().default(10),
 })
 
-export const env = envSchema.parse(process.env)
+const parsed = envSchema.safeParse(process.env)
+
+if (!parsed.success) {
+  console.error('❌ Invalid env:')
+  console.error(z.prettifyError(parsed.error))
+  process.exit(1)
+}
+
+export const env = parsed.data
 
 export const isDev = env.NODE_ENV === 'development'
 
