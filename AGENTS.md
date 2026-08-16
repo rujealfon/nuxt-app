@@ -26,7 +26,7 @@ Local dev without Docker: `docker compose up postgres -d`, copy `.env.example` t
 
 pnpm + Turborepo monorepo, three layers: `apps/*` (deployables), `layers/*` (Nuxt layers, extended by apps), `packages/*` (plain TS packages, no Nuxt).
 
-- **apps/api** — Hono server (not Nuxt). Feature modules live under `src/modules/*` and are mounted from `src/app.ts` with `app.route()`. Talks directly to `@nuxt-app/db`. A new API feature is a new `src/modules/<name>/` folder (start with `routes.ts`). Cross-cutting middleware stays in `src/middleware/`. Env is parsed once in `src/env.ts`.
+- **apps/api** — Hono server (not Nuxt). Feature modules live under `src/modules/*` and are mounted from `src/app.ts` with `app.route()`. Talks directly to `@nuxt-app/db`. A new API feature is a new `src/modules/<name>/` folder (start with `routes.ts`). Cross-cutting middleware stays in `src/middleware/`. Env is parsed once in `src/env.ts`. In development, Scalar is at `http://localhost:3001/` (`/openapi.json` is the spec).
 - **apps/app** — Nuxt 4 SPA (`ssr: false`) for the authenticated product. Extends `layer-auth` + `layer-base`.
 - **apps/admin** — Nuxt 4 SPA (`ssr: false`) for admins. Extends `layer-auth` + `layer-base`.
 - **apps/site** — Nuxt 4 SSG marketing site (`nuxt generate`, `nitro.preset: 'static'`). Extends `layer-base` only. Prefer prerender; do not add a Node server unless a page needs per-request data.

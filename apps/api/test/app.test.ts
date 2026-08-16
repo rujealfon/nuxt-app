@@ -19,6 +19,12 @@ describe('api', () => {
     expect(body).toEqual({ status: 'ok', service: 'nuxt-app-api' })
   })
 
+  it('does not expose Scalar outside development', async () => {
+    const { res, body } = await json('/openapi.json')
+    expect(res.status).toBe(404)
+    expect(body).toEqual({ error: 'Not Found' })
+  })
+
   it('returns 404 json', async () => {
     const { res, body } = await json('/nope')
     expect(res.status).toBe(404)
