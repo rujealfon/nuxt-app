@@ -94,10 +94,10 @@ describe('api', () => {
     ]))
   })
 
-  it('validates nanoid path params', () => {
-    expect(idParamsSchema.parse({ id: 'V1StGXR8_Z5jdHi6B-myT' })).toEqual({
-      id: 'V1StGXR8_Z5jdHi6B-myT',
+  it('validates uuid path params', () => {
+    expect(idParamsSchema.parse({ id: '4651e634-a530-4484-9b09-9616a28f35e3' })).toEqual({
+      id: '4651e634-a530-4484-9b09-9616a28f35e3',
     })
-    expect(idParamsSchema.safeParse({ id: 'not a nanoid' }).success).toBe(false)
+    expect(idParamsSchema.safeParse({ id: 'not-a-uuid' }).success).toBe(false)
   })
 })

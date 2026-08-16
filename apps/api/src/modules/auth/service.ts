@@ -3,7 +3,6 @@ import { db, sessions, users } from '@nuxt-app/db'
 import bcrypt from 'bcryptjs'
 import { and, eq, gt } from 'drizzle-orm'
 import { HTTPException } from 'hono/http-exception'
-import { nanoid } from 'nanoid'
 import * as HttpStatusCodes from 'stoker/http-status-codes'
 
 const SESSION_DURATION_MS = 1000 * 60 * 60 * 24 * 7
@@ -31,21 +30,28 @@ export async function createUser(data: {
     throw new HTTPException(HttpStatusCodes.BAD_REQUEST, { message: 'Email already registered' })
   }
 
-  const id = nanoid()
   const now = new Date()
   const passwordHash = await hashPassword(data.password)
-
-  await db.insert(users).values({
-    id,
+  const [row] = await db.insert(users).values({
     email: data.email.toLowerCase(),
     name: data.name,
     passwordHash,
     role: data.role || 'user',
     createdAt: now,
     updatedAt: now,
+  }).returning({
+    id: users.id,
+    email: users.email,
+    name: users.name,
+    role: users.role,
   })
 
-  return { id, email: data.email.toLowerCase(), name: data.name, role: data.role || 'user' }
+  return {
+    id: row.id,
+    email: row.email,
+    name: row.name,
+    role: row.role as 'user' | 'admin',
+  }
 }
 
 export async function createUserAndSession(data: {
@@ -62,32 +68,38 @@ export async function createUserAndSession(data: {
     if (existing)
       throw new HTTPException(HttpStatusCodes.BAD_REQUEST, { message: 'Email already registered' })
 
-    const id = nanoid()
     const now = new Date()
     const passwordHash = await hashPassword(data.password)
     const role = data.role || 'user'
 
-    await tx.insert(users).values({
-      id,
+    const [user] = await tx.insert(users).values({
       email: data.email.toLowerCase(),
       name: data.name,
       passwordHash,
       role,
       createdAt: now,
       updatedAt: now,
+    }).returning({
+      id: users.id,
+      email: users.email,
+      name: users.name,
+      role: users.role,
     })
 
-    const sessionId = nanoid(32)
-    await tx.insert(sessions).values({
-      id: sessionId,
-      userId: id,
+    const [session] = await tx.insert(sessions).values({
+      userId: user.id,
       expiresAt: new Date(now.getTime() + SESSION_DURATION_MS),
       createdAt: now,
-    })
+    }).returning({ id: sessions.id })
 
     return {
-      user: { id, email: data.email.toLowerCase(), name: data.name, role },
-      sessionId,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role as 'user' | 'admin',
+      },
+      sessionId: session.id,
     }
   })
 }
@@ -115,18 +127,14 @@ export async function authenticateUser(email: string, password: string): Promise
 }
 
 export async function createSession(userId: string): Promise<string> {
-  const sessionId = nanoid(32)
   const now = new Date()
-  const expiresAt = new Date(now.getTime() + SESSION_DURATION_MS)
-
-  await db.insert(sessions).values({
-    id: sessionId,
+  const [session] = await db.insert(sessions).values({
     userId,
-    expiresAt,
+    expiresAt: new Date(now.getTime() + SESSION_DURATION_MS),
     createdAt: now,
-  })
+  }).returning({ id: sessions.id })
 
-  return sessionId
+  return session.id
 }
 
 export async function getSessionUser(sessionId: string): Promise<AuthUser | null> {

@@ -15,6 +15,13 @@
       "when": 1786861877645,
       "tag": "0001_mighty_turbo",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1786885774642,
+      "tag": "0002_simple_morgan_stark",
+      "breakpoints": true
     }
   ]
 }
