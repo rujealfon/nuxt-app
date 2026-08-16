@@ -34,6 +34,11 @@ async function seed() {
     role: 'admin',
   })
 
+  if (!user) {
+    console.log(`User ${email} already exists`)
+    return
+  }
+
   console.log('Admin user created:')
   console.log(`  Email:    ${user.email}`)
   console.log(`  Password: ${password}`)

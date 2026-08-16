@@ -103,14 +103,42 @@ describe('api', () => {
 
   it('returns public_id as user.id and never the uuid pk', async () => {
     const email = `pub-${Date.now()}@example.com`
-    const { res, body } = await json('/auth/register', {
+    const password = 'password12'
+    const registered = await json('/auth/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password: 'password12', name: 'Pub' }),
+      body: JSON.stringify({ email, password, name: 'Pub' }),
+    })
+    expect(registered.res.status).toBe(200)
+    expect(registered.body).toEqual({ message: 'Registered successfully' })
+
+    const { res, body } = await json('/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
     })
     expect(res.status).toBe(200)
     const user = body.user as { id: string }
     expect(user.id).toMatch(/^[\w-]{21}$/)
     expect(user.id).not.toMatch(/^[0-9a-f-]{36}$/i)
+  })
+
+  it('does not reveal whether an email is already registered', async () => {
+    const email = `dup-${Date.now()}@example.com`
+    const payload = JSON.stringify({ email, password: 'password12', name: 'Dup' })
+    const first = await json('/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: payload,
+    })
+    const second = await json('/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: payload,
+    })
+    expect(first.res.status).toBe(200)
+    expect(second.res.status).toBe(200)
+    expect(first.body).toEqual(second.body)
+    expect(first.body).toEqual({ message: 'Registered successfully' })
   })
 })

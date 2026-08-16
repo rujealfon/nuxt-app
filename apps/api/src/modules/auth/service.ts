@@ -25,83 +25,46 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
   return bcrypt.compare(password, hash)
 }
 
+function pgConstraint(err: unknown): string | undefined {
+  let current: unknown = err
+  while (current && typeof current === 'object') {
+    if ('constraint' in current && typeof current.constraint === 'string')
+      return current.constraint
+    current = 'cause' in current ? current.cause : undefined
+  }
+}
+
 export async function createUser(data: {
   email: string
   password: string
   name: string
   role?: 'user' | 'admin'
-}) {
-  const existing = await db.query.users.findFirst({
-    where: eq(users.email, data.email.toLowerCase()),
-  })
-
-  if (existing) {
-    throw new HTTPException(HttpStatusCodes.BAD_REQUEST, { message: 'Email already registered' })
-  }
-
+}): Promise<AuthUser | null> {
   const now = new Date()
   const passwordHash = await hashPassword(data.password)
-  const [row] = await db.insert(users).values({
-    email: data.email.toLowerCase(),
-    name: data.name,
-    passwordHash,
-    role: data.role || 'user',
-    createdAt: now,
-    updatedAt: now,
-  }).returning({
-    publicId: users.publicId,
-    email: users.email,
-    name: users.name,
-    role: users.role,
-  })
 
-  return toAuthUser(row)
-}
-
-export async function createUserAndSession(data: {
-  email: string
-  password: string
-  name: string
-  role?: 'user' | 'admin'
-}) {
-  return db.transaction(async (tx) => {
-    const existing = await tx.query.users.findFirst({
-      where: eq(users.email, data.email.toLowerCase()),
-    })
-
-    if (existing)
-      throw new HTTPException(HttpStatusCodes.BAD_REQUEST, { message: 'Email already registered' })
-
-    const now = new Date()
-    const passwordHash = await hashPassword(data.password)
-    const role = data.role || 'user'
-
-    const [user] = await tx.insert(users).values({
+  try {
+    const [row] = await db.insert(users).values({
       email: data.email.toLowerCase(),
       name: data.name,
       passwordHash,
-      role,
+      role: data.role || 'user',
       createdAt: now,
       updatedAt: now,
     }).returning({
-      id: users.id,
       publicId: users.publicId,
       email: users.email,
       name: users.name,
       role: users.role,
     })
 
-    const [session] = await tx.insert(sessions).values({
-      userId: user.id,
-      expiresAt: new Date(now.getTime() + SESSION_DURATION_MS),
-      createdAt: now,
-    }).returning({ id: sessions.id })
-
-    return {
-      user: toAuthUser(user),
-      sessionId: session.id,
-    }
-  })
+    return toAuthUser(row)
+  }
+  catch (err) {
+    if (pgConstraint(err) === 'users_email_unique')
+      return null
+    throw err
+  }
 }
 
 export async function authenticateUser(email: string, password: string): Promise<{

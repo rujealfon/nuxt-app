@@ -5,7 +5,7 @@ import { clearSessionCookie, SESSION_COOKIE, setSessionCookie } from '@api/modul
 import {
   authenticateUser,
   createSession,
-  createUserAndSession,
+  createUser,
   deleteSession,
 } from '@api/modules/auth/service.js'
 import { createRoute } from '@hono/zod-openapi'
@@ -29,10 +29,9 @@ const register = createRoute({
     body: jsonContentRequired(registerSchema, 'Registration payload'),
   },
   responses: {
-    [HttpStatusCodes.OK]: jsonContent(authResponseSchema, 'Registered'),
-    [HttpStatusCodes.BAD_REQUEST]: jsonContent(
-      createMessageObjectSchema('Email already registered'),
-      HttpStatusPhrases.BAD_REQUEST,
+    [HttpStatusCodes.OK]: jsonContent(
+      createMessageObjectSchema('Registered successfully'),
+      'Registered',
     ),
     [HttpStatusCodes.UNPROCESSABLE_ENTITY]: jsonContent(
       createErrorSchema(registerSchema),
@@ -86,18 +85,8 @@ const me = createRoute({
 export const authRoutes = createRouter()
   .openapi(register, async (c) => {
     const { email, password, name } = c.req.valid('json')
-    const { user, sessionId } = await createUserAndSession({ email, password, name })
-    setSessionCookie(c, sessionId)
-
-    return c.json({
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        role: user.role,
-      },
-      message: 'Registered successfully',
-    }, HttpStatusCodes.OK)
+    await createUser({ email, password, name })
+    return c.json({ message: 'Registered successfully' }, HttpStatusCodes.OK)
   })
   .openapi(login, async (c) => {
     const { email, password } = c.req.valid('json')

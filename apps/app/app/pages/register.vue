@@ -4,7 +4,7 @@ definePageMeta({
 })
 
 async function onSuccess() {
-  await navigateTo('/')
+  await navigateTo('/login')
 }
 </script>
 

@@ -42,8 +42,8 @@ export const authClient = {
     return unwrap<AuthResponse>(await client().auth.login.$post({ json: input }))
   },
 
-  async register(input: RegisterInput): Promise<AuthResponse> {
-    return unwrap<AuthResponse>(await client().auth.register.$post({ json: input }))
+  async register(input: RegisterInput): Promise<{ message: string }> {
+    return unwrap<{ message: string }>(await client().auth.register.$post({ json: input }))
   },
 
   async logout(): Promise<{ message: string }> {

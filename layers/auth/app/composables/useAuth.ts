@@ -39,9 +39,6 @@ export function useAuth() {
 
   const registerMutation = useMutation({
     mutation: (input: RegisterInput) => authClient.register(input),
-    onSuccess(res) {
-      setUser(res.user)
-    },
   })
 
   async function fetchUser() {
