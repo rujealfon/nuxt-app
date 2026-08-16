@@ -23,7 +23,7 @@ services:
     ports:
       - '3001:3001'
     environment:
-      NODE_ENV: production
+      NODE_ENV: development
       API_PORT: 3001
       API_HOST: 0.0.0.0
       DATABASE_URL: postgres://${POSTGRES_USER:-nuxt}:${POSTGRES_PASSWORD:-nuxt}@postgres:5432/${POSTGRES_DB:-nuxt_app}
@@ -31,7 +31,7 @@ services:
       COOKIE_DOMAIN: ${COOKIE_DOMAIN:-localhost}
       APP_URL: ${APP_URL:-http://localhost:3000}
       ADMIN_URL: ${ADMIN_URL:-http://localhost:3002}
-      SITE_URL: ${SITE_URL:-http://localhost:3003}
+      WEB_URL: ${WEB_URL:-http://localhost:3003}
     depends_on:
       postgres:
         condition: service_healthy
@@ -103,13 +103,13 @@ services:
       api:
         condition: service_healthy
 
-  site:
+  web:
     build:
       context: .
       dockerfile: docker/Dockerfile.static
       args:
-        PACKAGE: '@nuxt-app/site'
-        APP_DIR: apps/site
+        PACKAGE: '@nuxt-app/web'
+        APP_DIR: apps/web
     ports:
       - '3003:80'
 

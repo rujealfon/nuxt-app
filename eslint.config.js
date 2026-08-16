@@ -25,7 +25,7 @@ const overrides = [
   appImports(['apps/api/**/*.ts'], '@api', ['apps/api/src/rpc.ts']),
   appImports(['apps/app/**/*.{ts,vue}'], '@app'),
   appImports(['apps/admin/**/*.{ts,vue}'], '@admin'),
-  appImports(['apps/site/**/*.{ts,vue}'], '@site'),
+  appImports(['apps/web/**/*.{ts,vue}'], '@web'),
 ]
 
 export default antfu({

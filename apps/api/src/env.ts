@@ -8,18 +8,18 @@ const envSchema = z.object({
   API_URL: z.url().default('http://localhost:3001'),
   APP_URL: z.url().default('http://localhost:3000'),
   ADMIN_URL: z.url().default('http://localhost:3002'),
-  SITE_URL: z.url().optional(),
+  WEB_URL: z.url().optional(),
   MARKETING_URL: z.url().optional(),
   COOKIE_DOMAIN: z.string().optional().transform(value => value || undefined),
 })
 
 export const env = envSchema.parse(process.env)
 
+export const isDev = env.NODE_ENV === 'development'
+
 export const allowedOrigins = [
   env.APP_URL,
   env.ADMIN_URL,
-  env.SITE_URL ?? env.MARKETING_URL ?? 'http://localhost:3003',
-  ...(env.NODE_ENV === 'development' ? [env.API_URL] : []),
+  env.WEB_URL ?? env.MARKETING_URL ?? 'http://localhost:3003',
+  ...(isDev ? [env.API_URL] : []),
 ]
-
-export const isDev = env.NODE_ENV === 'development'

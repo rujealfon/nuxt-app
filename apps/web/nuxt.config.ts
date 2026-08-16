@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url'
 export default defineNuxtConfig({
   extends: ['@nuxt-app/layer-base'],
   alias: {
-    '@site': fileURLToPath(new URL('./app', import.meta.url)),
+    '@web': fileURLToPath(new URL('./app', import.meta.url)),
   },
   nitro: {
     preset: 'static',

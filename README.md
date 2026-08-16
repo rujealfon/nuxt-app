@@ -4,7 +4,7 @@ A production-ready monorepo for:
 
 | Domain               | App   | Description                 |
 | -------------------- | ----- | --------------------------- |
-| `nuxt-app.com`       | site  | Public marketing site (SSG) |
+| `nuxt-app.com`       | web   | Public marketing site (SSG) |
 | `app.nuxt-app.com`   | app   | Authenticated product (SPA) |
 | `admin.nuxt-app.com` | admin | Admin panel (SPA)           |
 | `api.nuxt-app.com`   | api   | Hono API + custom auth      |
@@ -15,7 +15,7 @@ Nuxt apps extend shared layers:
 
 | Layer         | Package                | Used by          | Provides                                         |
 | ------------- | ---------------------- | ---------------- | ------------------------------------------------ |
-| `layers/base` | `@nuxt-app/layer-base` | app, admin, site | Tailwind, UI components, Nitro/devtools          |
+| `layers/base` | `@nuxt-app/layer-base` | app, admin, web | Tailwind, UI components, Nitro/devtools          |
 | `layers/auth` | `@nuxt-app/layer-auth` | app, admin       | `useAuth`, `auth` / `guest` / `admin` middleware |
 
 ## Stack
@@ -35,7 +35,7 @@ nuxt-app/
 │   ├── api/          # Hono backend (port 3001)
 │   ├── app/          # User app (port 3000)
 │   ├── admin/        # Admin panel (port 3002)
-│   └── site/         # Public site (port 3003)
+│   └── web/          # Public marketing site (port 3003)
 ├── layers/
 │   ├── base/         # Tailwind, UI components, shared Nuxt config
 │   └── auth/         # useAuth, auth/guest/admin middleware
@@ -88,7 +88,7 @@ Or individually:
 pnpm dev:api        # http://localhost:3001
 pnpm dev:app        # http://localhost:3000
 pnpm dev:admin      # http://localhost:3002
-pnpm dev:site       # http://localhost:3003
+pnpm dev:web        # http://localhost:3003
 ```
 
 ## Authentication

@@ -5,8 +5,8 @@ This file provides guidance when working with code in this repository.
 ## Commands
 
 ```bash
-pnpm dev              # all apps via Turborepo (api:3001, app:3000, admin:3002, site:3003)
-pnpm dev:api          # single app: turbo run dev --filter=@nuxt-app/api (also dev:app, dev:admin, dev:site)
+pnpm dev              # all apps via Turborepo (api:3001, app:3000, admin:3002, web:3003)
+pnpm dev:api          # single app: turbo run dev --filter=@nuxt-app/api (also dev:app, dev:admin, dev:web)
 pnpm build            # turbo run build (respects dependsOn: ["^build"])
 pnpm type-check       # turbo run type-check
 pnpm lint / lint:fix  # eslint . (root-level flat config, applies repo-wide)
@@ -27,10 +27,10 @@ Local host apps: Compose Postgres only (see [DOCKER.md](DOCKER.md)), then `pnpm 
 
 pnpm + Turborepo monorepo, three layers: `apps/*` (deployables), `layers/*` (Nuxt layers, extended by apps), `packages/*` (plain TS packages, no Nuxt).
 
-- **apps/api** — Hono server (not Nuxt). Feature modules live under `src/modules/*` and are mounted from `src/app.ts` with `app.route()`. Talks directly to `@nuxt-app/db`. A new API feature is a new `src/modules/<name>/` folder (start with `routes.ts`). Cross-cutting middleware stays in `src/middleware/`. Env is parsed once in `src/env.ts`. In development, Scalar is at `http://localhost:3001/` (`/openapi.json` is the spec).
+- **apps/api** — Hono server (not Nuxt). Feature modules live under `src/modules/*` and are mounted from `src/app.ts` with `app.route()`. Talks directly to `@nuxt-app/db`. A new API feature is a new `src/modules/<name>/` folder (start with `routes.ts`). Cross-cutting middleware stays in `src/middleware/`. Env is parsed once in `src/env.ts`. Scalar is at `http://localhost:3001/` when `NODE_ENV=development` (Compose API uses that). Spec: `/openapi.json`.
 - **apps/app** — Nuxt 4 SPA (`ssr: false`) for the authenticated product. Extends `layer-auth` + `layer-base`.
 - **apps/admin** — Nuxt 4 SPA (`ssr: false`) for admins. Extends `layer-auth` + `layer-base`.
-- **apps/site** — Nuxt 4 SSG marketing site (`nuxt generate`, `nitro.preset: 'static'`). Extends `layer-base` only. Prefer prerender; do not add a Node server unless a page needs per-request data.
+- **apps/web** — Nuxt 4 SSG marketing site (`nuxt generate`, `nitro.preset: 'static'`). Extends `layer-base` only. Prefer prerender; do not add a Node server unless a page needs per-request data.
 - **layers/base** (`@nuxt-app/layer-base`) — Tailwind v4 + `@nuxt/ui` + shared Nitro config. Every Nuxt app depends on this. Wrap pages in `UApp`.
 - **layers/auth** (`@nuxt-app/layer-auth`) — Pinia Colada + `useAuth` (query key `['auth', 'me']`), `AuthLoginForm`/`AuthRegisterForm`, and `auth`/`guest`/`admin` route middleware.
 - **packages/types** — shared Zod request schemas (`loginSchema`, `registerSchema`) plus inferred/plain types (`LoginInput`, `AuthUser`, …). API and Nuxt forms use the same schemas.
@@ -44,7 +44,7 @@ Auth flow: `apps/api/src/modules/auth/` owns password hashing (bcrypt), session 
 Imports:
 
 - Another package or layer: `@nuxt-app/db`, `@nuxt-app/types`, `@nuxt-app/auth`, `@nuxt-app/layer-base`, `@nuxt-app/layer-auth`. Do not add short aliases (`@db`, `@types`, `@auth`) — `@types` collides with DefinitelyTyped, and `@auth` is both a package and a layer.
-- Same-app source: `@api/`, `@app/`, `@admin/`, `@site/` (that app's `src/` or `app/`).
+- Same-app source: `@api/`, `@app/`, `@admin/`, `@web/` (that app's `src/` or `app/`).
 - Inside `packages/*`: relative `./` to local files. Public surface stays `src/index.ts`.
 - Layers: `extends: '@nuxt-app/layer-*'`. Components and composables are auto-imported. A specific layer file is `#layers/base` or `#layers/auth`.
 

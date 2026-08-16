@@ -1,5 +1,5 @@
 import app from '@api/app.js'
-import { env } from '@api/env.js'
+import { env, isDev } from '@api/env.js'
 import { serve } from '@hono/node-server'
 import { runMigrations } from '@nuxt-app/db'
 
@@ -12,7 +12,7 @@ async function main() {
   const host = hostname === '0.0.0.0' ? 'localhost' : hostname
   // eslint-disable-next-line no-console
   console.log(`API running on http://${host}:${port}`)
-  if (env.NODE_ENV === 'development') {
+  if (isDev) {
     // eslint-disable-next-line no-console
     console.log(`Scalar docs at http://${host}:${port}/`)
   }

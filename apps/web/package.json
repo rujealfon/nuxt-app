@@ -1,5 +1,5 @@
 {
-  "name": "@nuxt-app/site",
+  "name": "@nuxt-app/web",
   "type": "module",
   "private": true,
   "scripts": {

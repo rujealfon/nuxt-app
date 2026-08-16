@@ -12,7 +12,7 @@
     "dev:api": "turbo run dev --filter=@nuxt-app/api",
     "dev:app": "turbo run dev --filter=@nuxt-app/app",
     "dev:admin": "turbo run dev --filter=@nuxt-app/admin",
-    "dev:site": "turbo run dev --filter=@nuxt-app/site",
+    "dev:web": "turbo run dev --filter=@nuxt-app/web",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "test": "turbo run test",

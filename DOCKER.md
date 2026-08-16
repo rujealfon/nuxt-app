@@ -1,6 +1,6 @@
 # Docker
 
-Full stack: Postgres, API, app, admin, site, and Drizzle Studio.
+Full stack: Postgres, API, app, admin, web, and Drizzle Studio.
 
 ## Quick start
 
@@ -14,11 +14,11 @@ pnpm docker:up
 | App            | http://localhost:3000        |
 | API            | http://localhost:3001        |
 | Admin          | http://localhost:3002        |
-| Site           | http://localhost:3003        |
+| Web            | http://localhost:3003        |
 | Drizzle Studio | http://127.0.0.1:4983        |
 | Postgres       | localhost:5433 (container 5432) |
 
-The API runs Drizzle migrations on boot. Seed an admin user:
+The API runs Drizzle migrations on boot. Scalar is at http://localhost:3001/ (`NODE_ENV=development`). Seed an admin user:
 
 ```bash
 pnpm docker:db:seed
@@ -43,7 +43,7 @@ pnpm docker:db:seed
 | `api`           | `apps/api/Dockerfile`      | `tsx` on source; production `runner` stage |
 | `drizzle-studio`| `apps/api/Dockerfile`      | `development` target; schema bind-mounted  |
 | `app`, `admin`  | `docker/Dockerfile.nuxt`   | Nuxt Node server                           |
-| `site`          | `docker/Dockerfile.static` | nginx + prerendered files                  |
+| `web`           | `docker/Dockerfile.static` | nginx + prerendered files                  |
 | `postgres`      | `postgres:18-alpine`       | Volume `postgres_data`                     |
 
 Inside Compose, apps use `postgres:5432`. The host maps that to **5433** so it does not collide with a local Postgres on 5432.
