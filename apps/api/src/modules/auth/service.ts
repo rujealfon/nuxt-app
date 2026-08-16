@@ -1,5 +1,5 @@
 import type { AuthUser } from '@nuxt-app/types'
-import { db, sessions, users } from '@nuxt-app/db'
+import { db, sessions, users } from '@api/db'
 import bcrypt from 'bcryptjs'
 import { and, eq, gt } from 'drizzle-orm'
 import { HTTPException } from 'hono/http-exception'

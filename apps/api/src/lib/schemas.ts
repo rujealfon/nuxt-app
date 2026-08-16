@@ -1,5 +1,5 @@
+import { authUserSelectSchema } from '@api/db'
 import { z } from '@hono/zod-openapi'
-import { authUserSelectSchema } from '@nuxt-app/db'
 import getParamsSchema from 'stoker/openapi/schemas/get-params-schema'
 
 export const idParamsSchema = getParamsSchema({

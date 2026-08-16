@@ -2,10 +2,10 @@
 import { dirname, join } from 'node:path'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
+import { db, pool } from '@api/db/client'
 import { migrate } from 'drizzle-orm/node-postgres/migrator'
-import { db, pool } from './client'
 
-const migrationsFolder = join(dirname(fileURLToPath(import.meta.url)), '../drizzle')
+const migrationsFolder = join(dirname(fileURLToPath(import.meta.url)), 'migrations')
 
 export async function runMigrations() {
   console.log('Running migrations...')

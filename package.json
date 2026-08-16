@@ -18,9 +18,9 @@
     "test": "turbo run test",
     "type-check": "turbo run type-check",
     "clean": "turbo run clean && rm -rf node_modules",
-    "db:generate": "pnpm --filter @nuxt-app/db generate",
-    "db:migrate": "pnpm --filter @nuxt-app/db migrate",
-    "db:studio": "pnpm --filter @nuxt-app/db studio",
+    "db:generate": "pnpm --filter @nuxt-app/api db:generate",
+    "db:migrate": "pnpm --filter @nuxt-app/api db:migrate",
+    "db:studio": "pnpm --filter @nuxt-app/api db:studio",
     "db:seed": "pnpm --filter @nuxt-app/api db:seed",
     "predocker:up": "bash scripts/ensure-docker-env.sh",
     "predocker:rebuild": "bash scripts/ensure-docker-env.sh",
@@ -32,7 +32,7 @@
     "docker:restart": "docker compose restart",
     "docker:rebuild": "docker compose up --build -d --wait",
     "docker:reset": "docker compose down -v && docker compose up --build -d --wait",
-    "docker:db:migrate": "docker compose exec api pnpm --filter @nuxt-app/db migrate",
+    "docker:db:migrate": "docker compose exec api pnpm db:migrate",
     "docker:db:seed": "docker compose exec api pnpm db:seed"
   },
   "devDependencies": {

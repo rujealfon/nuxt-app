@@ -13,10 +13,10 @@ A production-ready monorepo for:
 
 Nuxt apps extend shared layers:
 
-| Layer         | Package                | Used by          | Provides                                         |
-| ------------- | ---------------------- | ---------------- | ------------------------------------------------ |
+| Layer         | Package                | Used by         | Provides                                         |
+| ------------- | ---------------------- | --------------- | ------------------------------------------------ |
 | `layers/base` | `@nuxt-app/layer-base` | app, admin, web | Tailwind, UI components, Nitro/devtools          |
-| `layers/auth` | `@nuxt-app/layer-auth` | app, admin       | `useAuth`, `auth` / `guest` / `admin` middleware |
+| `layers/auth` | `@nuxt-app/layer-auth` | app, admin      | `useAuth`, `auth` / `guest` / `admin` middleware |
 
 ## Stack
 
@@ -42,7 +42,6 @@ nuxt-app/
 │   └── auth/         # useAuth, auth/guest/admin middleware
 ├── packages/
 │   ├── auth/         # Shared auth HTTP client
-│   ├── db/           # Drizzle schema + client
 │   └── types/        # Shared TypeScript types
 ├── docker/
 │   ├── Dockerfile.nuxt

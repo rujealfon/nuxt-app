@@ -1,5 +1,5 @@
 import process from 'node:process'
-import { resolveDatabaseUrl } from '@nuxt-app/db/url'
+import { resolveDatabaseUrl } from '@api/db/url'
 import { afterAll, beforeAll } from 'vitest'
 
 process.env.NODE_ENV = 'test'
@@ -7,7 +7,7 @@ process.env.NODE_ENV = 'test'
 const url = resolveDatabaseUrl()
 
 beforeAll(async () => {
-  const { ensureDatabase, runMigrations } = await import('@nuxt-app/db')
+  const { ensureDatabase, runMigrations } = await import('@api/db')
   try {
     await ensureDatabase(url)
     await runMigrations()
@@ -22,6 +22,6 @@ beforeAll(async () => {
 })
 
 afterAll(async () => {
-  const { pool } = await import('@nuxt-app/db')
+  const { pool } = await import('@api/db')
   await pool.end()
 })

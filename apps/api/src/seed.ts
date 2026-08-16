@@ -4,8 +4,8 @@
  * Run: pnpm --filter @nuxt-app/api db:seed
  */
 import process from 'node:process'
+import { db, pool, users } from '@api/db'
 import { createUser } from '@api/modules/auth/service.js'
-import { db, pool, users } from '@nuxt-app/db'
 import { eq } from 'drizzle-orm'
 
 async function seed() {

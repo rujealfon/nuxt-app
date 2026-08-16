@@ -8,8 +8,8 @@ config({ path: resolve(process.cwd(), '.env') })
 
 export default defineConfig({
   dialect: 'postgresql',
-  schema: './src/schema/index.ts',
-  out: './drizzle',
+  schema: './src/db/schema/index.ts',
+  out: './src/db/migrations',
   dbCredentials: {
     url: process.env.DATABASE_URL ?? 'postgres://nuxt:nuxt@localhost:5432/nuxt_app',
   },

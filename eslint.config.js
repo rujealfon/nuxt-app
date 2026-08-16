@@ -22,7 +22,7 @@ function appImports(files, alias, ignores = []) {
 }
 
 const overrides = [
-  appImports(['apps/api/**/*.ts'], '@api', ['apps/api/src/rpc.ts']),
+  appImports(['apps/api/**/*.ts'], '@api', ['apps/api/src/rpc.ts', 'apps/api/drizzle.config.ts']),
   appImports(['apps/app/**/*.{ts,vue}'], '@app'),
   appImports(['apps/admin/**/*.{ts,vue}'], '@admin'),
   appImports(['apps/web/**/*.{ts,vue}'], '@web'),

@@ -1,6 +1,6 @@
+import { users } from '@api/db/schema/users'
 import { sql } from 'drizzle-orm'
 import { index, pgTable, timestamp, uuid } from 'drizzle-orm/pg-core'
-import { users } from './users'
 
 export const sessions = pgTable('sessions', {
   id: uuid('id').primaryKey().default(sql`uuidv7()`),

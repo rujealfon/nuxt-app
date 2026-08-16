@@ -1,8 +1,8 @@
 import app from '@api/app.js'
+import { runMigrations } from '@api/db'
 import { env, isDev } from '@api/env.js'
 import { connectRedis } from '@api/redis.js'
 import { serve } from '@hono/node-server'
-import { runMigrations } from '@nuxt-app/db'
 
 const port = env.API_PORT
 const hostname = env.API_HOST

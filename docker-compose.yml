@@ -65,7 +65,7 @@ services:
       dockerfile: apps/api/Dockerfile
       target: development
     restart: unless-stopped
-    command: pnpm --filter @nuxt-app/db exec drizzle-kit studio --host 0.0.0.0 --port 4983
+    command: pnpm --filter @nuxt-app/api exec drizzle-kit studio --host 0.0.0.0 --port 4983
     env_file:
       - path: .env
         required: false
@@ -74,8 +74,8 @@ services:
     ports:
       - '127.0.0.1:4983:4983'
     volumes:
-      - ./packages/db/src:/repo/packages/db/src
-      - ./packages/db/drizzle.config.ts:/repo/packages/db/drizzle.config.ts
+      - ./apps/api/src/db:/repo/apps/api/src/db
+      - ./apps/api/drizzle.config.ts:/repo/apps/api/drizzle.config.ts
     depends_on:
       postgres:
         condition: service_healthy
