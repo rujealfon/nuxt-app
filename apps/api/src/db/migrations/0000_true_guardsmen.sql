@@ -1,3 +1,24 @@
+CREATE EXTENSION IF NOT EXISTS pgcrypto;--> statement-breakpoint
+CREATE OR REPLACE FUNCTION nanoid(size integer DEFAULT 21)
+RETURNS text
+LANGUAGE sql
+VOLATILE
+PARALLEL SAFE
+STRICT
+AS $$
+  SELECT string_agg(
+    substr(
+      'useandom-26T198340PX75pxJACKVERYMINDBUSHWOLF_GQZbfghjklqvwyzrict',
+      (get_byte(n.bytes, g.i) % 64) + 1,
+      1
+    ),
+    ''
+    ORDER BY g.i
+  )
+  FROM (SELECT gen_random_bytes(size) AS bytes) n
+  CROSS JOIN generate_series(0, size - 1) AS g(i);
+$$;
+--> statement-breakpoint
 CREATE TYPE "public"."user_role" AS ENUM('user', 'admin');--> statement-breakpoint
 CREATE TABLE "sessions" (
 	"id" uuid PRIMARY KEY DEFAULT uuidv7() NOT NULL,
@@ -8,7 +29,7 @@ CREATE TABLE "sessions" (
 --> statement-breakpoint
 CREATE TABLE "users" (
 	"id" uuid PRIMARY KEY DEFAULT uuidv7() NOT NULL,
-	"public_id" text NOT NULL,
+	"public_id" text DEFAULT nanoid() NOT NULL,
 	"email" text NOT NULL,
 	"name" text NOT NULL,
 	"password_hash" text NOT NULL,

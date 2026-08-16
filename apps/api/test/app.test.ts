@@ -101,6 +101,18 @@ describe('api', () => {
     expect(idParamsSchema.safeParse({ id: 'not a nanoid' }).success).toBe(false)
   })
 
+  it('fills public_id from the SQL nanoid() default on raw insert', async () => {
+    const { pool } = await import('@api/db')
+    const email = `sql-id-${Date.now()}@example.com`
+    const result = await pool.query<{ public_id: string }>(
+      `INSERT INTO users (email, name, password_hash, created_at, updated_at)
+       VALUES ($1, $2, $3, now(), now())
+       RETURNING public_id`,
+      [email, 'SqlId', 'x'],
+    )
+    expect(result.rows[0].public_id).toMatch(/^[\w-]{21}$/)
+  })
+
   it('returns public_id as user.id and never the uuid pk', async () => {
     const email = `pub-${Date.now()}@example.com`
     const password = 'password12'
