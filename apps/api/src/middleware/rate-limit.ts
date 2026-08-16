@@ -3,8 +3,9 @@ import { env } from '@api/env.js'
 import { redis } from '@api/redis.js'
 import { getConnInfo } from '@hono/node-server/conninfo'
 import { MemoryStore, rateLimiter, RedisStore } from 'hono-rate-limiter'
+import * as HttpStatusPhrases from 'stoker/http-status-phrases'
 
-const tooMany = { error: 'Too many requests' } as const
+const tooMany = { message: HttpStatusPhrases.TOO_MANY_REQUESTS } as const
 
 function clientKey(c: Context): string {
   try {

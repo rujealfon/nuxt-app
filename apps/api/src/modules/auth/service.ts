@@ -4,6 +4,7 @@ import bcrypt from 'bcryptjs'
 import { and, eq, gt } from 'drizzle-orm'
 import { HTTPException } from 'hono/http-exception'
 import { nanoid } from 'nanoid'
+import * as HttpStatusCodes from 'stoker/http-status-codes'
 
 const SESSION_DURATION_MS = 1000 * 60 * 60 * 24 * 7
 const SALT_ROUNDS = 12
@@ -27,7 +28,7 @@ export async function createUser(data: {
   })
 
   if (existing) {
-    throw new HTTPException(400, { message: 'Email already registered' })
+    throw new HTTPException(HttpStatusCodes.BAD_REQUEST, { message: 'Email already registered' })
   }
 
   const id = nanoid()
@@ -59,7 +60,7 @@ export async function createUserAndSession(data: {
     })
 
     if (existing)
-      throw new HTTPException(400, { message: 'Email already registered' })
+      throw new HTTPException(HttpStatusCodes.BAD_REQUEST, { message: 'Email already registered' })
 
     const id = nanoid()
     const now = new Date()
@@ -97,12 +98,12 @@ export async function authenticateUser(email: string, password: string): Promise
   })
 
   if (!user) {
-    throw new HTTPException(401, { message: 'Invalid email or password' })
+    throw new HTTPException(HttpStatusCodes.UNAUTHORIZED, { message: 'Invalid email or password' })
   }
 
   const valid = await verifyPassword(password, user.passwordHash)
   if (!valid) {
-    throw new HTTPException(401, { message: 'Invalid email or password' })
+    throw new HTTPException(HttpStatusCodes.UNAUTHORIZED, { message: 'Invalid email or password' })
   }
 
   return {

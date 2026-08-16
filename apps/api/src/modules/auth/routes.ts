@@ -1,5 +1,5 @@
 import { createRouter } from '@api/factory.js'
-import { apiErrorSchema, authResponseSchema, meResponseSchema, messageSchema } from '@api/lib/schemas.js'
+import { authResponseSchema, meResponseSchema } from '@api/lib/schemas.js'
 import { authRateLimit } from '@api/middleware/rate-limit.js'
 import { clearSessionCookie, SESSION_COOKIE, setSessionCookie } from '@api/modules/auth/cookies.js'
 import {
@@ -12,7 +12,10 @@ import { createRoute } from '@hono/zod-openapi'
 import { loginSchema, registerSchema } from '@nuxt-app/types'
 import { getCookie } from 'hono/cookie'
 import * as HttpStatusCodes from 'stoker/http-status-codes'
+import * as HttpStatusPhrases from 'stoker/http-status-phrases'
 import { jsonContent, jsonContentRequired } from 'stoker/openapi/helpers'
+import createErrorSchema from 'stoker/openapi/schemas/create-error-schema'
+import createMessageObjectSchema from 'stoker/openapi/schemas/create-message-object'
 
 const tags = ['Auth']
 
@@ -27,7 +30,14 @@ const register = createRoute({
   },
   responses: {
     [HttpStatusCodes.OK]: jsonContent(authResponseSchema, 'Registered'),
-    [HttpStatusCodes.BAD_REQUEST]: jsonContent(apiErrorSchema, 'Validation error'),
+    [HttpStatusCodes.BAD_REQUEST]: jsonContent(
+      createMessageObjectSchema('Email already registered'),
+      HttpStatusPhrases.BAD_REQUEST,
+    ),
+    [HttpStatusCodes.UNPROCESSABLE_ENTITY]: jsonContent(
+      createErrorSchema(registerSchema),
+      'Validation error',
+    ),
   },
 })
 
@@ -42,8 +52,14 @@ const login = createRoute({
   },
   responses: {
     [HttpStatusCodes.OK]: jsonContent(authResponseSchema, 'Logged in'),
-    [HttpStatusCodes.BAD_REQUEST]: jsonContent(apiErrorSchema, 'Validation or auth error'),
-    [HttpStatusCodes.UNAUTHORIZED]: jsonContent(apiErrorSchema, 'Invalid credentials'),
+    [HttpStatusCodes.UNAUTHORIZED]: jsonContent(
+      createMessageObjectSchema('Invalid email or password'),
+      HttpStatusPhrases.UNAUTHORIZED,
+    ),
+    [HttpStatusCodes.UNPROCESSABLE_ENTITY]: jsonContent(
+      createErrorSchema(loginSchema),
+      'Validation error',
+    ),
   },
 })
 
@@ -53,7 +69,7 @@ const logout = createRoute({
   tags,
   summary: 'Log out',
   responses: {
-    [HttpStatusCodes.OK]: jsonContent(messageSchema, 'Logged out'),
+    [HttpStatusCodes.OK]: jsonContent(createMessageObjectSchema('Logged out'), 'Logged out'),
   },
 })
 

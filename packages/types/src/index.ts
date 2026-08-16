@@ -30,6 +30,17 @@ export interface AuthResponse {
 }
 
 export interface ApiError {
-  error: string
-  message?: string
+  message: string
+}
+
+export interface ApiValidationError {
+  success: false
+  error: {
+    name: string
+    issues: Array<{
+      code: string
+      path: Array<string | number>
+      message?: string
+    }>
+  }
 }

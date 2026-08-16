@@ -23,10 +23,17 @@ function client() {
   })
 }
 
+interface ErrorBody {
+  message?: string
+  error?: string | { issues?: Array<{ message?: string }> }
+}
+
 async function unwrap<T>(res: Response): Promise<T> {
-  const data = await res.json() as { error?: string, message?: string } & T
-  if (!res.ok)
-    throw new Error(data.error || data.message || 'Request failed')
+  const data = await res.json() as ErrorBody & T
+  if (!res.ok) {
+    const issue = typeof data.error === 'object' ? data.error.issues?.[0]?.message : data.error
+    throw new Error(issue || data.message || 'Request failed')
+  }
   return data
 }
 

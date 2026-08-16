@@ -13,6 +13,8 @@ import { cors } from 'hono/cors'
 import { csrf } from 'hono/csrf'
 import { requestId } from 'hono/request-id'
 import { secureHeaders } from 'hono/secure-headers'
+import * as HttpStatusCodes from 'stoker/http-status-codes'
+import * as HttpStatusPhrases from 'stoker/http-status-phrases'
 
 const base = createRouter()
 
@@ -46,12 +48,12 @@ base.use(
 base.use('*', csrf({ origin: allowedOrigins }))
 base.use('*', bodyLimit({
   maxSize: 64 * 1024,
-  onError: c => c.json({ error: 'Payload too large' }, 413),
+  onError: c => c.json({ message: HttpStatusPhrases.REQUEST_TOO_LONG }, HttpStatusCodes.REQUEST_TOO_LONG),
 }))
 base.use('*', rateLimit)
 base.use('*', sessionMiddleware)
 base.onError(onError)
-base.notFound(c => c.json({ error: 'Not Found' }, 404))
+base.notFound(c => c.json({ message: HttpStatusPhrases.NOT_FOUND }, HttpStatusCodes.NOT_FOUND))
 
 if (isDev)
   configureOpenAPI(base)

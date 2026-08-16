@@ -19,7 +19,7 @@ describe('rate limit', () => {
 
     const second = await app.request('/')
     expect(second.status).toBe(429)
-    expect(await second.json()).toEqual({ error: 'Too many requests' })
+    expect(await second.json()).toEqual({ message: 'Too Many Requests' })
   })
 
   it('skips OPTIONS and health on the global limiter', async () => {

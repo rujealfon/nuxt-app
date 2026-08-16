@@ -1,9 +1,11 @@
 import { createRouter } from '@api/factory.js'
-import { adminDashboardSchema, apiErrorSchema } from '@api/lib/schemas.js'
+import { adminDashboardSchema } from '@api/lib/schemas.js'
 import { requireAdmin } from '@api/middleware/require-admin.js'
 import { createRoute } from '@hono/zod-openapi'
 import * as HttpStatusCodes from 'stoker/http-status-codes'
+import * as HttpStatusPhrases from 'stoker/http-status-phrases'
 import { jsonContent } from 'stoker/openapi/helpers'
+import createMessageObjectSchema from 'stoker/openapi/schemas/create-message-object'
 
 const dashboard = createRoute({
   path: '/dashboard',
@@ -14,8 +16,14 @@ const dashboard = createRoute({
   security: [{ sessionCookie: [] }],
   responses: {
     [HttpStatusCodes.OK]: jsonContent(adminDashboardSchema, 'Admin only'),
-    [HttpStatusCodes.UNAUTHORIZED]: jsonContent(apiErrorSchema, 'Unauthenticated'),
-    [HttpStatusCodes.FORBIDDEN]: jsonContent(apiErrorSchema, 'Not an admin'),
+    [HttpStatusCodes.UNAUTHORIZED]: jsonContent(
+      createMessageObjectSchema(HttpStatusPhrases.UNAUTHORIZED),
+      HttpStatusPhrases.UNAUTHORIZED,
+    ),
+    [HttpStatusCodes.FORBIDDEN]: jsonContent(
+      createMessageObjectSchema(HttpStatusPhrases.FORBIDDEN),
+      HttpStatusPhrases.FORBIDDEN,
+    ),
   },
 })
 

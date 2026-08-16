@@ -1,4 +1,5 @@
 import app from '@api/app.js'
+import { idParamsSchema } from '@api/lib/schemas.js'
 import { describe, expect, it } from 'vitest'
 
 async function json(path: string, init?: RequestInit) {
@@ -22,13 +23,13 @@ describe('api', () => {
   it('does not expose Scalar outside development', async () => {
     const { res, body } = await json('/openapi.json')
     expect(res.status).toBe(404)
-    expect(body).toEqual({ error: 'Not Found' })
+    expect(body).toEqual({ message: 'Not Found' })
   })
 
   it('returns 404 json', async () => {
     const { res, body } = await json('/nope')
     expect(res.status).toBe(404)
-    expect(body).toEqual({ error: 'Not Found' })
+    expect(body).toEqual({ message: 'Not Found' })
   })
 
   it('rejects empty register payload', async () => {
@@ -37,8 +38,10 @@ describe('api', () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: '' }),
     })
-    expect(res.status).toBe(400)
-    expect(body.error).toBe('Email, password and name are required')
+    expect(res.status).toBe(422)
+    expect(body.success).toBe(false)
+    expect((body.error as { issues: Array<{ message?: string }> }).issues[0]?.message)
+      .toBe('Email, password and name are required')
   })
 
   it('rejects short register password', async () => {
@@ -47,8 +50,9 @@ describe('api', () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: 'a@b.c', password: 'short', name: 'A' }),
     })
-    expect(res.status).toBe(400)
-    expect(body.error).toBe('Password must be at least 8 characters')
+    expect(res.status).toBe(422)
+    expect((body.error as { issues: Array<{ message?: string }> }).issues[0]?.message)
+      .toBe('Password must be at least 8 characters')
   })
 
   it('rejects empty login payload', async () => {
@@ -57,8 +61,9 @@ describe('api', () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({}),
     })
-    expect(res.status).toBe(400)
-    expect(body.error).toBe('Email and password are required')
+    expect(res.status).toBe(422)
+    expect((body.error as { issues: Array<{ message?: string }> }).issues[0]?.message)
+      .toBe('Email and password are required')
   })
 
   it('returns null user when unauthenticated', async () => {
@@ -70,7 +75,7 @@ describe('api', () => {
   it('rejects unauthenticated admin routes', async () => {
     const { res, body } = await json('/admin/dashboard')
     expect(res.status).toBe(401)
-    expect(body).toEqual({ error: 'Unauthorized' })
+    expect(body).toEqual({ message: 'Unauthorized' })
   })
 
   it('generates an OpenAPI spec from registered routes', async () => {
@@ -87,5 +92,12 @@ describe('api', () => {
       '/auth/me',
       '/admin/dashboard',
     ]))
+  })
+
+  it('validates nanoid path params', () => {
+    expect(idParamsSchema.parse({ id: 'V1StGXR8_Z5jdHi6B-myT' })).toEqual({
+      id: 'V1StGXR8_Z5jdHi6B-myT',
+    })
+    expect(idParamsSchema.safeParse({ id: 'not a nanoid' }).success).toBe(false)
   })
 })
