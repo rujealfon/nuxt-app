@@ -1,0 +1,24 @@
+<div class="spa-loading">
+  <div class="spa-loading__spinner"></div>
+</div>
+
+<style>
+.spa-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100dvh;
+  background: #f8fafc;
+}
+.spa-loading__spinner {
+  width: 2rem;
+  height: 2rem;
+  border: 3px solid #e2e8f0;
+  border-top-color: #0f172a;
+  border-radius: 9999px;
+  animation: spa-spin 0.7s linear infinite;
+}
+@keyframes spa-spin {
+  to { transform: rotate(360deg); }
+}
+</style>

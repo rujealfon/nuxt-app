@@ -2,9 +2,10 @@ import type { AuthUser } from '@nuxt-app/types'
 import { db, sessions, users } from '@nuxt-app/db'
 import bcrypt from 'bcryptjs'
 import { and, eq, gt } from 'drizzle-orm'
+import { HTTPException } from 'hono/http-exception'
 import { nanoid } from 'nanoid'
 
-const SESSION_DURATION_MS = 1000 * 60 * 60 * 24 * 7 // 7 days
+const SESSION_DURATION_MS = 1000 * 60 * 60 * 24 * 7
 const SALT_ROUNDS = 12
 
 export async function hashPassword(password: string): Promise<string> {
@@ -26,7 +27,7 @@ export async function createUser(data: {
   })
 
   if (existing) {
-    throw new Error('Email already registered')
+    throw new HTTPException(400, { message: 'Email already registered' })
   }
 
   const id = nanoid()
@@ -46,18 +47,62 @@ export async function createUser(data: {
   return { id, email: data.email.toLowerCase(), name: data.name, role: data.role || 'user' }
 }
 
+export async function createUserAndSession(data: {
+  email: string
+  password: string
+  name: string
+  role?: 'user' | 'admin'
+}) {
+  return db.transaction(async (tx) => {
+    const existing = await tx.query.users.findFirst({
+      where: eq(users.email, data.email.toLowerCase()),
+    })
+
+    if (existing)
+      throw new HTTPException(400, { message: 'Email already registered' })
+
+    const id = nanoid()
+    const now = new Date()
+    const passwordHash = await hashPassword(data.password)
+    const role = data.role || 'user'
+
+    await tx.insert(users).values({
+      id,
+      email: data.email.toLowerCase(),
+      name: data.name,
+      passwordHash,
+      role,
+      createdAt: now,
+      updatedAt: now,
+    })
+
+    const sessionId = nanoid(32)
+    await tx.insert(sessions).values({
+      id: sessionId,
+      userId: id,
+      expiresAt: new Date(now.getTime() + SESSION_DURATION_MS),
+      createdAt: now,
+    })
+
+    return {
+      user: { id, email: data.email.toLowerCase(), name: data.name, role },
+      sessionId,
+    }
+  })
+}
+
 export async function authenticateUser(email: string, password: string): Promise<AuthUser> {
   const user = await db.query.users.findFirst({
     where: eq(users.email, email.toLowerCase()),
   })
 
   if (!user) {
-    throw new Error('Invalid email or password')
+    throw new HTTPException(401, { message: 'Invalid email or password' })
   }
 
   const valid = await verifyPassword(password, user.passwordHash)
   if (!valid) {
-    throw new Error('Invalid email or password')
+    throw new HTTPException(401, { message: 'Invalid email or password' })
   }
 
   return {

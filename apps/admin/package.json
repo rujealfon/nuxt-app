@@ -10,6 +10,7 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
+    "@iconify-json/lucide": "^1.2.123",
     "@nuxt-app/layer-auth": "workspace:*",
     "@nuxt-app/layer-base": "workspace:*",
     "nuxt": "^4.5.2",

@@ -1,77 +1,100 @@
-import type { AuthUser } from '@nuxt-app/types'
+import type { AuthUser, LoginInput, RegisterInput } from '@nuxt-app/types'
 import { authClient } from '@nuxt-app/auth/client'
+import { defineQuery, useMutation, useQuery, useQueryCache } from '@pinia/colada'
+
+export const authKeys = {
+  me: ['auth', 'me'] as const,
+}
+
+const useAuthMe = defineQuery(() => {
+  return useQuery({
+    key: authKeys.me,
+    async query() {
+      const res = await authClient.me()
+      return res.user
+    },
+  })
+})
 
 export function useAuth() {
-  const user = useState<AuthUser | null>('auth-user', () => null)
-  const loading = useState('auth-loading', () => true)
-  const error = useState<string | null>('auth-error', () => null)
+  const me = useAuthMe()
+  const queryCache = useQueryCache()
+  const error = ref<string | null>(null)
+
+  function setUser(user: AuthUser | null) {
+    queryCache.setQueryData(authKeys.me, user)
+  }
+
+  function fail(e: unknown): never {
+    error.value = e instanceof Error ? e.message : 'Request failed'
+    throw e
+  }
+
+  const loginMutation = useMutation({
+    mutation: (input: LoginInput) => authClient.login(input),
+    onSuccess(res) {
+      setUser(res.user)
+    },
+  })
+
+  const registerMutation = useMutation({
+    mutation: (input: RegisterInput) => authClient.register(input),
+    onSuccess(res) {
+      setUser(res.user)
+    },
+  })
 
   async function fetchUser() {
-    loading.value = true
     error.value = null
-    try {
-      const res = await authClient.me()
-      user.value = res.user
-    }
-    catch {
-      user.value = null
-    }
-    finally {
-      loading.value = false
-    }
+    await me.refetch()
+    return me.data.value ?? null
   }
 
   async function login(email: string, password: string) {
     error.value = null
     try {
-      const res = await authClient.login({ email, password })
-      user.value = res.user
-      return res
+      return await loginMutation.mutateAsync({ email, password })
     }
-    catch (e: any) {
-      error.value = e.message
-      throw e
+    catch (e) {
+      fail(e)
     }
   }
 
   async function register(email: string, password: string, name: string) {
     error.value = null
     try {
-      const res = await authClient.register({ email, password, name })
-      user.value = res.user
-      return res
+      return await registerMutation.mutateAsync({ email, password, name })
     }
-    catch (e: any) {
-      error.value = e.message
-      throw e
+    catch (e) {
+      fail(e)
     }
   }
 
   async function logout(redirectTo = '/login') {
     await authClient.logout()
-    user.value = null
-    if (redirectTo) {
+    setUser(null)
+    if (redirectTo)
       await navigateTo(redirectTo)
-    }
   }
 
   async function ensureUser() {
-    if (loading.value) {
-      await fetchUser()
-    }
-    return user.value
+    if (me.status.value !== 'success')
+      await me.refresh()
+    return me.data.value ?? null
   }
+
+  const user = computed(() => me.data.value ?? null)
 
   return {
     user,
-    loading,
+    loading: computed(() => me.status.value === 'pending'),
     error,
     fetchUser,
     login,
     register,
     logout,
     ensureUser,
-    isAuthenticated: computed(() => !!user.value),
-    isAdmin: computed(() => user.value?.role === 'admin'),
+    isAuthenticated: computed(() => !!me.data.value),
+    isAdmin: computed(() => me.data.value?.role === 'admin'),
   }
 }

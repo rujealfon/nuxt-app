@@ -1,0 +1,69 @@
+import { describe, expect, it } from 'vitest'
+import app from '../src/app.js'
+
+async function json(path: string, init?: RequestInit) {
+  const res = await app.request(path, init)
+  return { res, body: await res.json() as Record<string, unknown> }
+}
+
+describe('api', () => {
+  it('returns health', async () => {
+    const { res, body } = await json('/health')
+    expect(res.status).toBe(200)
+    expect(body).toEqual({ status: 'ok' })
+  })
+
+  it('returns service status on /', async () => {
+    const { res, body } = await json('/')
+    expect(res.status).toBe(200)
+    expect(body).toEqual({ status: 'ok', service: 'nuxt-app-api' })
+  })
+
+  it('returns 404 json', async () => {
+    const { res, body } = await json('/nope')
+    expect(res.status).toBe(404)
+    expect(body).toEqual({ error: 'Not Found' })
+  })
+
+  it('rejects empty register payload', async () => {
+    const { res, body } = await json('/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: '' }),
+    })
+    expect(res.status).toBe(400)
+    expect(body.error).toBe('Email, password and name are required')
+  })
+
+  it('rejects short register password', async () => {
+    const { res, body } = await json('/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: 'a@b.c', password: 'short', name: 'A' }),
+    })
+    expect(res.status).toBe(400)
+    expect(body.error).toBe('Password must be at least 8 characters')
+  })
+
+  it('rejects empty login payload', async () => {
+    const { res, body } = await json('/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    })
+    expect(res.status).toBe(400)
+    expect(body.error).toBe('Email and password are required')
+  })
+
+  it('returns null user when unauthenticated', async () => {
+    const { res, body } = await json('/auth/me')
+    expect(res.status).toBe(200)
+    expect(body).toEqual({ user: null })
+  })
+
+  it('rejects unauthenticated admin routes', async () => {
+    const { res, body } = await json('/admin/dashboard')
+    expect(res.status).toBe(401)
+    expect(body).toEqual({ error: 'Unauthorized' })
+  })
+})

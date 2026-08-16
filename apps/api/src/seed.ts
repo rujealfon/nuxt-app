@@ -6,7 +6,7 @@
 import process from 'node:process'
 import { db, pool, users } from '@nuxt-app/db'
 import { eq } from 'drizzle-orm'
-import { createUser } from './lib/auth.js'
+import { createUser } from './modules/auth/service.js'
 
 async function seed() {
   const email = process.env.ADMIN_EMAIL || 'admin@nuxt-app.com'

@@ -84,16 +84,12 @@ services:
   site:
     build:
       context: .
-      dockerfile: docker/Dockerfile.nuxt
+      dockerfile: docker/Dockerfile.static
       args:
         PACKAGE: '@nuxt-app/site'
         APP_DIR: apps/site
     ports:
-      - '3003:3000'
-    environment:
-      NODE_ENV: production
-      NITRO_HOST: 0.0.0.0
-      NITRO_PORT: 3000
+      - '3003:80'
 
 volumes:
   postgres_data:

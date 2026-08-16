@@ -9,6 +9,10 @@
   "dependencies": {
     "@nuxt-app/auth": "workspace:*",
     "@nuxt-app/types": "workspace:*",
-    "nuxt": "^4.5.2"
+    "@pinia/colada": "^1.4.2",
+    "@pinia/colada-nuxt": "^1.0.2",
+    "@pinia/nuxt": "^1.0.2",
+    "nuxt": "^4.5.2",
+    "pinia": "^4.0.3"
   }
 }

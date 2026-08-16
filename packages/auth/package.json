@@ -11,7 +11,9 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@nuxt-app/types": "workspace:*"
+    "@nuxt-app/api": "workspace:*",
+    "@nuxt-app/types": "workspace:*",
+    "hono": "^4.13.2"
   },
   "devDependencies": {
     "typescript": "^5.8.0"

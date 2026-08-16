@@ -1,1 +1,1 @@
-export * from './client'
+export { authClient, setAuthApiUrl } from './client'

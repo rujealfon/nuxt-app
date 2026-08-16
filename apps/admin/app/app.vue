@@ -1,5 +1,7 @@
 <template>
-  <div class="min-h-screen bg-slate-900 text-slate-50">
-    <NuxtPage />
-  </div>
+  <UApp>
+    <div class="min-h-dvh bg-default text-default">
+      <NuxtPage />
+    </div>
+  </UApp>
 </template>

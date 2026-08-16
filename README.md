@@ -2,12 +2,12 @@
 
 A production-ready monorepo for:
 
-| Domain               | App   | Description                  |
-| -------------------- | ----- | ---------------------------- |
-| `nuxt-app.com`       | site  | Public site / landing        |
-| `app.nuxt-app.com`   | app   | Authenticated user dashboard |
-| `admin.nuxt-app.com` | admin | Admin panel (role: admin)    |
-| `api.nuxt-app.com`   | api   | Hono API + custom auth       |
+| Domain               | App   | Description                 |
+| -------------------- | ----- | --------------------------- |
+| `nuxt-app.com`       | site  | Public marketing site (SSG) |
+| `app.nuxt-app.com`   | app   | Authenticated product (SPA) |
+| `admin.nuxt-app.com` | admin | Admin panel (SPA)           |
+| `api.nuxt-app.com`   | api   | Hono API + custom auth      |
 
 ## Layers
 
@@ -44,7 +44,8 @@ nuxt-app/
 │   ├── db/           # Drizzle schema + client
 │   └── types/        # Shared TypeScript types
 ├── docker/
-│   └── Dockerfile.nuxt
+│   ├── Dockerfile.nuxt
+│   └── Dockerfile.static
 ├── docker-compose.yml
 ├── package.json
 ├── pnpm-workspace.yaml

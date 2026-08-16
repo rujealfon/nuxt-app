@@ -3,26 +3,33 @@
   "type": "module",
   "version": "0.0.0",
   "private": true,
+  "exports": {
+    "./rpc": "./src/rpc.ts"
+  },
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "tsx src/index.ts",
     "type-check": "tsc --noEmit",
+    "test": "vitest run",
     "db:seed": "tsx src/seed.ts"
   },
   "dependencies": {
     "@hono/node-server": "^1.14.0",
+    "@hono/zod-validator": "^0.9.0",
     "@nuxt-app/db": "workspace:*",
     "@nuxt-app/types": "workspace:*",
     "bcryptjs": "^3.0.2",
     "drizzle-orm": "^0.43.1",
     "hono": "^4.7.0",
     "nanoid": "^5.1.0",
-    "tsx": "^4.19.0"
+    "tsx": "^4.19.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^22.14.0",
-    "typescript": "^5.8.0"
+    "typescript": "^5.8.0",
+    "vitest": "^4.1.10"
   }
 }

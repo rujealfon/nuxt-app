@@ -21,16 +21,8 @@ export interface AuthUser {
   role: 'user' | 'admin'
 }
 
-export interface LoginInput {
-  email: string
-  password: string
-}
-
-export interface RegisterInput {
-  email: string
-  password: string
-  name: string
-}
+export { loginSchema, registerSchema } from './auth'
+export type { LoginInput, RegisterInput } from './auth'
 
 export interface AuthResponse {
   user: AuthUser
