@@ -11,6 +11,11 @@ const envSchema = z.object({
   WEB_URL: z.url().optional(),
   MARKETING_URL: z.url().optional(),
   COOKIE_DOMAIN: z.string().optional().transform(value => value || undefined),
+  UPSTASH_REDIS_REST_URL: z.url().default('http://localhost:8079'),
+  UPSTASH_REDIS_REST_TOKEN: z.string().min(1).default('local'),
+  RATE_LIMIT_MAX: z.coerce.number().int().positive().default(120),
+  RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(60_000),
+  AUTH_RATE_LIMIT_MAX: z.coerce.number().int().positive().default(10),
 })
 
 export const env = envSchema.parse(process.env)

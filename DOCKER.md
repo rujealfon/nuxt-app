@@ -1,6 +1,6 @@
 # Docker
 
-Full stack: Postgres, API, app, admin, web, and Drizzle Studio.
+Full stack: Postgres, Redis, API, app, admin, web, and Drizzle Studio.
 
 ## Quick start
 
@@ -17,6 +17,8 @@ pnpm docker:up
 | Web            | http://localhost:3003        |
 | Drizzle Studio | http://127.0.0.1:4983        |
 | Postgres       | localhost:5433 (container 5432) |
+| Redis          | localhost:6380 (container 6379) |
+| SRH (Upstash HTTP) | http://localhost:8079       |
 
 The API runs Drizzle migrations on boot. Scalar is at http://localhost:3001/ (`NODE_ENV=development`). Seed an admin user:
 
@@ -45,18 +47,22 @@ pnpm docker:db:seed
 | `app`, `admin`  | `docker/Dockerfile.nuxt`   | Nuxt Node server                           |
 | `web`           | `docker/Dockerfile.static` | nginx + prerendered files                  |
 | `postgres`      | `postgres:18-alpine`       | Volume `postgres_data`                     |
+| `redis`         | `redis:8-alpine`           | Host **6380** so it does not collide with local Redis on 6379 |
+| `srh`           | `hiett/serverless-redis-http` | Upstash-compatible HTTP in front of Redis; host **8079** |
 
-Inside Compose, apps use `postgres:5432`. The host maps that to **5433** so it does not collide with a local Postgres on 5432.
+Inside Compose, apps use `postgres:5432` and Redis via SRH at `http://srh:80`. The host maps Postgres to **5433**, Redis to **6380**, and SRH to **8079**.
 
 `docker/postgres-init/` runs on a **new** volume only. It creates `nuxt_app_test` for API tests.
 
-## Host apps + Compose Postgres only
+## Host apps + Compose Postgres and Redis only
 
 ```bash
-docker compose up postgres -d
+docker compose up postgres redis srh -d
 cp .env.example .env
 ```
 
-Point `DATABASE_URL` at `localhost:5433` (see `.env.example`). Then `pnpm install`, `pnpm db:migrate`, `pnpm dev`.
+Point `DATABASE_URL` at `localhost:5433` and `UPSTASH_REDIS_REST_URL` at `http://localhost:8079` (see `.env.example`). Then `pnpm install`, `pnpm db:migrate`, `pnpm dev`.
+
+The API rate-limits by client IP (Redis in Compose/production, in-memory in tests). A reverse proxy should overwrite `X-Forwarded-For` — do not trust a client-supplied value.
 
 Local Drizzle Studio (no container): `pnpm db:studio`.

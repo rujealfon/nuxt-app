@@ -1,6 +1,7 @@
 import { allowedOrigins, isDev } from '@api/env.js'
 import { factory } from '@api/factory.js'
 import { onError } from '@api/middleware/error.js'
+import { rateLimit } from '@api/middleware/rate-limit.js'
 import { sessionMiddleware } from '@api/middleware/session.js'
 import { adminRoutes } from '@api/modules/admin/routes.js'
 import { authRoutes } from '@api/modules/auth/routes.js'
@@ -46,6 +47,7 @@ const base = factory.createApp()
     maxSize: 64 * 1024,
     onError: c => c.json({ error: 'Payload too large' }, 413),
   }))
+  .use('*', rateLimit)
   .use('*', sessionMiddleware)
   .onError(onError)
   .notFound(c => c.json({ error: 'Not Found' }, 404))

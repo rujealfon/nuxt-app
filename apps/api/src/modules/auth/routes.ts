@@ -1,4 +1,5 @@
 import { factory } from '@api/factory.js'
+import { authRateLimit } from '@api/middleware/rate-limit.js'
 import { clearSessionCookie, SESSION_COOKIE, setSessionCookie } from '@api/modules/auth/cookies.js'
 import {
   authenticateUser,
@@ -19,7 +20,7 @@ function jsonError(
 }
 
 export const authRoutes = factory.createApp()
-  .post('/register', zValidator('json', registerSchema, jsonError), async (c) => {
+  .post('/register', authRateLimit, zValidator('json', registerSchema, jsonError), async (c) => {
     const { email, password, name } = c.req.valid('json')
     const { user, sessionId } = await createUserAndSession({ email, password, name })
     setSessionCookie(c, sessionId)
@@ -34,7 +35,7 @@ export const authRoutes = factory.createApp()
       message: 'Registered successfully',
     })
   })
-  .post('/login', zValidator('json', loginSchema, jsonError), async (c) => {
+  .post('/login', authRateLimit, zValidator('json', loginSchema, jsonError), async (c) => {
     const { email, password } = c.req.valid('json')
     const user = await authenticateUser(email, password)
     const sessionId = await createSession(user.id)
