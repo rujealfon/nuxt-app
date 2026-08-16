@@ -1,7 +1,7 @@
+import app from '@api/app.js'
+import { env } from '@api/env.js'
 import { serve } from '@hono/node-server'
 import { runMigrations } from '@nuxt-app/db'
-import app from './app.js'
-import { env } from './env.js'
 
 const port = env.API_PORT
 const hostname = env.API_HOST

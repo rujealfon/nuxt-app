@@ -1,5 +1,5 @@
-import { factory } from '../../factory.js'
-import { requireAdmin } from '../../middleware/require-admin.js'
+import { factory } from '@api/factory.js'
+import { requireAdmin } from '@api/middleware/require-admin.js'
 
 export const adminRoutes = factory.createApp()
   .use('*', requireAdmin)

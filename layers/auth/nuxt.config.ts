@@ -2,6 +2,7 @@ import process from 'node:process'
 import { defineNuxtConfig } from 'nuxt/config'
 
 export default defineNuxtConfig({
+  $meta: { name: 'auth' },
   modules: ['@pinia/nuxt', '@pinia/colada-nuxt'],
   runtimeConfig: {
     public: {

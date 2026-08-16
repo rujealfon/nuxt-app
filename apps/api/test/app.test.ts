@@ -1,5 +1,5 @@
+import app from '@api/app.js'
 import { describe, expect, it } from 'vitest'
-import app from '../src/app.js'
 
 async function json(path: string, init?: RequestInit) {
   const res = await app.request(path, init)

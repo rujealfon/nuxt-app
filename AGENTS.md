@@ -40,7 +40,14 @@ Auth flow: `apps/api/src/modules/auth/` owns password hashing (bcrypt), session 
 
 `src/index.ts` is process boot (`runMigrations()` + `serve`). CORS allowlisting lives in `src/app.ts`.
 
-Cross-package imports use workspace protocol (`@nuxt-app/*`: `workspace:*`) — when changing a shared package's public surface (`packages/*/src/index.ts` exports), check all consuming apps/layers, not just the one you're editing.
+Imports:
+
+- Another package or layer: `@nuxt-app/db`, `@nuxt-app/types`, `@nuxt-app/auth`, `@nuxt-app/layer-base`, `@nuxt-app/layer-auth`. Do not add short aliases (`@db`, `@types`, `@auth`) — `@types` collides with DefinitelyTyped, and `@auth` is both a package and a layer.
+- Same-app source: `@api/`, `@app/`, `@admin/`, `@site/` (that app's `src/` or `app/`).
+- Inside `packages/*`: relative `./` to local files. Public surface stays `src/index.ts`.
+- Layers: `extends: '@nuxt-app/layer-*'`. Components and composables are auto-imported. A specific layer file is `#layers/base` or `#layers/auth`.
+
+When changing a shared package's public surface (`packages/*/src/index.ts` exports), check all consuming apps/layers, not just the one you're editing.
 
 Env vars are shared across all apps from repo-root `.env` (see `.env.example`): `DATABASE_URL`, `SESSION_SECRET`, `COOKIE_DOMAIN`, per-app `*_URL` vars used both for CORS allowlisting in `apps/api/src/app.ts` and for cross-subdomain cookie config in production.
 

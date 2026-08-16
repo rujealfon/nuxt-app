@@ -1,9 +1,13 @@
 {
   "compilerOptions": {
     "target": "ES2022",
+    "baseUrl": ".",
     "rootDir": "src",
     "module": "ESNext",
     "moduleResolution": "bundler",
+    "paths": {
+      "@api/*": ["./src/*"]
+    },
     "types": ["node"],
     "strict": true,
     "outDir": "dist",

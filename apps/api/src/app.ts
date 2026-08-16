@@ -1,16 +1,16 @@
+import { allowedOrigins } from '@api/env.js'
+import { factory } from '@api/factory.js'
+import { onError } from '@api/middleware/error.js'
+import { sessionMiddleware } from '@api/middleware/session.js'
+import { adminRoutes } from '@api/modules/admin/routes.js'
+import { authRoutes } from '@api/modules/auth/routes.js'
+import { healthRoutes } from '@api/modules/health/routes.js'
 import { bodyLimit } from 'hono/body-limit'
 import { cors } from 'hono/cors'
 import { csrf } from 'hono/csrf'
 import { logger } from 'hono/logger'
 import { requestId } from 'hono/request-id'
 import { secureHeaders } from 'hono/secure-headers'
-import { allowedOrigins } from './env.js'
-import { factory } from './factory.js'
-import { onError } from './middleware/error.js'
-import { sessionMiddleware } from './middleware/session.js'
-import { adminRoutes } from './modules/admin/routes.js'
-import { authRoutes } from './modules/auth/routes.js'
-import { healthRoutes } from './modules/health/routes.js'
 
 const app = factory.createApp()
   .use('*', requestId())

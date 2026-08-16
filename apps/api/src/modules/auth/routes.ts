@@ -1,14 +1,14 @@
-import { zValidator } from '@hono/zod-validator'
-import { loginSchema, registerSchema } from '@nuxt-app/types'
-import { getCookie } from 'hono/cookie'
-import { factory } from '../../factory.js'
-import { clearSessionCookie, SESSION_COOKIE, setSessionCookie } from './cookies.js'
+import { factory } from '@api/factory.js'
+import { clearSessionCookie, SESSION_COOKIE, setSessionCookie } from '@api/modules/auth/cookies.js'
 import {
   authenticateUser,
   createSession,
   createUserAndSession,
   deleteSession,
-} from './service.js'
+} from '@api/modules/auth/service.js'
+import { zValidator } from '@hono/zod-validator'
+import { loginSchema, registerSchema } from '@nuxt-app/types'
+import { getCookie } from 'hono/cookie'
 
 function jsonError(
   result: { success: boolean, error?: { issues: { message: string }[] } },

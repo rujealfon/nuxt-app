@@ -1,4 +1,4 @@
-import { factory } from '../../factory.js'
+import { factory } from '@api/factory.js'
 
 export const healthRoutes = factory.createApp()
   .get('/', c => c.json({ status: 'ok', service: 'nuxt-app-api' }))

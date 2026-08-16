@@ -1,7 +1,7 @@
+import { factory } from '@api/factory.js'
+import { SESSION_COOKIE } from '@api/modules/auth/cookies.js'
+import { getSessionUser } from '@api/modules/auth/service.js'
 import { getCookie } from 'hono/cookie'
-import { factory } from '../factory.js'
-import { SESSION_COOKIE } from '../modules/auth/cookies.js'
-import { getSessionUser } from '../modules/auth/service.js'
 
 export const sessionMiddleware = factory.createMiddleware(async (c, next) => {
   const sessionId = getCookie(c, SESSION_COOKIE)

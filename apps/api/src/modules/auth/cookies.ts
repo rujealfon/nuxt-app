@@ -1,7 +1,7 @@
+import type { AppEnv } from '@api/types.js'
 import type { Context } from 'hono'
-import type { AppEnv } from '../../types.js'
+import { env } from '@api/env.js'
 import { deleteCookie, setCookie } from 'hono/cookie'
-import { env } from '../../env.js'
 
 export const SESSION_COOKIE = 'nuxt_app_session'
 
