@@ -1,6 +1,19 @@
 shellEmulator: true
+confirmModulesPurge: false
 
 trustPolicy: no-downgrade
+# Older publishes often lack trusted-publisher evidence; still enforce the policy on new releases.
+trustPolicyIgnoreAfter: 43200
+# These transitive packages publish more than once a day (icon sets, browser lists, motion).
+minimumReleaseAgeExclude:
+  - '@iconify/collections'
+  - electron-to-chromium
+  - motion-v
+
+allowBuilds:
+  better-sqlite3: false
+  esbuild: true
+  vue-demi: true
 
 packages:
   - 'apps/*'

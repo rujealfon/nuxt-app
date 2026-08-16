@@ -1,8 +1,9 @@
 import antfu from '@antfu/eslint-config'
 
-function appImports(files, alias) {
+function appImports(files, alias, ignores = []) {
   return {
     files,
+    ignores,
     rules: {
       'no-restricted-imports': ['error', {
         patterns: [
@@ -21,7 +22,7 @@ function appImports(files, alias) {
 }
 
 const overrides = [
-  appImports(['apps/api/**/*.ts'], '@api'),
+  appImports(['apps/api/**/*.ts'], '@api', ['apps/api/src/rpc.ts']),
   appImports(['apps/app/**/*.{ts,vue}'], '@app'),
   appImports(['apps/admin/**/*.{ts,vue}'], '@admin'),
   appImports(['apps/site/**/*.{ts,vue}'], '@site'),

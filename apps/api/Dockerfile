@@ -1,5 +1,5 @@
-FROM node:22-alpine AS base
-RUN corepack enable && corepack prepare pnpm@10.8.0 --activate
+FROM node:24-alpine AS base
+RUN corepack enable && corepack prepare pnpm@11.22.0 --activate
 WORKDIR /repo
 
 FROM base AS build
@@ -8,7 +8,7 @@ COPY apps ./apps
 COPY packages ./packages
 RUN pnpm install --frozen-lockfile
 
-FROM node:22-alpine AS runner
+FROM node:24-alpine AS runner
 WORKDIR /repo
 ENV NODE_ENV=production
 COPY --from=build /repo/package.json /repo/pnpm-lock.yaml /repo/pnpm-workspace.yaml ./

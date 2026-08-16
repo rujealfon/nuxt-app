@@ -1,1 +1,1 @@
-export type { AppType } from '@api/app.js'
+export type { AppType } from './app.js'
