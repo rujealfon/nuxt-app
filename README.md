@@ -1,64 +1,125 @@
-# Nuxt Starter Template
+# MySite Monorepo Starter
 
-[![Nuxt UI](https://img.shields.io/badge/Made%20with-Nuxt%20UI-00DC82?logo=nuxt&labelColor=020420)](https://ui.nuxt.com)
+A production-ready monorepo for:
 
-Use this template to get started with [Nuxt UI](https://ui.nuxt.com) quickly.
+| Domain              | App          | Description                    |
+|---------------------|--------------|--------------------------------|
+| `mysite.com`        | site    | Public site / landing     |
+| `app.mysite.com`    | app          | Authenticated user dashboard   |
+| `admin.mysite.com`  | admin        | Admin panel (role: admin)      |
+| `api.mysite.com`    | api          | Hono API + custom auth         |
 
-- [Live demo](https://starter-template.nuxt.dev/)
-- [Documentation](https://ui.nuxt.com/docs/getting-started/installation/nuxt)
+## Stack
 
-<a href="https://starter-template.nuxt.dev/" target="_blank">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://ui.nuxt.com/assets/templates/nuxt/starter-dark.png">
-    <source media="(prefers-color-scheme: light)" srcset="https://ui.nuxt.com/assets/templates/nuxt/starter-light.png">
-    <img alt="Nuxt Starter Template" src="https://ui.nuxt.com/assets/templates/nuxt/starter-light.png" width="830" height="466">
-  </picture>
-</a>
+- **Monorepo**: pnpm + Turborepo
+- **Frontends**: Nuxt 4
+- **API**: Hono
+- **Auth**: Custom session-based (httpOnly cookies + SQLite)
+- **DB**: SQLite (local) → easy to switch to Postgres later
 
-> The starter template for Vue is on https://github.com/nuxt-ui-templates/starter-vue.
+## Structure
+
+```
+mysite-monorepo/
+├── apps/
+│   ├── api/          # Hono backend (port 3001)
+│   ├── app/          # User app (port 3000)
+│   ├── admin/        # Admin panel (port 3002)
+│   └── site/    # site site (port 3003)
+├── packages/
+│   ├── auth/         # Shared auth client
+│   └── types/        # Shared TypeScript types
+├── package.json
+├── pnpm-workspace.yaml
+└── turbo.json
+```
 
 ## Quick Start
 
-```bash [Terminal]
-npm create nuxt@latest -- -t ui
-```
-
-## Deploy your own
-
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-name=starter&repository-url=https%3A%2F%2Fgithub.com%2Fnuxt-ui-templates%2Fstarter&demo-image=https%3A%2F%2Fui.nuxt.com%2Fassets%2Ftemplates%2Fnuxt%2Fstarter-dark.png&demo-url=https%3A%2F%2Fstarter-template.nuxt.dev%2F&demo-title=Nuxt%20Starter%20Template&demo-description=A%20minimal%20template%20to%20get%20started%20with%20Nuxt%20UI.)
-
-## Setup
-
-Make sure to install the dependencies:
+### 1. Install dependencies
 
 ```bash
 pnpm install
 ```
 
-## Development Server
+### 2. Setup environment
 
-Start the development server on `http://localhost:3000`:
+```bash
+cp .env.example .env
+# Edit .env if needed
+```
+
+### 3. Run database migrations
+
+```bash
+cd apps/api
+pnpm db:migrate
+```
+
+### 4. Start everything
+
+From the root:
 
 ```bash
 pnpm dev
 ```
 
-## Production
-
-Build the application for production:
+Or individually:
 
 ```bash
-pnpm build
+pnpm dev:api        # http://localhost:3001
+pnpm dev:app        # http://localhost:3000
+pnpm dev:admin      # http://localhost:3002
+pnpm dev:site  # http://localhost:3003
 ```
 
-Locally preview production build:
+## Authentication
 
-```bash
-pnpm preview
+Custom session-based auth:
+
+- Password hashed with **bcrypt**
+- Sessions stored in DB
+- **httpOnly** cookie (`mysite_session`)
+- Cross-subdomain ready (set `COOKIE_DOMAIN=.mysite.com` in production)
+
+### Create first admin user
+
+You can register normally, then promote the user in the database:
+
+```sql
+UPDATE users SET role = 'admin' WHERE email = 'you@example.com';
 ```
 
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+Or use the register endpoint and update role.
 
-## Renovate integration
+### API Endpoints
 
-Install [Renovate GitHub app](https://github.com/apps/renovate/installations/select_target) on your repository and you are good to go.
+| Method | Path            | Description              |
+|--------|-----------------|--------------------------|
+| POST   | `/auth/register`| Create account           |
+| POST   | `/auth/login`   | Login                    |
+| POST   | `/auth/logout`  | Logout                   |
+| GET    | `/auth/me`      | Current user             |
+| GET    | `/me`           | Protected route example  |
+| GET    | `/admin/dashboard` | Admin only            |
+
+## Production (Vercel)
+
+1. Create **4 Vercel projects** from the same repo
+2. Set **Root Directory** for each:
+   - `apps/api`
+   - `apps/app`
+   - `apps/admin`
+   - `apps/site`
+3. Add domains:
+   - `api.mysite.com` → api project
+   - `app.mysite.com` → app project
+   - `admin.mysite.com` → admin project
+   - `mysite.com` → site project
+4. Set environment variables (especially `COOKIE_DOMAIN=.mysite.com` and `DATABASE_URL`)
+
+## Notes
+
+- Cookies work across subdomains when `COOKIE_DOMAIN=.mysite.com`
+- For local development, `COOKIE_DOMAIN` can stay empty / `localhost`
+- Switch to Postgres by changing the Drizzle driver and connection string
