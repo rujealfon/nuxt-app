@@ -7,31 +7,42 @@ const { user, logout } = useAuth()
 </script>
 
 <template>
-  <div style="max-width: 640px; margin: 0 auto; padding: 48px 24px;">
-    <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px;">
-      <h1 style="font-size: 1.5rem; font-weight: 700;">MySite App</h1>
-      <button
-        @click="logout"
-        style="padding: 8px 16px; background: #ef4444; color: white; border: none; border-radius: 6px; font-size: 0.875rem;"
-      >
+  <div class="mx-auto max-w-xl px-6 py-12">
+    <header class="mb-10 flex items-center justify-between">
+      <h1 class="text-2xl font-bold">
+        Nuxt App
+      </h1>
+      <AppButton variant="danger" @click="logout()">
         Logout
-      </button>
+      </AppButton>
     </header>
 
-    <div style="background: white; border-radius: 12px; padding: 32px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-      <h2 style="font-size: 1.25rem; margin-bottom: 8px;">Welcome, {{ user?.name }}!</h2>
-      <p style="color: #6b7280; margin-bottom: 24px;">{{ user?.email }}</p>
+    <AppCard>
+      <h2 class="mb-1 text-xl font-semibold">
+        Welcome, {{ user?.name }}!
+      </h2>
+      <p class="mb-6 text-gray-500">
+        {{ user?.email }}
+      </p>
 
-      <div style="display: grid; gap: 12px; font-size: 0.875rem;">
-        <div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f3f4f6;">
-          <span style="color: #6b7280;">User ID</span>
-          <span style="font-family: monospace;">{{ user?.id }}</span>
+      <dl class="space-y-3 text-sm">
+        <div class="flex justify-between border-b border-gray-100 py-3">
+          <dt class="text-gray-500">
+            User ID
+          </dt>
+          <dd class="font-mono">
+            {{ user?.id }}
+          </dd>
         </div>
-        <div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f3f4f6;">
-          <span style="color: #6b7280;">Role</span>
-          <span style="text-transform: capitalize; font-weight: 500;">{{ user?.role }}</span>
+        <div class="flex justify-between py-3">
+          <dt class="text-gray-500">
+            Role
+          </dt>
+          <dd class="font-medium capitalize">
+            {{ user?.role }}
+          </dd>
         </div>
-      </div>
-    </div>
+      </dl>
+    </AppCard>
   </div>
 </template>

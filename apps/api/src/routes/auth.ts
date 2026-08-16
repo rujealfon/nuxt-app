@@ -1,16 +1,17 @@
+import process from 'node:process'
 import { Hono } from 'hono'
-import { setCookie, getCookie, deleteCookie } from 'hono/cookie'
+import { deleteCookie, getCookie, setCookie } from 'hono/cookie'
 import {
-  createUser,
   authenticateUser,
   createSession,
-  getSessionUser,
+  createUser,
   deleteSession,
-} from '../lib/auth'
+  getSessionUser,
+} from '../lib/auth.js'
 
-const SESSION_COOKIE = 'mysite_session'
+const SESSION_COOKIE = 'nuxt_app_session'
 const isProd = process.env.NODE_ENV === 'production'
-const cookieDomain = process.env.COOKIE_DOMAIN || undefined // e.g. '.mysite.com' in production
+const cookieDomain = process.env.COOKIE_DOMAIN || undefined // e.g. '.nuxt-app.com' in production
 
 const auth = new Hono()
 
@@ -59,7 +60,8 @@ auth.post('/register', async (c) => {
       },
       message: 'Registered successfully',
     })
-  } catch (err: any) {
+  }
+  catch (err: any) {
     return c.json({ error: err.message || 'Registration failed' }, 400)
   }
 })
@@ -82,7 +84,8 @@ auth.post('/login', async (c) => {
       user,
       message: 'Logged in successfully',
     })
-  } catch (err: any) {
+  }
+  catch (err: any) {
     return c.json({ error: err.message || 'Login failed' }, 401)
   }
 })

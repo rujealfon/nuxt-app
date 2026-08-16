@@ -1,9 +1,8 @@
-import { eq, and, gt } from 'drizzle-orm'
-import { nanoid } from 'nanoid'
+import type { AuthUser } from '@nuxt-app/types'
+import { db, sessions, users } from '@nuxt-app/db'
 import bcrypt from 'bcryptjs'
-import { db } from '../db'
-import { users, sessions } from '../db/schema'
-import type { AuthUser } from '@mysite/types'
+import { and, eq, gt } from 'drizzle-orm'
+import { nanoid } from 'nanoid'
 
 const SESSION_DURATION_MS = 1000 * 60 * 60 * 24 * 7 // 7 days
 const SALT_ROUNDS = 12
@@ -85,7 +84,8 @@ export async function createSession(userId: string): Promise<string> {
 }
 
 export async function getSessionUser(sessionId: string): Promise<AuthUser | null> {
-  if (!sessionId) return null
+  if (!sessionId)
+    return null
 
   const result = await db
     .select({
@@ -101,7 +101,8 @@ export async function getSessionUser(sessionId: string): Promise<AuthUser | null
     .limit(1)
 
   const row = result[0]
-  if (!row) return null
+  if (!row)
+    return null
 
   return {
     id: row.userId,
@@ -112,7 +113,8 @@ export async function getSessionUser(sessionId: string): Promise<AuthUser | null
 }
 
 export async function deleteSession(sessionId: string) {
-  if (!sessionId) return
+  if (!sessionId)
+    return
   await db.delete(sessions).where(eq(sessions.id, sessionId))
 }
 

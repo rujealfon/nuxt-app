@@ -1,7 +1,7 @@
-import { createMiddleware } from 'hono/factory'
+import type { AuthUser } from '@nuxt-app/types'
 import { getCookie } from 'hono/cookie'
-import { getSessionUser } from '../lib/auth'
-import type { AuthUser } from '@mysite/types'
+import { createMiddleware } from 'hono/factory'
+import { getSessionUser } from '../lib/auth.js'
 
 declare module 'hono' {
   interface ContextVariableMap {
@@ -10,7 +10,7 @@ declare module 'hono' {
 }
 
 export const sessionMiddleware = createMiddleware(async (c, next) => {
-  const sessionId = getCookie(c, 'mysite_session')
+  const sessionId = getCookie(c, 'nuxt_app_session')
   const user = await getSessionUser(sessionId || '')
   c.set('user', user)
   await next()

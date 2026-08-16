@@ -1,0 +1,14 @@
+{
+  "name": "@nuxt-app/layer-auth",
+  "type": "module",
+  "private": true,
+  "main": "./nuxt.config.ts",
+  "scripts": {
+    "postinstall": "nuxt prepare"
+  },
+  "dependencies": {
+    "@nuxt-app/auth": "workspace:*",
+    "@nuxt-app/types": "workspace:*",
+    "nuxt": "^4.5.2"
+  }
+}

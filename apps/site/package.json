@@ -1,5 +1,5 @@
 {
-  "name": "@mysite/site",
+  "name": "@nuxt-app/site",
   "type": "module",
   "private": true,
   "scripts": {
@@ -10,6 +10,7 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
+    "@nuxt-app/layer-base": "workspace:*",
     "nuxt": "^4.5.2",
     "vue": "^3.5.41",
     "vue-router": "^5.2.0"

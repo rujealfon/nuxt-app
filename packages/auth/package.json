@@ -1,8 +1,8 @@
 {
-  "name": "@mysite/auth",
+  "name": "@nuxt-app/auth",
+  "type": "module",
   "version": "0.0.0",
   "private": true,
-  "type": "module",
   "exports": {
     ".": "./src/index.ts",
     "./client": "./src/client.ts"
@@ -11,7 +11,7 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@mysite/types": "workspace:*"
+    "@nuxt-app/types": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.8.0"

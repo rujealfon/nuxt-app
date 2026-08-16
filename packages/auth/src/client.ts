@@ -1,12 +1,14 @@
-import type { AuthUser, LoginInput, RegisterInput, AuthResponse } from '@mysite/types'
+import type { AuthResponse, AuthUser, LoginInput, RegisterInput } from '@nuxt-app/types'
 
 function getApiUrl(): string {
   // Nuxt runtime config
   if (typeof useRuntimeConfig === 'function') {
     try {
       const config = useRuntimeConfig()
-      if (config.public?.apiUrl) return config.public.apiUrl as string
-    } catch {
+      if (config.public?.apiUrl)
+        return config.public.apiUrl as string
+    }
+    catch {
       // outside of Nuxt context
     }
   }
@@ -58,7 +60,8 @@ export const authClient = {
   async me(): Promise<{ user: AuthUser | null }> {
     try {
       return await request('/auth/me')
-    } catch {
+    }
+    catch {
       return { user: null }
     }
   },

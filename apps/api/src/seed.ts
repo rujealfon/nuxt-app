@@ -1,14 +1,15 @@
+/* eslint-disable no-console */
 /**
- * Simple seed script to create an admin user.
- * Run: pnpm tsx src/db/seed.ts
+ * Create an admin user.
+ * Run: pnpm --filter @nuxt-app/api db:seed
  */
-import { createUser } from '../lib/auth'
-import { db } from './index'
-import { users } from './schema'
+import process from 'node:process'
+import { db, pool, users } from '@nuxt-app/db'
 import { eq } from 'drizzle-orm'
+import { createUser } from './lib/auth.js'
 
 async function seed() {
-  const email = process.env.ADMIN_EMAIL || 'admin@mysite.com'
+  const email = process.env.ADMIN_EMAIL || 'admin@nuxt-app.com'
   const password = process.env.ADMIN_PASSWORD || 'admin123456'
   const name = process.env.ADMIN_NAME || 'Admin'
 
@@ -20,6 +21,7 @@ async function seed() {
     console.log(`User ${email} already exists (role: ${existing.role})`)
     if (existing.role !== 'admin') {
       await db.update(users).set({ role: 'admin' }).where(eq(users.id, existing.id))
+
       console.log('Promoted to admin.')
     }
     return
@@ -38,4 +40,9 @@ async function seed() {
   console.log(`  Role:     ${user.role}`)
 }
 
-seed().catch(console.error)
+seed()
+  .then(() => pool.end())
+  .catch((err) => {
+    console.error(err)
+    process.exit(1)
+  })

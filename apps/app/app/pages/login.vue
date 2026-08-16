@@ -1,76 +1,62 @@
 <script setup lang="ts">
-const { login, error, isAuthenticated } = useAuth()
+definePageMeta({
+  middleware: 'guest',
+})
+
+const { login, error } = useAuth()
 const route = useRoute()
 
 const email = ref('')
 const password = ref('')
 const submitting = ref(false)
 
-if (isAuthenticated.value) {
-  await navigateTo('/')
-}
-
 async function onSubmit() {
-  if (!email.value || !password.value) return
+  if (!email.value || !password.value)
+    return
   submitting.value = true
   try {
     await login(email.value, password.value)
     const redirect = (route.query.redirect as string) || '/'
     await navigateTo(redirect)
-  } catch {
+  }
+  catch {
     // error is already set in composable
-  } finally {
+  }
+  finally {
     submitting.value = false
   }
 }
 </script>
 
 <template>
-  <div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px;">
-    <div style="width: 100%; max-width: 400px; background: white; border-radius: 12px; padding: 40px; box-shadow: 0 4px 6px rgba(0,0,0,0.07);">
-      <h1 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 8px; text-align: center;">Sign in</h1>
-      <p style="color: #6b7280; text-align: center; margin-bottom: 32px; font-size: 0.875rem;">
+  <div class="flex min-h-screen items-center justify-center p-6">
+    <AppCard class="w-full max-w-md">
+      <h1 class="mb-1 text-center text-2xl font-bold">
+        Sign in
+      </h1>
+      <p class="mb-8 text-center text-sm text-gray-500">
         Access your account
       </p>
 
-      <form @submit.prevent="onSubmit" style="display: grid; gap: 16px;">
-        <div>
-          <label style="display: block; font-size: 0.875rem; font-weight: 500; margin-bottom: 6px;">Email</label>
-          <input
-            v-model="email"
-            type="email"
-            required
-            style="width: 100%; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 8px; outline: none;"
-            placeholder="you@example.com"
-          />
-        </div>
+      <form class="grid gap-4" @submit.prevent="onSubmit">
+        <AppInput v-model="email" type="email" label="Email" placeholder="you@example.com" required />
+        <AppInput v-model="password" type="password" label="Password" placeholder="••••••••" required />
 
-        <div>
-          <label style="display: block; font-size: 0.875rem; font-weight: 500; margin-bottom: 6px;">Password</label>
-          <input
-            v-model="password"
-            type="password"
-            required
-            style="width: 100%; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 8px; outline: none;"
-            placeholder="••••••••"
-          />
-        </div>
+        <p v-if="error" class="text-sm text-red-500">
+          {{ error }}
+        </p>
 
-        <p v-if="error" style="color: #ef4444; font-size: 0.875rem;">{{ error }}</p>
-
-        <button
-          type="submit"
-          :disabled="submitting"
-          style="width: 100%; padding: 12px; background: #111827; color: white; border: none; border-radius: 8px; font-weight: 500;"
-        >
+        <AppButton type="submit" :disabled="submitting">
           {{ submitting ? 'Signing in...' : 'Sign in' }}
-        </button>
+        </AppButton>
       </form>
 
-      <p style="text-align: center; margin-top: 24px; font-size: 0.875rem; color: #6b7280;">
+      <p class="mt-6 text-center text-sm text-gray-500">
         Don't have an account?
-        <NuxtLink to="/register" style="color: #111827; font-weight: 500; text-decoration: none;">Create one</NuxtLink>
+        <NuxtLink to="/register" class="font-medium text-gray-900">
+          Create one
+        </NuxtLink>
       </p>
-    </div>
+    </AppCard>
   </div>
 </template>

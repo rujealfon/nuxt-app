@@ -1,66 +1,95 @@
-# MySite Monorepo Starter
+# Nuxt App Monorepo Starter
 
 A production-ready monorepo for:
 
-| Domain              | App          | Description                    |
-|---------------------|--------------|--------------------------------|
-| `mysite.com`        | site    | Public site / landing     |
-| `app.mysite.com`    | app          | Authenticated user dashboard   |
-| `admin.mysite.com`  | admin        | Admin panel (role: admin)      |
-| `api.mysite.com`    | api          | Hono API + custom auth         |
+| Domain               | App   | Description                  |
+| -------------------- | ----- | ---------------------------- |
+| `nuxt-app.com`       | site  | Public site / landing        |
+| `app.nuxt-app.com`   | app   | Authenticated user dashboard |
+| `admin.nuxt-app.com` | admin | Admin panel (role: admin)    |
+| `api.nuxt-app.com`   | api   | Hono API + custom auth       |
+
+## Layers
+
+Nuxt apps extend shared layers:
+
+| Layer         | Package                | Used by          | Provides                                         |
+| ------------- | ---------------------- | ---------------- | ------------------------------------------------ |
+| `layers/base` | `@nuxt-app/layer-base` | app, admin, site | Tailwind, UI components, Nitro/devtools          |
+| `layers/auth` | `@nuxt-app/layer-auth` | app, admin       | `useAuth`, `auth` / `guest` / `admin` middleware |
 
 ## Stack
 
 - **Monorepo**: pnpm + Turborepo
 - **Frontends**: Nuxt 4
 - **API**: Hono
-- **Auth**: Custom session-based (httpOnly cookies + SQLite)
-- **DB**: SQLite (local) → easy to switch to Postgres later
+- **Auth**: Custom session-based (httpOnly cookies)
+- **DB**: PostgreSQL via Drizzle
+- **Runtime**: Docker Compose (Postgres + all apps)
 
 ## Structure
 
 ```
-mysite-monorepo/
+nuxt-app/
 ├── apps/
 │   ├── api/          # Hono backend (port 3001)
 │   ├── app/          # User app (port 3000)
 │   ├── admin/        # Admin panel (port 3002)
-│   └── site/    # site site (port 3003)
+│   └── site/         # Public site (port 3003)
+├── layers/
+│   ├── base/         # Tailwind, UI components, shared Nuxt config
+│   └── auth/         # useAuth, auth/guest/admin middleware
 ├── packages/
-│   ├── auth/         # Shared auth client
+│   ├── auth/         # Shared auth HTTP client
+│   ├── db/           # Drizzle schema + client
 │   └── types/        # Shared TypeScript types
+├── docker/
+│   └── Dockerfile.nuxt
+├── docker-compose.yml
 ├── package.json
 ├── pnpm-workspace.yaml
 └── turbo.json
 ```
 
-## Quick Start
-
-### 1. Install dependencies
-
-```bash
-pnpm install
-```
-
-### 2. Setup environment
+## Quick Start (Docker)
 
 ```bash
 cp .env.example .env
-# Edit .env if needed
+pnpm docker:up
 ```
 
-### 3. Run database migrations
+- App: http://localhost:3000
+- API: http://localhost:3001
+- Admin: http://localhost:3002
+- Site: http://localhost:3003
+- Postgres: localhost:5433 (container port 5432)
+
+The API applies Drizzle migrations on boot.
+
+Seed an admin user:
 
 ```bash
-cd apps/api
+docker compose exec api pnpm exec tsx src/seed.ts
+```
+
+## Lint
+
+[@antfu/eslint-config](https://github.com/antfu/eslint-config) at the repo root (Vue + TypeScript + CSS formatters).
+
+```bash
+pnpm lint
+pnpm lint:fix
+```
+
+## Local development (apps on the host)
+
+Start only Postgres:
+
+```bash
+docker compose up postgres -d
+cp .env.example .env
+pnpm install
 pnpm db:migrate
-```
-
-### 4. Start everything
-
-From the root:
-
-```bash
 pnpm dev
 ```
 
@@ -70,7 +99,7 @@ Or individually:
 pnpm dev:api        # http://localhost:3001
 pnpm dev:app        # http://localhost:3000
 pnpm dev:admin      # http://localhost:3002
-pnpm dev:site  # http://localhost:3003
+pnpm dev:site       # http://localhost:3003
 ```
 
 ## Authentication
@@ -78,48 +107,35 @@ pnpm dev:site  # http://localhost:3003
 Custom session-based auth:
 
 - Password hashed with **bcrypt**
-- Sessions stored in DB
-- **httpOnly** cookie (`mysite_session`)
-- Cross-subdomain ready (set `COOKIE_DOMAIN=.mysite.com` in production)
+- Sessions stored in Postgres
+- **httpOnly** cookie (`nuxt_app_session`)
+- Cross-subdomain ready (set `COOKIE_DOMAIN=.nuxt-app.com` in production)
 
 ### Create first admin user
 
-You can register normally, then promote the user in the database:
+```bash
+pnpm db:seed
+```
+
+Or register normally, then promote the user:
 
 ```sql
 UPDATE users SET role = 'admin' WHERE email = 'you@example.com';
 ```
 
-Or use the register endpoint and update role.
-
 ### API Endpoints
 
-| Method | Path            | Description              |
-|--------|-----------------|--------------------------|
-| POST   | `/auth/register`| Create account           |
-| POST   | `/auth/login`   | Login                    |
-| POST   | `/auth/logout`  | Logout                   |
-| GET    | `/auth/me`      | Current user             |
-| GET    | `/me`           | Protected route example  |
-| GET    | `/admin/dashboard` | Admin only            |
-
-## Production (Vercel)
-
-1. Create **4 Vercel projects** from the same repo
-2. Set **Root Directory** for each:
-   - `apps/api`
-   - `apps/app`
-   - `apps/admin`
-   - `apps/site`
-3. Add domains:
-   - `api.mysite.com` → api project
-   - `app.mysite.com` → app project
-   - `admin.mysite.com` → admin project
-   - `mysite.com` → site project
-4. Set environment variables (especially `COOKIE_DOMAIN=.mysite.com` and `DATABASE_URL`)
+| Method | Path               | Description             |
+| ------ | ------------------ | ----------------------- |
+| POST   | `/auth/register`   | Create account          |
+| POST   | `/auth/login`      | Login                   |
+| POST   | `/auth/logout`     | Logout                  |
+| GET    | `/auth/me`         | Current user            |
+| GET    | `/me`              | Protected route example |
+| GET    | `/admin/dashboard` | Admin only              |
 
 ## Notes
 
-- Cookies work across subdomains when `COOKIE_DOMAIN=.mysite.com`
-- For local development, `COOKIE_DOMAIN` can stay empty / `localhost`
-- Switch to Postgres by changing the Drizzle driver and connection string
+- The API container talks to Postgres at `postgres:5432`. Compose publishes that database on **localhost:5433** so it does not collide with a local Postgres on 5432.
+- Cookies work across subdomains when `COOKIE_DOMAIN=.nuxt-app.com`
+- For local development, `COOKIE_DOMAIN` can stay `localhost`

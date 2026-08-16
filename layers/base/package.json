@@ -1,0 +1,14 @@
+{
+  "name": "@nuxt-app/layer-base",
+  "type": "module",
+  "private": true,
+  "main": "./nuxt.config.ts",
+  "scripts": {
+    "postinstall": "nuxt prepare"
+  },
+  "dependencies": {
+    "@tailwindcss/vite": "^4.1.0",
+    "nuxt": "^4.5.2",
+    "tailwindcss": "^4.1.0"
+  }
+}

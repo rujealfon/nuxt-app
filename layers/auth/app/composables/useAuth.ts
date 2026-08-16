@@ -1,5 +1,5 @@
-import { authClient } from '@mysite/auth/client'
-import type { AuthUser } from '@mysite/types'
+import type { AuthUser } from '@nuxt-app/types'
+import { authClient } from '@nuxt-app/auth/client'
 
 export function useAuth() {
   const user = useState<AuthUser | null>('auth-user', () => null)
@@ -12,9 +12,11 @@ export function useAuth() {
     try {
       const res = await authClient.me()
       user.value = res.user
-    } catch {
+    }
+    catch {
       user.value = null
-    } finally {
+    }
+    finally {
       loading.value = false
     }
   }
@@ -25,7 +27,8 @@ export function useAuth() {
       const res = await authClient.login({ email, password })
       user.value = res.user
       return res
-    } catch (e: any) {
+    }
+    catch (e: any) {
       error.value = e.message
       throw e
     }
@@ -37,16 +40,26 @@ export function useAuth() {
       const res = await authClient.register({ email, password, name })
       user.value = res.user
       return res
-    } catch (e: any) {
+    }
+    catch (e: any) {
       error.value = e.message
       throw e
     }
   }
 
-  async function logout() {
+  async function logout(redirectTo = '/login') {
     await authClient.logout()
     user.value = null
-    await navigateTo('/login')
+    if (redirectTo) {
+      await navigateTo(redirectTo)
+    }
+  }
+
+  async function ensureUser() {
+    if (loading.value) {
+      await fetchUser()
+    }
+    return user.value
   }
 
   return {
@@ -57,6 +70,8 @@ export function useAuth() {
     login,
     register,
     logout,
+    ensureUser,
     isAuthenticated: computed(() => !!user.value),
+    isAdmin: computed(() => user.value?.role === 'admin'),
   }
 }

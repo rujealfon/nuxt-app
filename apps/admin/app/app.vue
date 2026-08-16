@@ -1,12 +1,5 @@
 <template>
-  <div style="min-height: 100vh; background: #0f172a; color: #f8fafc;">
+  <div class="min-h-screen bg-slate-900 text-slate-50">
     <NuxtPage />
   </div>
 </template>
-
-<style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: system-ui, sans-serif; line-height: 1.5; }
-button { cursor: pointer; }
-input { font: inherit; }
-</style>
