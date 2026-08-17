@@ -170,7 +170,7 @@ Git pushes then deploy all four. `turbo-ignore` skips unchanged packages.
 1. Open web → page loads (static, no Node server).
 2. Open app `/register` → create a user → lands logged in.
 3. `GET https://<api>/auth/me` in that browser session returns the user (`nuxt_app_session`, httpOnly).
-4. Open admin → same cookie works on `*.nuxt-app.com` with `COOKIE_DOMAIN` set. Promote with `pnpm db:seed` or `UPDATE users SET role = 'admin' …`.
+4. Open admin → same cookie works on `*.nuxt-app.com` with `COOKIE_DOMAIN` set. Promote with `ADMIN_PASSWORD=... pnpm db:seed` (resets that account's password) or `UPDATE users SET role = 'admin' …`.
 5. Wrong-origin request to the API is rejected (CORS/CSRF).
 6. Hit login ~11 times quickly → 429 from the Redis limiter.
 

@@ -6,6 +6,7 @@ FROM base AS build
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
 COPY apps ./apps
 COPY packages ./packages
+COPY layers ./layers
 RUN pnpm install --frozen-lockfile
 
 FROM build AS development
@@ -16,6 +17,7 @@ ENV NODE_ENV=production
 COPY --from=build /repo/package.json /repo/pnpm-lock.yaml /repo/pnpm-workspace.yaml ./
 COPY --from=build /repo/node_modules ./node_modules
 COPY --from=build /repo/packages ./packages
+COPY --from=build /repo/layers ./layers
 COPY --from=build /repo/apps/api/package.json ./apps/api/package.json
 COPY --from=build /repo/apps/api/tsconfig.json ./apps/api/tsconfig.json
 COPY --from=build /repo/apps/api/drizzle.config.ts ./apps/api/drizzle.config.ts

@@ -5,7 +5,7 @@
  */
 import process from 'node:process'
 import { db, pool, users } from '@api/db'
-import { createUser } from '@api/modules/auth/service.js'
+import { createUser, deleteUserSessions, hashPassword } from '@api/modules/auth/service.js'
 import { registerSchema } from '@nuxt-app/types'
 import { eq } from 'drizzle-orm'
 
@@ -13,7 +13,7 @@ export function resolveAdminSeedPassword(env: NodeJS.Dict<string> = process.env)
   const password = env.ADMIN_PASSWORD?.trim()
   if (!password) {
     throw new Error(
-      'ADMIN_PASSWORD is required to create an admin user. Set it explicitly, e.g. ADMIN_PASSWORD=... pnpm db:seed',
+      'ADMIN_PASSWORD is required to seed an admin user. Set it explicitly, e.g. ADMIN_PASSWORD=... pnpm db:seed',
     )
   }
 
@@ -28,22 +28,27 @@ export function resolveAdminSeedPassword(env: NodeJS.Dict<string> = process.env)
 export async function seed(env: NodeJS.Dict<string> = process.env) {
   const email = env.ADMIN_EMAIL || 'admin@nuxt-app.com'
   const name = env.ADMIN_NAME || 'Admin'
+  const password = resolveAdminSeedPassword(env)
 
   const existing = await db.query.users.findFirst({
     where: eq(users.email, email),
   })
 
   if (existing) {
-    console.log(`User ${email} already exists (role: ${existing.role})`)
-    if (existing.role !== 'admin') {
-      await db.update(users).set({ role: 'admin' }).where(eq(users.id, existing.id))
+    const passwordHash = await hashPassword(password)
+    await db.update(users).set({
+      passwordHash,
+      role: 'admin',
+      updatedAt: new Date(),
+    }).where(eq(users.id, existing.id))
+    await deleteUserSessions(existing.id)
 
-      console.log('Promoted to admin.')
-    }
+    const action = existing.role === 'admin'
+      ? 'password reset'
+      : 'password reset and promoted to admin'
+    console.log(`User ${email} already exists; ${action}.`)
     return
   }
-
-  const password = resolveAdminSeedPassword(env)
 
   const user = await createUser({
     email,

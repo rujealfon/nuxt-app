@@ -1,4 +1,5 @@
 import { db, users } from '@api/db'
+import { createSession, createUser, getSessionUser, verifyPassword } from '@api/modules/auth/service.js'
 import { resolveAdminSeedPassword, seed } from '@api/seed'
 import { eq } from 'drizzle-orm'
 import { describe, expect, it } from 'vitest'
@@ -49,5 +50,45 @@ describe('seed', () => {
     })
     expect(existing?.role).toBe('admin')
     expect(existing?.name).toBe('Admin')
+  })
+
+  it('does not promote a pre-existing account when ADMIN_PASSWORD is unset', async () => {
+    const email = `seed-pre-${Date.now()}@nuxt-app.com`
+    await createUser({ email, password: 'attacker-pass', name: 'Pre' })
+
+    await expect(seed({ ADMIN_EMAIL: email, ADMIN_NAME: 'Admin' })).rejects.toThrow(
+      /ADMIN_PASSWORD is required/,
+    )
+
+    const existing = await db.query.users.findFirst({
+      where: eq(users.email, email),
+    })
+    expect(existing?.role).toBe('user')
+    expect(await verifyPassword('attacker-pass', existing!.passwordHash)).toBe(true)
+  })
+
+  it('resets the password and sessions when promoting a pre-existing account', async () => {
+    const email = `seed-takeover-${Date.now()}@nuxt-app.com`
+    const created = await createUser({ email, password: 'attacker-pass', name: 'Pre' })
+    const row = await db.query.users.findFirst({
+      where: eq(users.email, email),
+    })
+    const sessionId = await createSession(row!.id)
+    expect(created?.role).toBe('user')
+    expect(await getSessionUser(sessionId)).not.toBeNull()
+
+    await seed({
+      ADMIN_EMAIL: email,
+      ADMIN_NAME: 'Admin',
+      ADMIN_PASSWORD: 'operator-pass-99',
+    })
+
+    const existing = await db.query.users.findFirst({
+      where: eq(users.email, email),
+    })
+    expect(existing?.role).toBe('admin')
+    expect(await verifyPassword('attacker-pass', existing!.passwordHash)).toBe(false)
+    expect(await verifyPassword('operator-pass-99', existing!.passwordHash)).toBe(true)
+    expect(await getSessionUser(sessionId)).toBeNull()
   })
 })
