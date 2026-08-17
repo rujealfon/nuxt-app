@@ -1,7 +1,7 @@
 import process from 'node:process'
 import { API_PROXY_PREFIX } from '@nuxt-app/auth'
+import { loadRootEnv } from '@nuxt-app/layer-base/load-root-env'
 import { defineNuxtConfig } from 'nuxt/config'
-import { loadRootEnv } from '../base/load-root-env'
 
 loadRootEnv()
 

@@ -1,7 +1,7 @@
 import { resolve } from 'node:path'
 import process from 'node:process'
+import { applyEnvFiles } from '@nuxt-app/layer-base/apply-env-files'
 import { defineConfig } from 'drizzle-kit'
-import { applyEnvFiles } from '../../layers/base/apply-env-files'
 
 applyEnvFiles([
   resolve(process.cwd(), '../../.env'),

@@ -124,6 +124,9 @@ importers:
         specifier: ^4.4.3
         version: 4.4.3
     devDependencies:
+      '@nuxt-app/layer-base':
+        specifier: workspace:*
+        version: link:../../layers/base
       '@types/node':
         specifier: ^24.13.3
         version: 24.13.3
@@ -222,6 +225,9 @@ importers:
       '@nuxt-app/auth':
         specifier: workspace:*
         version: link:../../packages/auth
+      '@nuxt-app/layer-base':
+        specifier: workspace:*
+        version: link:../base
       '@nuxt-app/types':
         specifier: workspace:*
         version: link:../../packages/types
