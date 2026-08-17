@@ -55,14 +55,9 @@ base.notFound(c => c.json({ message: HttpStatusPhrases.NOT_FOUND }, HttpStatusCo
 if (isDev)
   configureOpenAPI(base)
 
-function mountApi<T extends typeof base>(app: T) {
-  return app
-    .route('/', healthRoutes)
-    .route('/auth', authRoutes)
-    .route('/admin', adminRoutes)
-}
-
-const app = mountApi(base)
+const app = base
+  .route('/', healthRoutes)
+  .route('/auth', authRoutes)
+  .route('/admin', adminRoutes)
 
 export default app
-export type AppType = ReturnType<typeof mountApi>
