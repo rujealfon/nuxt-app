@@ -44,7 +44,7 @@ describe('rate limit', () => {
     expect((await app.request('/limited', { method: 'OPTIONS' })).status).not.toBe(429)
   })
 
-  it('keys by the forwarded client, not a shared proxy socket', async () => {
+  it('does not let a client rotate X-Forwarded-For to bypass the limiter', async () => {
     const app = new Hono()
       .use(createRateLimit({
         limit: 1,
@@ -59,22 +59,26 @@ describe('rate limit', () => {
     const other = await app.request('/', {
       headers: { 'X-Forwarded-For': '203.0.113.11' },
     })
-    const repeat = await app.request('/', {
-      headers: { 'X-Forwarded-For': '203.0.113.10' },
-    })
 
     expect(first.status).toBe(200)
-    expect(other.status).toBe(200)
-    expect(repeat.status).toBe(429)
+    expect(other.status).toBe(429)
   })
 })
 
 describe('resolveClientKey', () => {
-  it('prefers the trusted forwarded address over the proxy socket', () => {
+  it('prefers the forwarded address only when a proxy is trusted', () => {
     expect(resolveClientKey({
       remoteAddress: '10.0.0.1',
       forwardedFor: '203.0.113.10, 10.0.0.1',
+      trustProxy: true,
     })).toBe('203.0.113.10')
+  })
+
+  it('uses the socket address when a proxy is not trusted', () => {
+    expect(resolveClientKey({
+      remoteAddress: '10.0.0.1',
+      forwardedFor: '203.0.113.10',
+    })).toBe('10.0.0.1')
   })
 
   it('uses the socket address when no forwarded header is present', () => {

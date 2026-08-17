@@ -91,6 +91,7 @@ Set on each project (Production + Preview). Projects do not inherit each other�
 | `ADMIN_URL`     | `https://admin.nuxt-app.com`                                                                                                                 |
 | `WEB_URL`       | `https://nuxt-app.com`                                                                                                                       |
 | `COOKIE_DOMAIN` | `.nuxt-app.com` on custom domains; omit on `*.vercel.app` previews (app/admin use a same-origin `/__api` proxy so the cookie is first-party) |
+| `TRUST_PROXY`   | `true` (Vercel overwrites `X-Forwarded-For`)                                                                                                 |
 | `LOG_LEVEL`     | `info`                                                                                                                                       |
 
 `APP_URL` / `ADMIN_URL` / `WEB_URL` are the CORS + CSRF allowlist. Exact origin: `https`, no trailing slash.
@@ -168,11 +169,12 @@ Git pushes then deploy all four. `turbo-ignore` skips unchanged packages.
 ## Smoke test
 
 1. Open web → page loads (static, no Node server).
-2. Open app `/register` → create a user → lands logged in.
-3. `GET https://<api>/auth/me` in that browser session returns the user (`nuxt_app_session`, httpOnly).
-4. Open admin → same cookie works on `*.nuxt-app.com` with `COOKIE_DOMAIN` set. Promote with `ADMIN_PASSWORD=... pnpm db:seed` (resets that account's password) or `UPDATE users SET role = 'admin' …`.
-5. Wrong-origin request to the API is rejected (CORS/CSRF).
-6. Hit login ~11 times quickly → 429 from the Redis limiter.
+2. Open app `/register` → create a user → lands on `/login` (register does not start a session).
+3. Sign in with that account → lands logged in.
+4. `GET https://<api>/auth/me` in that browser session returns the user (`nuxt_app_session`, httpOnly).
+5. Open admin → same cookie works on `*.nuxt-app.com` with `COOKIE_DOMAIN` set. Promote with `ADMIN_PASSWORD=... pnpm db:seed` (resets that account's password) or `UPDATE users SET role = 'admin' …`.
+6. Wrong-origin request to the API is rejected (CORS/CSRF).
+7. Hit login ~11 times quickly → 429 from the Redis limiter.
 
 ## Gotchas
 

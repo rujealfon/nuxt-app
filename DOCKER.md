@@ -64,6 +64,6 @@ pnpm dev
 
 `.env.example` already uses the published Compose ports (`localhost:5433` for Postgres, `localhost:6380` for Redis). Change those only if Postgres or Redis is running natively on the default ports.
 
-The API rate-limits by client IP (Redis in Compose/production, in-memory in tests). A reverse proxy should overwrite `X-Forwarded-For` — the limiter keys on that address, not the proxy socket. Do not trust a client-supplied value.
+The API rate-limits by client IP (Redis in Compose/production, in-memory in tests). The limiter uses the socket address unless `TRUST_PROXY` is set, in which case it keys on the first `X-Forwarded-For` hop. Only enable that when a reverse proxy overwrites the header.
 
 Local Drizzle Studio (no container): `pnpm db:studio`.

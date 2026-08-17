@@ -19,6 +19,11 @@ const envSchema = z.object({
   RATE_LIMIT_MAX: z.coerce.number().int().positive().default(120),
   RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(60_000),
   AUTH_RATE_LIMIT_MAX: z.coerce.number().int().positive().default(10),
+  TRUST_PROXY: z.string().optional().transform((value) => {
+    if (!value)
+      return false
+    return ['1', 'true', 'yes'].includes(value.trim().toLowerCase())
+  }),
 })
 
 const parsed = envSchema.safeParse(process.env)

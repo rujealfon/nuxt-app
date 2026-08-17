@@ -25,20 +25,26 @@ function socketAddress(c: Context): string | undefined {
   }
 }
 
-/** Prefer the proxy-overwritten X-Forwarded-For client over the proxy socket. */
+/** Use X-Forwarded-For only when the deployment trusts a proxy that overwrites it. */
 export function resolveClientKey(options: {
   remoteAddress?: string
   forwardedFor?: string | null
+  trustProxy?: boolean
 }): string {
-  return firstForwardedAddress(options.forwardedFor)
-    ?? options.remoteAddress
-    ?? 'unknown'
+  if (options.trustProxy) {
+    const forwarded = firstForwardedAddress(options.forwardedFor)
+    if (forwarded)
+      return forwarded
+  }
+
+  return options.remoteAddress ?? 'unknown'
 }
 
 function clientKey(c: Context): string {
   return resolveClientKey({
     remoteAddress: socketAddress(c),
     forwardedFor: c.req.header('x-forwarded-for'),
+    trustProxy: env.TRUST_PROXY,
   })
 }
 
