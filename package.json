@@ -33,7 +33,7 @@
     "docker:rebuild": "docker compose up --build -d --wait",
     "docker:reset": "docker compose down -v && docker compose up --build -d --wait",
     "docker:db:migrate": "docker compose exec api pnpm db:migrate",
-    "docker:db:seed": "docker compose exec api pnpm db:seed"
+    "docker:db:seed": "docker compose exec -e ADMIN_PASSWORD -e ADMIN_EMAIL -e ADMIN_NAME api pnpm db:seed"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^9.3.0",

@@ -1,11 +1,18 @@
+<script setup lang="ts">
+const config = useRuntimeConfig()
+const appOrigin = String(config.public.appUrl).replace(/\/$/, '')
+const loginUrl = `${appOrigin}/login`
+const registerUrl = `${appOrigin}/register`
+</script>
+
 <template>
   <div>
     <header class="flex items-center justify-between border-b border-gray-200 px-6 py-4">
       <strong class="text-xl">Nuxt App</strong>
       <nav class="flex items-center gap-6 text-sm">
-        <a href="http://localhost:3000/login">Login</a>
+        <a :href="loginUrl">Login</a>
         <a
-          href="http://localhost:3000/register"
+          :href="registerUrl"
           class="rounded-md bg-gray-900 px-4 py-2 text-white"
         >
           Get started
@@ -21,7 +28,7 @@
         Site for nuxt-app.com. This is the public-facing landing page.
       </p>
       <a
-        href="http://localhost:3000/register"
+        :href="registerUrl"
         class="inline-block rounded-lg bg-gray-900 px-7 py-3.5 font-medium text-white"
       >
         Start free →

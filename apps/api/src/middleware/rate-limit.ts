@@ -8,24 +8,38 @@ import * as HttpStatusPhrases from 'stoker/http-status-phrases'
 
 const tooMany = { message: HttpStatusPhrases.TOO_MANY_REQUESTS } as const
 
-function clientKey(c: Context): string {
+function firstForwardedAddress(forwardedFor?: string | null): string | undefined {
+  if (!forwardedFor)
+    return undefined
+  const [first] = forwardedFor.split(',')
+  const address = first?.trim()
+  return address || undefined
+}
+
+function socketAddress(c: Context): string | undefined {
   try {
-    const address = getConnInfo(c).remote.address
-    if (address)
-      return address
+    return getConnInfo(c).remote.address
   }
   catch {
     // app.request() and other non-Node fetches have no socket
   }
+}
 
-  const forwarded = c.req.header('x-forwarded-for')
-  if (forwarded) {
-    const [first] = forwarded.split(',')
-    if (first?.trim())
-      return first.trim()
-  }
+/** Prefer the proxy-overwritten X-Forwarded-For client over the proxy socket. */
+export function resolveClientKey(options: {
+  remoteAddress?: string
+  forwardedFor?: string | null
+}): string {
+  return firstForwardedAddress(options.forwardedFor)
+    ?? options.remoteAddress
+    ?? 'unknown'
+}
 
-  return 'unknown'
+function clientKey(c: Context): string {
+  return resolveClientKey({
+    remoteAddress: socketAddress(c),
+    forwardedFor: c.req.header('x-forwarded-for'),
+  })
 }
 
 function skipPublic(c: Context) {

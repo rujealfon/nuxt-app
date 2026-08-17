@@ -103,7 +103,13 @@ Set on each project (Production + Preview). Projects do not inherit each otherâ€
 
 Baked in at **build** time (`layers/auth` `runtimeConfig.public.apiUrl`). Change it, then redeploy those two projects.
 
-**`nuxt-app-web`:** none unless the marketing site later calls the API.
+**`nuxt-app-web`**
+
+| Name | Value |
+| --- | --- |
+| `NUXT_PUBLIC_APP_URL` | `https://app.nuxt-app.com` |
+
+Baked into the static site at **generate** time (`runtimeConfig.public.appUrl`). Change it, then redeploy web. Falls back to `APP_URL` if unset.
 
 Preview: either Preview-scoped URL vars, or preview frontends call the production API until you add per-preview CORS origins.
 
@@ -120,7 +126,7 @@ Settings â†’ Domains on each project:
 
 Add the DNS records Vercel shows. Then set `COOKIE_DOMAIN=.nuxt-app.com` on the API and redeploy it.
 
-Until DNS is live: use the four `*.vercel.app` URLs, leave `COOKIE_DOMAIN` unset, and put those exact origins in `APP_URL` / `ADMIN_URL` / `WEB_URL` / `NUXT_PUBLIC_API_URL`.
+Until DNS is live: use the four `*.vercel.app` URLs, leave `COOKIE_DOMAIN` unset, and put those exact origins in `APP_URL` / `ADMIN_URL` / `WEB_URL` / `NUXT_PUBLIC_API_URL` / `NUXT_PUBLIC_APP_URL`.
 
 ## Migrate
 
@@ -133,6 +139,7 @@ DATABASE_URL='postgres://USER:PASS@ep-xxx.region.aws.neon.tech/neondb?sslmode=re
   pnpm db:migrate
 
 DATABASE_URL='postgres://USER:PASS@ep-xxx.region.aws.neon.tech/neondb?sslmode=require' \
+  ADMIN_PASSWORD='your-strong-password' \
   pnpm db:seed
 ```
 

@@ -103,8 +103,10 @@ Custom session-based auth:
 ### Create first admin user
 
 ```bash
-pnpm db:seed
+ADMIN_PASSWORD='your-strong-password' pnpm db:seed
 ```
+
+`ADMIN_PASSWORD` is required. Optional: `ADMIN_EMAIL` (default `admin@nuxt-app.com`) and `ADMIN_NAME`.
 
 Or register normally, then promote the user:
 

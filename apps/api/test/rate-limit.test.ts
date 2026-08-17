@@ -1,4 +1,4 @@
-import { createRateLimit } from '@api/middleware/rate-limit.js'
+import { createRateLimit, resolveClientKey } from '@api/middleware/rate-limit.js'
 import { Hono } from 'hono'
 import { MemoryStore } from 'hono-rate-limiter'
 import { describe, expect, it } from 'vitest'
@@ -42,5 +42,46 @@ describe('rate limit', () => {
     expect((await app.request('/limited')).status).toBe(200)
     expect((await app.request('/limited')).status).toBe(429)
     expect((await app.request('/limited', { method: 'OPTIONS' })).status).not.toBe(429)
+  })
+
+  it('keys by the forwarded client, not a shared proxy socket', async () => {
+    const app = new Hono()
+      .use(createRateLimit({
+        limit: 1,
+        windowMs: 60_000,
+        store: new MemoryStore(),
+      }))
+      .get('/', c => c.json({ ok: true }))
+
+    const first = await app.request('/', {
+      headers: { 'X-Forwarded-For': '203.0.113.10' },
+    })
+    const other = await app.request('/', {
+      headers: { 'X-Forwarded-For': '203.0.113.11' },
+    })
+    const repeat = await app.request('/', {
+      headers: { 'X-Forwarded-For': '203.0.113.10' },
+    })
+
+    expect(first.status).toBe(200)
+    expect(other.status).toBe(200)
+    expect(repeat.status).toBe(429)
+  })
+})
+
+describe('resolveClientKey', () => {
+  it('prefers the trusted forwarded address over the proxy socket', () => {
+    expect(resolveClientKey({
+      remoteAddress: '10.0.0.1',
+      forwardedFor: '203.0.113.10, 10.0.0.1',
+    })).toBe('203.0.113.10')
+  })
+
+  it('uses the socket address when no forwarded header is present', () => {
+    expect(resolveClientKey({ remoteAddress: '10.0.0.1' })).toBe('10.0.0.1')
+  })
+
+  it('falls back to unknown when neither address is available', () => {
+    expect(resolveClientKey({})).toBe('unknown')
   })
 })

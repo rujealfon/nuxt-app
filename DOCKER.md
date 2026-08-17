@@ -19,10 +19,10 @@ pnpm docker:up
 | Postgres       | localhost:5433 (container 5432) |
 | Redis          | localhost:6380 (container 6379) |
 
-The API runs Drizzle migrations on boot. Scalar is at http://localhost:3001/ (`NODE_ENV=development`). Seed an admin user:
+The API runs Drizzle migrations on boot. Scalar is at http://localhost:3001/ (`NODE_ENV=development`). Seed an admin user (`ADMIN_PASSWORD` is required):
 
 ```bash
-pnpm docker:db:seed
+ADMIN_PASSWORD='your-strong-password' pnpm docker:db:seed
 ```
 
 ## Scripts
@@ -61,6 +61,6 @@ cp .env.example .env
 
 Point `DATABASE_URL` at `localhost:5433` and `REDIS_URL` at `redis://localhost:6380` (see `.env.example`). Then `pnpm install`, `pnpm db:migrate`, `pnpm dev`.
 
-The API rate-limits by client IP (Redis in Compose/production, in-memory in tests). A reverse proxy should overwrite `X-Forwarded-For` — do not trust a client-supplied value.
+The API rate-limits by client IP (Redis in Compose/production, in-memory in tests). A reverse proxy should overwrite `X-Forwarded-For` — the limiter keys on that address, not the proxy socket. Do not trust a client-supplied value.
 
 Local Drizzle Studio (no container): `pnpm db:studio`.

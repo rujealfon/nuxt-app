@@ -4,6 +4,8 @@ WORKDIR /repo
 
 FROM base AS build
 ARG PACKAGE
+ARG NUXT_PUBLIC_APP_URL=http://localhost:3000
+ENV NUXT_PUBLIC_APP_URL=$NUXT_PUBLIC_APP_URL
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
 COPY apps ./apps
 COPY packages ./packages

@@ -14,7 +14,7 @@ pnpm test             # turbo run test (API vitest via app.request(); uses nuxt_
 pnpm db:generate      # drizzle-kit generate (run after editing apps/api/src/db/schema/)
 pnpm db:migrate       # applies migrations (also runs automatically on API boot, see apps/api/src/index.ts)
 pnpm db:studio        # drizzle-kit studio on the host
-pnpm db:seed          # seed an admin user, tsx apps/api/src/seed.ts
+pnpm db:seed          # seed an admin user (requires ADMIN_PASSWORD), tsx apps/api/src/seed.ts
 ```
 
 Docker: [DOCKER.md](DOCKER.md) (`pnpm docker:up`, ports, images, Postgres 5433, Redis 6380).
@@ -50,6 +50,6 @@ Imports:
 
 When changing a shared package's public surface (`packages/*/src/index.ts` exports), check all consuming apps/layers, not just the one you're editing.
 
-Env vars are shared across all apps from repo-root `.env` (see `.env.example`): `DATABASE_URL`, `REDIS_URL`, `SESSION_SECRET`, `COOKIE_DOMAIN`, per-app `*_URL` vars used both for CORS allowlisting in `apps/api/src/app.ts` and for cross-subdomain cookie config in production. Rate-limit knobs: `RATE_LIMIT_MAX`, `RATE_LIMIT_WINDOW_MS`, `AUTH_RATE_LIMIT_MAX`. Log level: `LOG_LEVEL` (pino; tests use `silent`). A reverse proxy should overwrite `X-Forwarded-For`.
+Env vars are shared across all apps from repo-root `.env` (see `.env.example`): `DATABASE_URL`, `REDIS_URL`, `SESSION_SECRET`, `COOKIE_DOMAIN`, per-app `*_URL` vars used both for CORS allowlisting in `apps/api/src/app.ts` and for cross-subdomain cookie config in production. The marketing site bakes `NUXT_PUBLIC_APP_URL` (falls back to `APP_URL`) into Login/register CTAs at generate time. Rate-limit knobs: `RATE_LIMIT_MAX`, `RATE_LIMIT_WINDOW_MS`, `AUTH_RATE_LIMIT_MAX`. Log level: `LOG_LEVEL` (pino; tests use `silent`). A reverse proxy should overwrite `X-Forwarded-For`.
 
 Lint: `@antfu/eslint-config` (Vue + TypeScript + formatters) at repo root — no per-package eslint config.

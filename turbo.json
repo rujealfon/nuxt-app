@@ -3,7 +3,8 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": ["dist/**", ".output/**", ".nuxt/**"]
+      "outputs": ["dist/**", ".output/**", ".nuxt/**"],
+      "env": ["NUXT_PUBLIC_APP_URL", "NUXT_PUBLIC_API_URL", "APP_URL"]
     },
     "dev": {
       "cache": false,
