@@ -1,5 +1,4 @@
 import app from '@api/app.js'
-import { idParamsSchema } from '@api/lib/schemas.js'
 import bcrypt from 'bcryptjs'
 import { describe, expect, it, vi } from 'vitest'
 
@@ -166,13 +165,6 @@ describe('api', () => {
       '/auth/me',
       '/admin/dashboard',
     ]))
-  })
-
-  it('validates nanoid path params', () => {
-    expect(idParamsSchema.parse({ id: 'V1StGXR8_Z5jdHi6B-myT' })).toEqual({
-      id: 'V1StGXR8_Z5jdHi6B-myT',
-    })
-    expect(idParamsSchema.safeParse({ id: 'not a nanoid' }).success).toBe(false)
   })
 
   it('fills public_id from the SQL nanoid() default on raw insert', async () => {

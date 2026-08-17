@@ -12,8 +12,7 @@ const envSchema = z.object({
   API_URL: z.url().default('http://localhost:3001'),
   APP_URL: z.url().default('http://localhost:3000'),
   ADMIN_URL: z.url().default('http://localhost:3002'),
-  WEB_URL: z.url().optional(),
-  MARKETING_URL: z.url().optional(),
+  WEB_URL: z.url().default('http://localhost:3003'),
   COOKIE_DOMAIN: z.string().optional().transform(value => value || undefined),
   REDIS_URL: z.url().default('redis://localhost:6380'),
   RATE_LIMIT_MAX: z.coerce.number().int().positive().default(120),
@@ -43,6 +42,6 @@ export const isDev = env.NODE_ENV === 'development'
 export const allowedOrigins = [
   env.APP_URL,
   env.ADMIN_URL,
-  env.WEB_URL ?? env.MARKETING_URL ?? 'http://localhost:3003',
+  env.WEB_URL,
   ...(isDev ? [env.API_URL] : []),
 ]

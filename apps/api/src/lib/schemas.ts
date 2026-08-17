@@ -1,11 +1,5 @@
 import { z } from '@hono/zod-openapi'
 import { authUserSchema } from '@nuxt-app/types'
-import getParamsSchema from 'stoker/openapi/schemas/get-params-schema'
-
-export const idParamsSchema = getParamsSchema({
-  name: 'id',
-  validator: 'nanoid',
-})
 
 export { authUserSchema }
 

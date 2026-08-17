@@ -50,8 +50,6 @@ function clientKey(c: Context): string {
   })
 }
 
-export { skipPublic }
-
 let rateLimitStoreFactory: (prefix: string) => Store = prefix => createRedisStore(prefix)
 
 /** Tests inject MemoryStore. Production keeps the Redis factory. */

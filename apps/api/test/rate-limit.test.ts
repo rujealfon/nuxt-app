@@ -1,4 +1,5 @@
-import { createRateLimit, resolveClientKey, skipPublic } from '@api/middleware/rate-limit.js'
+import { createRateLimit, resolveClientKey } from '@api/middleware/rate-limit.js'
+import { skipPublic } from '@api/request-policy.js'
 import { Hono } from 'hono'
 import { MemoryStore } from 'hono-rate-limiter'
 import { describe, expect, it } from 'vitest'
