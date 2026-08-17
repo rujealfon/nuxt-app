@@ -19,7 +19,7 @@ pnpm docker:up
 | Postgres       | localhost:5433 (container 5432) |
 | Redis          | localhost:6380 (container 6379) |
 
-The API runs Drizzle migrations on boot. Scalar is at http://localhost:3001/ (`NODE_ENV=development`). Seed an admin user (`ADMIN_PASSWORD` is required):
+The API runs Drizzle migrations on boot. Scalar is at http://localhost:3001/docs (`NODE_ENV=development`). Seed an admin user (`ADMIN_PASSWORD` is required):
 
 ```bash
 ADMIN_PASSWORD='your-strong-password' pnpm docker:db:seed

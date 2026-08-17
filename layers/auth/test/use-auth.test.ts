@@ -1,22 +1,20 @@
-import { authClient } from '@nuxt-app/auth/client'
 import { mockNuxtImport, mountSuspended } from '@nuxt/test-utils/runtime'
 import { useQueryCache } from '@pinia/colada'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { defineComponent } from 'vue'
 import { authKeys, useAuth } from '../app/composables/useAuth'
 
-vi.mock('@nuxt-app/auth/client', () => ({
-  authClient: {
-    login: vi.fn(),
-    register: vi.fn(),
-    logout: vi.fn(),
-    me: vi.fn(async () => ({ user: null })),
-  },
-  setAuthApiUrl: vi.fn(),
+const { login, register, logout, me, navigateTo } = vi.hoisted(() => ({
+  login: vi.fn(),
+  register: vi.fn(),
+  logout: vi.fn(),
+  me: vi.fn(async () => ({ user: null })),
+  navigateTo: vi.fn(),
 }))
 
-const { navigateTo } = vi.hoisted(() => ({
-  navigateTo: vi.fn(),
+vi.mock('@nuxt-app/auth', () => ({
+  createAuthClient: () => ({ login, register, logout, me }),
+  resolveAuthApiBase: (url: string) => url,
 }))
 
 mockNuxtImport('navigateTo', () => navigateTo)
@@ -54,10 +52,10 @@ async function mountAuth() {
 
 describe('useAuth', () => {
   beforeEach(() => {
-    vi.mocked(authClient.me).mockResolvedValue({ user: null })
-    vi.mocked(authClient.login).mockReset()
-    vi.mocked(authClient.register).mockReset()
-    vi.mocked(authClient.logout).mockReset()
+    me.mockResolvedValue({ user: null })
+    login.mockReset()
+    register.mockReset()
+    logout.mockReset()
     navigateTo.mockReset()
   })
 
@@ -69,7 +67,7 @@ describe('useAuth', () => {
   })
 
   it('sets the user after a successful login', async () => {
-    vi.mocked(authClient.login).mockResolvedValue({ user, message: 'ok' })
+    vi.mocked(login).mockResolvedValue({ user, message: 'ok' })
     const wrapper = await mountAuth()
 
     await expect(wrapper.vm.login('ada@example.com', 'password12'))
@@ -82,7 +80,7 @@ describe('useAuth', () => {
   })
 
   it('records the error message when login fails', async () => {
-    vi.mocked(authClient.login).mockRejectedValue(new Error('Invalid credentials'))
+    vi.mocked(login).mockRejectedValue(new Error('Invalid credentials'))
     const wrapper = await mountAuth()
 
     await expect(wrapper.vm.login('ada@example.com', 'nope'))
@@ -94,14 +92,14 @@ describe('useAuth', () => {
   })
 
   it('registers with the submitted name', async () => {
-    vi.mocked(authClient.register).mockResolvedValue({ message: 'Registered successfully' })
+    vi.mocked(register).mockResolvedValue({ message: 'Registered successfully' })
     const wrapper = await mountAuth()
 
     await expect(wrapper.vm.register('ada@example.com', 'password12', 'Ada'))
       .resolves
       .toEqual({ message: 'Registered successfully' })
 
-    expect(authClient.register).toHaveBeenCalledWith({
+    expect(register).toHaveBeenCalledWith({
       email: 'ada@example.com',
       password: 'password12',
       name: 'Ada',
@@ -109,8 +107,8 @@ describe('useAuth', () => {
   })
 
   it('clears the user and navigates away on logout', async () => {
-    vi.mocked(authClient.login).mockResolvedValue({ user })
-    vi.mocked(authClient.logout).mockResolvedValue({ message: 'Logged out' })
+    vi.mocked(login).mockResolvedValue({ user })
+    vi.mocked(logout).mockResolvedValue({ message: 'Logged out' })
     const wrapper = await mountAuth()
     await wrapper.vm.login('ada@example.com', 'password12')
 
@@ -121,7 +119,7 @@ describe('useAuth', () => {
   })
 
   it('skips navigation when logout is called with an empty redirect', async () => {
-    vi.mocked(authClient.logout).mockResolvedValue({ message: 'Logged out' })
+    vi.mocked(logout).mockResolvedValue({ message: 'Logged out' })
     const wrapper = await mountAuth()
 
     await wrapper.vm.logout('')
@@ -130,26 +128,26 @@ describe('useAuth', () => {
   })
 
   it('treats an admin user as admin', async () => {
-    vi.mocked(authClient.login).mockResolvedValue({ user: admin })
+    vi.mocked(login).mockResolvedValue({ user: admin })
     const wrapper = await mountAuth()
     await wrapper.vm.login('ada@example.com', 'password12')
     expect(wrapper.vm.isAdmin).toBe(true)
   })
 
   it('revalidates a stale successful me query on ensureUser', async () => {
-    vi.mocked(authClient.login).mockResolvedValue({ user })
+    vi.mocked(login).mockResolvedValue({ user })
     const wrapper = await mountAuth()
     await wrapper.vm.login('ada@example.com', 'password12')
-    vi.mocked(authClient.me).mockClear()
-    vi.mocked(authClient.me).mockResolvedValue({ user: null })
+    vi.mocked(me).mockClear()
+    vi.mocked(me).mockResolvedValue({ user: null })
 
     await wrapper.vm.ensureUser()
     expect(wrapper.vm.user).toEqual(user)
-    expect(authClient.me).not.toHaveBeenCalled()
+    expect(me).not.toHaveBeenCalled()
 
     await wrapper.vm.markMeStale()
     await wrapper.vm.ensureUser()
     expect(wrapper.vm.user).toBeNull()
-    expect(authClient.me).toHaveBeenCalled()
+    expect(me).toHaveBeenCalled()
   })
 })

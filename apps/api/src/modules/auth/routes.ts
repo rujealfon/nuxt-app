@@ -1,10 +1,9 @@
 import { createRouter } from '@api/factory.js'
-import { authResponseSchema, meResponseSchema } from '@api/lib/schemas.js'
 import { authRateLimit } from '@api/middleware/rate-limit.js'
 import { authenticateUser, createUser } from '@api/modules/auth/identity.js'
 import { endSession, startSession } from '@api/modules/auth/session.js'
-import { createRoute } from '@hono/zod-openapi'
-import { loginSchema, registerSchema } from '@nuxt-app/types'
+import { createRoute, z } from '@hono/zod-openapi'
+import { authUserSchema, loginSchema, registerSchema } from '@nuxt-app/types'
 import { HTTPException } from 'hono/http-exception'
 import * as HttpStatusCodes from 'stoker/http-status-codes'
 import * as HttpStatusPhrases from 'stoker/http-status-phrases'
@@ -13,6 +12,15 @@ import createErrorSchema from 'stoker/openapi/schemas/create-error-schema'
 import createMessageObjectSchema from 'stoker/openapi/schemas/create-message-object'
 
 const tags = ['Auth']
+
+const authResponseSchema = z.object({
+  user: authUserSchema,
+  message: z.string().optional(),
+})
+
+const meResponseSchema = z.object({
+  user: authUserSchema.nullable(),
+})
 
 const register = createRoute({
   path: '/register',

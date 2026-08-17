@@ -53,16 +53,3 @@ export function createAuthClient(baseUrl: string) {
 }
 
 export type AuthClient = ReturnType<typeof createAuthClient>
-
-let defaultClient = createAuthClient('http://localhost:3001')
-
-export function setAuthApiUrl(url: string) {
-  defaultClient = createAuthClient(url)
-}
-
-export const authClient: AuthClient = {
-  login: input => defaultClient.login(input),
-  register: input => defaultClient.register(input),
-  logout: () => defaultClient.logout(),
-  me: () => defaultClient.me(),
-}

@@ -17,13 +17,15 @@ describe('resolveCorsOrigin', () => {
 describe('skipPublic', () => {
   const app = new Hono()
 
-  it('skips OPTIONS, /, and /health', async () => {
+  it('skips OPTIONS, health, and docs', async () => {
     app.use('*', async (c) => {
       return c.json({ skip: skipPublic(c) })
     })
 
     expect(await (await app.request('/health')).json()).toEqual({ skip: true })
     expect(await (await app.request('/')).json()).toEqual({ skip: true })
+    expect(await (await app.request('/docs')).json()).toEqual({ skip: true })
+    expect(await (await app.request('/openapi.json')).json()).toEqual({ skip: true })
     expect(await (await app.request('/auth/me', { method: 'OPTIONS' })).json()).toEqual({ skip: true })
     expect(await (await app.request('/auth/me')).json()).toEqual({ skip: false })
   })

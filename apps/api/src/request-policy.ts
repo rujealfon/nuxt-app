@@ -13,5 +13,5 @@ export function skipPublic(c: Context) {
   if (c.req.method === 'OPTIONS')
     return true
   const path = c.req.path
-  return path === '/' || path === '/health'
+  return path === '/' || path === '/health' || path === '/docs' || path === '/openapi.json'
 }

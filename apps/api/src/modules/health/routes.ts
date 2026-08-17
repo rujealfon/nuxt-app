@@ -1,10 +1,18 @@
 import { createRouter } from '@api/factory.js'
-import { healthSchema, serviceHealthSchema } from '@api/lib/schemas.js'
-import { createRoute } from '@hono/zod-openapi'
+import { createRoute, z } from '@hono/zod-openapi'
 import * as HttpStatusCodes from 'stoker/http-status-codes'
 import { jsonContent } from 'stoker/openapi/helpers'
 
 const tags = ['Health']
+
+const healthSchema = z.object({
+  status: z.string(),
+})
+
+const serviceHealthSchema = z.object({
+  status: z.string(),
+  service: z.string(),
+})
 
 const root = createRoute({
   path: '/',

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { authClient, createAuthClient, setAuthApiUrl } from '../src/client'
+import { createAuthClient } from '../src/client'
 
 const user = {
   id: 'V1StGXR8_Z5jdHi6B-myT',
@@ -15,13 +15,13 @@ function jsonResponse(status: number, body: unknown) {
   })
 }
 
-describe('authClient', () => {
+describe('createAuthClient', () => {
   const fetchMock = vi.fn()
+  const authClient = createAuthClient('http://localhost:3001')
 
   beforeEach(() => {
     fetchMock.mockReset()
     vi.stubGlobal('fetch', fetchMock)
-    setAuthApiUrl('http://localhost:3001')
   })
 
   afterEach(() => {
@@ -46,16 +46,6 @@ describe('authClient', () => {
       email: 'ada@example.com',
       password: 'password12',
     })
-  })
-
-  it('uses the overridden API origin', async () => {
-    setAuthApiUrl('https://api.example.com')
-    fetchMock.mockResolvedValue(jsonResponse(200, { user }))
-
-    await authClient.login({ email: 'ada@example.com', password: 'password12' })
-
-    const [url] = fetchMock.mock.calls[0] as [string]
-    expect(String(url)).toContain('https://api.example.com/auth/login')
   })
 
   it('constructs a client for a given base URL', async () => {

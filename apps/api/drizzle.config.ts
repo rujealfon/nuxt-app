@@ -1,7 +1,7 @@
 import { resolve } from 'node:path'
 import process from 'node:process'
 import { defineConfig } from 'drizzle-kit'
-import { applyEnvFiles } from './src/apply-env-files'
+import { applyEnvFiles } from '../../layers/base/apply-env-files'
 
 applyEnvFiles([
   resolve(process.cwd(), '../../.env'),

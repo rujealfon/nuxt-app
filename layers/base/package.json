@@ -4,7 +4,8 @@
   "private": true,
   "exports": {
     ".": "./nuxt.config.ts",
-    "./load-root-env": "./load-root-env.ts"
+    "./load-root-env": "./load-root-env.ts",
+    "./apply-env-files": "./apply-env-files.ts"
   },
   "main": "./nuxt.config.ts",
   "scripts": {

@@ -1,16 +1,23 @@
 import type { AuthUser, LoginInput, RegisterInput } from '@nuxt-app/types'
-import { authClient } from '@nuxt-app/auth/client'
+import { createAuthClient, resolveAuthApiBase } from '@nuxt-app/auth'
 import { defineQuery, useMutation, useQuery, useQueryCache } from '@pinia/colada'
 
 export const authKeys = {
   me: ['auth', 'me'] as const,
 }
 
+function runtimeAuthClient() {
+  const config = useRuntimeConfig()
+  const apiUrl = String(config.public.apiUrl || 'http://localhost:3001')
+  const pageHref = import.meta.client ? window.location.href : undefined
+  return createAuthClient(resolveAuthApiBase(apiUrl, pageHref))
+}
+
 const useAuthMe = defineQuery(() => {
   return useQuery({
     key: authKeys.me,
     async query() {
-      const res = await authClient.me()
+      const res = await runtimeAuthClient().me()
       return res.user
     },
   })
@@ -31,14 +38,14 @@ export function useAuth() {
   }
 
   const loginMutation = useMutation({
-    mutation: (input: LoginInput) => authClient.login(input),
+    mutation: (input: LoginInput) => runtimeAuthClient().login(input),
     onSuccess(res) {
       setUser(res.user)
     },
   })
 
   const registerMutation = useMutation({
-    mutation: (input: RegisterInput) => authClient.register(input),
+    mutation: (input: RegisterInput) => runtimeAuthClient().register(input),
   })
 
   async function fetchUser() {
@@ -68,7 +75,7 @@ export function useAuth() {
   }
 
   async function logout(redirectTo = '/login') {
-    await authClient.logout()
+    await runtimeAuthClient().logout()
     setUser(null)
     if (redirectTo)
       await navigateTo(redirectTo)

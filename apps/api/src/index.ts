@@ -18,7 +18,7 @@ async function main() {
   console.log(`API running on http://${host}:${port}`)
   if (isDev) {
     // eslint-disable-next-line no-console
-    console.log(`Scalar docs at http://${host}:${port}/`)
+    console.log(`Scalar docs at http://${host}:${port}/docs`)
   }
 
   serve({
