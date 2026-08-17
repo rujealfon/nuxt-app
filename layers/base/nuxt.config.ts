@@ -20,7 +20,8 @@ export default defineNuxtConfig({
     },
   },
   nitro: {
-    preset: 'node-server',
+    // Docker/local keep a Node server. Vercel sets VERCEL and needs its preset.
+    preset: process.env.VERCEL ? 'vercel' : 'node-server',
   },
   css: [fileURLToPath(new URL('./app/assets/css/main.css', import.meta.url))],
 })
