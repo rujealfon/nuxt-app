@@ -2,11 +2,13 @@ import type { Context } from 'hono'
 import type { MemoryStore, Store } from 'hono-rate-limiter'
 import { env } from '@api/env.js'
 import { rateLimitRedis } from '@api/redis.js'
+import { skipPublic } from '@api/request-policy.js'
 import { getConnInfo } from '@hono/node-server/conninfo'
+import { failedResponseBody } from '@nuxt-app/types'
 import { rateLimiter, RedisStore } from 'hono-rate-limiter'
 import * as HttpStatusPhrases from 'stoker/http-status-phrases'
 
-const tooMany = { message: HttpStatusPhrases.TOO_MANY_REQUESTS } as const
+const tooMany = failedResponseBody(HttpStatusPhrases.TOO_MANY_REQUESTS)
 
 function firstForwardedAddress(forwardedFor?: string | null): string | undefined {
   if (!forwardedFor)
@@ -48,12 +50,7 @@ function clientKey(c: Context): string {
   })
 }
 
-export function skipPublic(c: Context) {
-  if (c.req.method === 'OPTIONS')
-    return true
-  const path = c.req.path
-  return path === '/' || path === '/health'
-}
+export { skipPublic }
 
 let rateLimitStoreFactory: (prefix: string) => Store = prefix => createRedisStore(prefix)
 

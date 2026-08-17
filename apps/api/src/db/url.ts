@@ -1,5 +1,4 @@
-import process from 'node:process'
-import { loadEnv } from '@api/load-env.js'
+import { env } from '@api/env.js'
 
 export const TEST_DATABASE_NAME = 'nuxt_app_test'
 
@@ -9,19 +8,12 @@ export function replaceDatabaseName(connectionString: string, name: string) {
   return url.toString()
 }
 
-export function resolveDatabaseUrl(env: NodeJS.ProcessEnv = process.env) {
-  loadEnv()
-
+export function resolveDatabaseUrl() {
   if (env.NODE_ENV === 'test') {
     if (env.DATABASE_URL_TEST)
       return env.DATABASE_URL_TEST
-    if (env.DATABASE_URL)
-      return replaceDatabaseName(env.DATABASE_URL, TEST_DATABASE_NAME)
-    throw new Error('DATABASE_URL or DATABASE_URL_TEST is required')
+    return replaceDatabaseName(env.DATABASE_URL, TEST_DATABASE_NAME)
   }
-
-  if (!env.DATABASE_URL)
-    throw new Error('DATABASE_URL is required')
 
   return env.DATABASE_URL
 }

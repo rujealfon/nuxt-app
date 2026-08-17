@@ -1,4 +1,5 @@
 import type { AuthUser } from '@nuxt-app/types'
+import { matchesRequiredRole } from '@nuxt-app/types'
 
 export type RouteGate = 'auth' | 'guest' | 'guest-admin' | 'admin'
 
@@ -27,17 +28,10 @@ export function resolveRouteAccess(
     case 'admin':
       if (!user)
         return { redirect: { path: '/login', query: { redirect: to.fullPath } } }
-      if (user.role !== 'admin')
+      if (!matchesRequiredRole(user, 'admin'))
         return { redirect: '/login' }
       return { allow: true }
   }
 }
 
-export function matchesRequiredRole(
-  user: AuthUser,
-  requireRole?: AuthUser['role'],
-): boolean {
-  if (!requireRole)
-    return true
-  return user.role === requireRole
-}
+export { matchesRequiredRole }

@@ -1,56 +1,54 @@
 import type { AppType } from '@nuxt-app/api/rpc'
 import type { AuthResponse, AuthUser, LoginInput, RegisterInput } from '@nuxt-app/types'
+import { messageFromFailedBody } from '@nuxt-app/types'
 import { hc } from 'hono/client'
 
-let apiUrlOverride: string | undefined
-
-export function setAuthApiUrl(url: string) {
-  apiUrlOverride = url
-}
-
-function getApiUrl(): string {
-  if (apiUrlOverride)
-    return apiUrlOverride
-  if (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_API_URL)
-    return (import.meta as any).env.VITE_API_URL
-  return 'http://localhost:3001'
-}
-
-function client() {
-  const base = getApiUrl()
-  return hc<AppType>(base.endsWith('/') ? base : `${base}/`, {
-    init: { credentials: 'include' },
-  })
-}
-
-interface ErrorBody {
-  message?: string
-  error?: string | { issues?: Array<{ message?: string }> }
+function normalizeBase(baseUrl: string) {
+  return baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`
 }
 
 async function unwrap<T>(res: Response): Promise<T> {
-  const data = await res.json() as ErrorBody & T
-  if (!res.ok) {
-    const issue = typeof data.error === 'object' ? data.error.issues?.[0]?.message : data.error
-    throw new Error(issue || data.message || 'Request failed')
-  }
+  const data = await res.json() as T
+  if (!res.ok)
+    throw new Error(messageFromFailedBody(data))
   return data
 }
 
-export const authClient = {
-  async login(input: LoginInput): Promise<AuthResponse> {
-    return unwrap<AuthResponse>(await client().auth.login.$post({ json: input }))
-  },
+export function createAuthClient(baseUrl: string) {
+  const client = () => hc<AppType>(normalizeBase(baseUrl), {
+    init: { credentials: 'include' },
+  })
 
-  async register(input: RegisterInput): Promise<{ message: string }> {
-    return unwrap<{ message: string }>(await client().auth.register.$post({ json: input }))
-  },
+  return {
+    async login(input: LoginInput): Promise<AuthResponse> {
+      return unwrap<AuthResponse>(await client().auth.login.$post({ json: input }))
+    },
 
-  async logout(): Promise<{ message: string }> {
-    return unwrap<{ message: string }>(await client().auth.logout.$post())
-  },
+    async register(input: RegisterInput): Promise<{ message: string }> {
+      return unwrap<{ message: string }>(await client().auth.register.$post({ json: input }))
+    },
 
-  async me(): Promise<{ user: AuthUser | null }> {
-    return unwrap<{ user: AuthUser | null }>(await client().auth.me.$get())
-  },
+    async logout(): Promise<{ message: string }> {
+      return unwrap<{ message: string }>(await client().auth.logout.$post())
+    },
+
+    async me(): Promise<{ user: AuthUser | null }> {
+      return unwrap<{ user: AuthUser | null }>(await client().auth.me.$get())
+    },
+  }
+}
+
+export type AuthClient = ReturnType<typeof createAuthClient>
+
+let defaultClient = createAuthClient('http://localhost:3001')
+
+export function setAuthApiUrl(url: string) {
+  defaultClient = createAuthClient(url)
+}
+
+export const authClient: AuthClient = {
+  login: input => defaultClient.login(input),
+  register: input => defaultClient.register(input),
+  logout: () => defaultClient.logout(),
+  me: () => defaultClient.me(),
 }

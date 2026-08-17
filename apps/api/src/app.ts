@@ -8,6 +8,7 @@ import { adminRoutes } from '@api/modules/admin/routes.js'
 import { authRoutes } from '@api/modules/auth/routes.js'
 import { configureOpenAPI } from '@api/modules/docs/routes.js'
 import { healthRoutes } from '@api/modules/health/routes.js'
+import { resolveCorsOrigin } from '@api/request-policy.js'
 import { bodyLimit } from 'hono/body-limit'
 import { cors } from 'hono/cors'
 import { csrf } from 'hono/csrf'
@@ -35,11 +36,7 @@ base.use('*', secureHeaders(isDev
 base.use(
   '*',
   cors({
-    origin: (origin) => {
-      if (!origin || allowedOrigins.includes(origin))
-        return origin || allowedOrigins[0]
-      return allowedOrigins[0]
-    },
+    origin: resolveCorsOrigin,
     credentials: true,
     allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowHeaders: ['Content-Type', 'Authorization'],

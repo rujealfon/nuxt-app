@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { authClient, setAuthApiUrl } from '../src/client'
+import { authClient, createAuthClient, setAuthApiUrl } from '../src/client'
 
 const user = {
   id: 'V1StGXR8_Z5jdHi6B-myT',
@@ -56,6 +56,16 @@ describe('authClient', () => {
 
     const [url] = fetchMock.mock.calls[0] as [string]
     expect(String(url)).toContain('https://api.example.com/auth/login')
+  })
+
+  it('constructs a client for a given base URL', async () => {
+    fetchMock.mockResolvedValue(jsonResponse(200, { user }))
+    const client = createAuthClient('https://constructed.example')
+
+    await client.me()
+
+    const [url] = fetchMock.mock.calls[0] as [string]
+    expect(String(url)).toContain('https://constructed.example/auth/me')
   })
 
   it('throws the first validation issue from a failed login', async () => {

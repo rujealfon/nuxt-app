@@ -24,6 +24,8 @@ const envSchema = z.object({
       return false
     return ['1', 'true', 'yes'].includes(value.trim().toLowerCase())
   }),
+  DATABASE_URL: z.url(),
+  DATABASE_URL_TEST: z.url().optional(),
 })
 
 const parsed = envSchema.safeParse(process.env)

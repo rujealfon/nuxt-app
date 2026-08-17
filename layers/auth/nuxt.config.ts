@@ -10,6 +10,7 @@ const apiUrl = (process.env.NUXT_PUBLIC_API_URL || 'http://localhost:3001').repl
 export default defineNuxtConfig({
   $meta: { name: 'auth' },
   alias: {
+    // Follows `hc<AppType>` into apps/api (no layer source imports `@api`).
     '@api': fileURLToPath(new URL('../../apps/api/src', import.meta.url)),
   },
   modules: ['@pinia/nuxt', '@pinia/colada-nuxt'],
