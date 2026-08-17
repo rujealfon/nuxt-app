@@ -30,7 +30,7 @@ Migrations do **not** run on API boot on Vercel. Apply them from your machine (o
 
 ## Project settings
 
-Each app owns its settings in `apps/<name>/vercel.json` (picked up because Root Directory is that folder). Leave dashboard **Override** toggles (Build / Output / Install / Development) off so the files win. Leave **Include files outside the Root Directory** on (pnpm workspaces need `layers/*` and `packages/*`). Node **24.x**. Install stays the default (`pnpm install` from the repo root).
+Each app owns its settings in `apps/<name>/vercel.json` (picked up because Root Directory is that folder). Leave dashboard **Override** toggles (Build / Output / Install / Development) off so the files win. Leave **Include files outside the Root Directory** on (pnpm workspaces need `layers/*` and `packages/*`). Node **24.x**. Install stays the default (`pnpm install` from the repo root). App/admin/web `prebuild` runs `nuxt prepare` in the shared layers so Vite can resolve `layers/*/.nuxt/tsconfig.json` (that folder is gitignored and is not created by the app’s own prepare).
 
 | App   | File                     | Framework | Build                          | Output                                      |
 | ----- | ------------------------ | --------- | ------------------------------ | ------------------------------------------- |

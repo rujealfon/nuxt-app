@@ -74,6 +74,7 @@ export function useAuth() {
       await navigateTo(redirectTo)
   }
 
+  /** refresh() respects staleTime (30s); a revoked/demoted session can pass guards until then. */
   async function ensureUser() {
     await me.refresh()
     return me.data.value ?? null

@@ -6,14 +6,19 @@ import { config } from 'dotenv'
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..')
 
-/** Root `.env`, then the workspace `.env`. Existing process.env wins. */
+/** Load existing env files. Existing process.env wins. */
+export function applyEnvFiles(files: string[]) {
+  for (const file of files) {
+    if (existsSync(file))
+      config({ path: file })
+  }
+}
+
+/** Root `.env`, then the workspace `.env`. */
 export function loadRootEnv() {
   // Vitest/Nuxt re-evaluate nuxt.config; skip so dotenv does not retrigger that loop.
   if (process.env.VITEST)
     return
 
-  for (const file of [resolve(repoRoot, '.env'), resolve(process.cwd(), '.env')]) {
-    if (existsSync(file))
-      config({ path: file })
-  }
+  applyEnvFiles([resolve(repoRoot, '.env'), resolve(process.cwd(), '.env')])
 }

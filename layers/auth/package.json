@@ -5,6 +5,7 @@
   "main": "./nuxt.config.ts",
   "scripts": {
     "postinstall": "nuxt prepare",
+    "nuxt:prepare": "nuxt prepare",
     "type-check": "nuxt typecheck",
     "test": "vitest run"
   },
