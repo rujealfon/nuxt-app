@@ -305,15 +305,9 @@ importers:
 
   packages/auth:
     dependencies:
-      '@nuxt-app/api':
-        specifier: workspace:*
-        version: link:../../apps/api
       '@nuxt-app/types':
         specifier: workspace:*
         version: link:../types
-      hono:
-        specifier: ^4.13.2
-        version: 4.13.2
     devDependencies:
       typescript:
         specifier: ^5.9.3

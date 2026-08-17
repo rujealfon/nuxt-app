@@ -9,9 +9,7 @@ async function onSuccess() {
 </script>
 
 <template>
-  <div class="flex min-h-dvh items-center justify-center p-6">
-    <UPageCard class="w-full max-w-md">
-      <AuthRegisterForm @success="onSuccess" />
-    </UPageCard>
-  </div>
+  <AuthPageShell>
+    <AuthRegisterForm @success="onSuccess" />
+  </AuthPageShell>
 </template>

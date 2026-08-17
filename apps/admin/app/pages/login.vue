@@ -9,14 +9,12 @@ async function onSuccess() {
 </script>
 
 <template>
-  <div class="flex min-h-dvh items-center justify-center p-6">
-    <UPageCard class="w-full max-w-md">
-      <AuthLoginForm
-        title="Admin login"
-        description="Administrator access only."
-        require-role="admin"
-        @success="onSuccess"
-      />
-    </UPageCard>
-  </div>
+  <AuthPageShell>
+    <AuthLoginForm
+      title="Admin login"
+      description="Administrator access only."
+      require-role="admin"
+      @success="onSuccess"
+    />
+  </AuthPageShell>
 </template>

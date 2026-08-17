@@ -12,9 +12,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@nuxt-app/api": "workspace:*",
-    "@nuxt-app/types": "workspace:*",
-    "hono": "^4.13.2"
+    "@nuxt-app/types": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.9.3",

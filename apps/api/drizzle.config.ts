@@ -1,10 +1,12 @@
 import { resolve } from 'node:path'
 import process from 'node:process'
-import { config } from 'dotenv'
 import { defineConfig } from 'drizzle-kit'
+import { applyEnvFiles } from './src/apply-env-files'
 
-config({ path: resolve(process.cwd(), '../../.env') })
-config({ path: resolve(process.cwd(), '.env') })
+applyEnvFiles([
+  resolve(process.cwd(), '../../.env'),
+  resolve(process.cwd(), '.env'),
+])
 
 export default defineConfig({
   dialect: 'postgresql',

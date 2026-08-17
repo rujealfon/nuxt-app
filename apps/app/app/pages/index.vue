@@ -12,12 +12,12 @@ const { user, logout } = useAuth()
       <h1 class="text-2xl font-bold">
         Nuxt App
       </h1>
-      <AppButton variant="danger" @click="logout()">
+      <UButton color="error" @click="logout()">
         Logout
-      </AppButton>
+      </UButton>
     </header>
 
-    <AppCard>
+    <UCard>
       <h2 class="mb-1 text-xl font-semibold">
         Welcome, {{ user?.name }}!
       </h2>
@@ -43,6 +43,6 @@ const { user, logout } = useAuth()
           </dd>
         </div>
       </dl>
-    </AppCard>
+    </UCard>
   </div>
 </template>

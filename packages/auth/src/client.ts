@@ -1,10 +1,9 @@
-import type { AppType } from '@nuxt-app/api/rpc'
 import type { AuthResponse, AuthUser, LoginInput, RegisterInput } from '@nuxt-app/types'
 import { messageFromFailedBody } from '@nuxt-app/types'
-import { hc } from 'hono/client'
 
-function normalizeBase(baseUrl: string) {
-  return baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`
+function joinUrl(baseUrl: string, path: string) {
+  const base = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`
+  return new URL(path.replace(/^\//, ''), base).toString()
 }
 
 async function unwrap<T>(res: Response): Promise<T> {
@@ -14,26 +13,41 @@ async function unwrap<T>(res: Response): Promise<T> {
   return data
 }
 
-export function createAuthClient(baseUrl: string) {
-  const client = () => hc<AppType>(normalizeBase(baseUrl), {
-    init: { credentials: 'include' },
+async function request<T>(baseUrl: string, path: string, init: RequestInit = {}): Promise<T> {
+  const headers = new Headers(init.headers)
+  if (init.body && !headers.has('Content-Type'))
+    headers.set('Content-Type', 'application/json')
+
+  const res = await fetch(joinUrl(baseUrl, path), {
+    ...init,
+    credentials: 'include',
+    headers,
   })
+  return unwrap(res)
+}
 
+export function createAuthClient(baseUrl: string) {
   return {
-    async login(input: LoginInput): Promise<AuthResponse> {
-      return unwrap<AuthResponse>(await client().auth.login.$post({ json: input }))
+    login(input: LoginInput): Promise<AuthResponse> {
+      return request<AuthResponse>(baseUrl, 'auth/login', {
+        method: 'POST',
+        body: JSON.stringify(input),
+      })
     },
 
-    async register(input: RegisterInput): Promise<{ message: string }> {
-      return unwrap<{ message: string }>(await client().auth.register.$post({ json: input }))
+    register(input: RegisterInput): Promise<{ message: string }> {
+      return request<{ message: string }>(baseUrl, 'auth/register', {
+        method: 'POST',
+        body: JSON.stringify(input),
+      })
     },
 
-    async logout(): Promise<{ message: string }> {
-      return unwrap<{ message: string }>(await client().auth.logout.$post())
+    logout(): Promise<{ message: string }> {
+      return request<{ message: string }>(baseUrl, 'auth/logout', { method: 'POST' })
     },
 
-    async me(): Promise<{ user: AuthUser | null }> {
-      return unwrap<{ user: AuthUser | null }>(await client().auth.me.$get())
+    me(): Promise<{ user: AuthUser | null }> {
+      return request<{ user: AuthUser | null }>(baseUrl, 'auth/me')
     },
   }
 }

@@ -1,18 +1,12 @@
-import { existsSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { config } from 'dotenv'
+import { applyEnvFiles } from '@api/apply-env-files'
 
 const srcDir = dirname(fileURLToPath(import.meta.url))
 const apiRoot = resolve(srcDir, '..')
 const repoRoot = resolve(apiRoot, '../..')
 
-export function applyEnvFiles(files: string[]) {
-  for (const file of files) {
-    if (existsSync(file))
-      config({ path: file })
-  }
-}
+export { applyEnvFiles }
 
 /** Root `.env`, then `apps/api/.env`. Existing process.env wins. */
 export function loadEnv() {

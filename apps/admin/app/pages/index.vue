@@ -12,12 +12,12 @@ const { user, logout } = useAuth()
       <h1 class="text-2xl font-bold">
         Admin Panel
       </h1>
-      <AppButton variant="danger" @click="logout()">
+      <UButton color="error" @click="logout()">
         Logout
-      </AppButton>
+      </UButton>
     </header>
 
-    <AppCard dark>
+    <UCard>
       <h2 class="mb-1 text-lg font-semibold">
         Hello, {{ user?.name }}
       </h2>
@@ -27,6 +27,6 @@ const { user, logout } = useAuth()
       <p class="text-sm text-slate-500">
         This is the admin area. You can manage posts, users, and site content from here.
       </p>
-    </AppCard>
+    </UCard>
   </div>
 </template>
