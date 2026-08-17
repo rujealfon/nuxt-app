@@ -39,7 +39,7 @@ Each app owns its settings in `apps/<name>/vercel.json` (picked up because Root 
 | admin | `apps/admin/vercel.json` | `nuxtjs`  | `pnpm build` (`nuxt build`)    | default                                     |
 | api   | `apps/api/vercel.json`   | `hono`    | empty (do not run `tsc`)       | default — Vercel bundles `src/app.ts`       |
 
-`ignoreCommand` is `npx turbo-ignore` in every file. That skips a project when that package and its workspace deps did not change.
+Do **not** set `ignoreCommand` / Ignored Build Step to `npx turbo-ignore` (`turbo-ignore` is deprecated). Vercel [skips unaffected projects](https://vercel.com/docs/monorepos#skipping-unaffected-projects) when the commit does not change that package or its workspace deps. That path does not take a concurrent build slot. Leave **Skip deployment** enabled under Root Directory (the default). Leave Ignored Build Step empty.
 
 Do **not** copy web’s `outputDirectory` onto app/admin. Those are `nuxt build` + the Vercel Nitro preset, not a static `generate`.
 
@@ -165,7 +165,7 @@ pnpm db:migrate
 3. Migrate + seed if the database is new or migrations changed.
 4. app, admin, web.
 
-Git pushes then deploy all four. `turbo-ignore` skips unchanged packages.
+Git pushes then deploy all four. Vercel skips a project when that package and its workspace deps did not change.
 
 ## Smoke test
 

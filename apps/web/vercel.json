@@ -2,6 +2,5 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nuxtjs",
   "buildCommand": "pnpm build",
-  "outputDirectory": ".output/public",
-  "ignoreCommand": "npx turbo-ignore"
+  "outputDirectory": ".output/public"
 }
