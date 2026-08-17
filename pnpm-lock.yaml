@@ -274,6 +274,9 @@ importers:
       '@tailwindcss/vite':
         specifier: ^4.3.3
         version: 4.3.3(vite@8.2.1(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))
+      dotenv:
+        specifier: ^17.4.2
+        version: 17.4.2
       nuxt:
         specifier: ^4.5.2
         version: 4.5.2(ef7f3bcb597c308354cd2668e859c1eb)

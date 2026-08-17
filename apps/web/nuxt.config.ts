@@ -1,5 +1,8 @@
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
+import { loadRootEnv } from '@nuxt-app/layer-base/load-root-env'
+
+loadRootEnv()
 
 export default defineNuxtConfig({
   extends: ['@nuxt-app/layer-base'],

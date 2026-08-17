@@ -1,6 +1,9 @@
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
 import { defineNuxtConfig } from 'nuxt/config'
+import { loadRootEnv } from '../base/load-root-env'
+
+loadRootEnv()
 
 const apiUrl = (process.env.NUXT_PUBLIC_API_URL || 'http://localhost:3001').replace(/\/$/, '')
 

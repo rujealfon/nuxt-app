@@ -2,6 +2,10 @@
   "name": "@nuxt-app/layer-base",
   "type": "module",
   "private": true,
+  "exports": {
+    ".": "./nuxt.config.ts",
+    "./load-root-env": "./load-root-env.ts"
+  },
   "main": "./nuxt.config.ts",
   "scripts": {
     "postinstall": "nuxt prepare",
@@ -12,6 +16,7 @@
     "@iconify-json/lucide": "^1.2.123",
     "@nuxt/ui": "^4.10.0",
     "@tailwindcss/vite": "^4.3.3",
+    "dotenv": "^17.4.2",
     "nuxt": "^4.5.2",
     "tailwindcss": "^4.3.3"
   },

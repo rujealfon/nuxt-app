@@ -1,6 +1,9 @@
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
 import { defineNuxtConfig } from 'nuxt/config'
+import { loadRootEnv } from './load-root-env'
+
+loadRootEnv()
 
 export default defineNuxtConfig({
   $meta: { name: 'base' },
