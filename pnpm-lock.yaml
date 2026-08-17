@@ -43,7 +43,7 @@ importers:
         version: link:../../layers/base
       nuxt:
         specifier: ^4.5.2
-        version: 4.5.2(ef7f3bcb597c308354cd2668e859c1eb)
+        version: 4.5.2(931155ebc8c733b74446f853e0734eca)
       vue:
         specifier: ^3.5.41
         version: 3.5.41(typescript@5.9.3)
@@ -60,9 +60,15 @@ importers:
       happy-dom:
         specifier: ^20.11.2
         version: 20.11.2
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
       vitest:
         specifier: ^4.1.10
         version: 4.1.10(@types/node@24.13.3)(happy-dom@20.11.2)(vite@8.2.1(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))
+      vue-tsc:
+        specifier: ^3.3.10
+        version: 3.3.10(typescript@5.9.3)
 
   apps/api:
     dependencies:
@@ -204,9 +210,15 @@ importers:
       happy-dom:
         specifier: ^20.11.2
         version: 20.11.2
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
       vitest:
         specifier: ^4.1.10
         version: 4.1.10(@types/node@24.13.3)(happy-dom@20.11.2)(vite@8.2.1(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))
+      vue-tsc:
+        specifier: ^3.3.10
+        version: 3.3.10(typescript@5.9.3)
 
   layers/auth:
     dependencies:
@@ -241,9 +253,15 @@ importers:
       happy-dom:
         specifier: ^20.11.2
         version: 20.11.2
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
       vitest:
         specifier: ^4.1.10
         version: 4.1.10(@types/node@24.13.3)(happy-dom@20.11.2)(vite@8.2.1(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))
+      vue-tsc:
+        specifier: ^3.3.10
+        version: 3.3.10(typescript@5.9.3)
 
   layers/base:
     dependencies:
@@ -258,7 +276,7 @@ importers:
         version: 4.3.3(vite@8.2.1(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))
       nuxt:
         specifier: ^4.5.2
-        version: 4.5.2(931155ebc8c733b74446f853e0734eca)
+        version: 4.5.2(ef7f3bcb597c308354cd2668e859c1eb)
       tailwindcss:
         specifier: ^4.3.3
         version: 4.3.3
@@ -272,9 +290,15 @@ importers:
       happy-dom:
         specifier: ^20.11.2
         version: 20.11.2
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
       vitest:
         specifier: ^4.1.10
         version: 4.1.10(@types/node@24.13.3)(happy-dom@20.11.2)(vite@8.2.1(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))
+      vue-tsc:
+        specifier: ^3.3.10
+        version: 3.3.10(typescript@5.9.3)
 
   packages/auth:
     dependencies:
@@ -8226,8 +8250,8 @@ snapshots:
       typescript: 5.9.3
       ufo: 1.6.4
       unplugin: 3.3.0(esbuild@0.28.2)(rolldown@1.2.4)(rollup@4.62.4)(vite@8.2.1(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))
-      unplugin-auto-import: 21.1.0(@nuxt/kit@4.5.2(magic-string@1.2.0)(magicast@0.5.4)(rolldown@1.2.4)(unplugin@3.3.0(esbuild@0.28.2)(rolldown@1.2.4)(rollup@4.62.4)(vite@8.2.1(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))))(@vueuse/core@14.4.0(vue@3.5.41(typescript@5.9.3)))(esbuild@0.28.2)(rolldown@1.2.4)(rollup@4.62.4)(vite@8.2.1(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))
-      unplugin-vue-components: 32.1.0(@nuxt/kit@4.5.2(magic-string@1.2.0)(magicast@0.5.4)(rolldown@1.2.4)(unplugin@3.3.0(esbuild@0.28.2)(rolldown@1.2.4)(rollup@4.62.4)(vite@8.2.1(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))))(esbuild@0.28.2)(rolldown@1.2.4)(rollup@4.62.4)(vite@8.2.1(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))(vue@3.5.41(typescript@5.9.3))
+      unplugin-auto-import: 21.1.0(@nuxt/kit@4.5.2(magic-string@0.30.21)(magicast@0.5.4)(rolldown@1.2.4)(unplugin@3.3.0(esbuild@0.28.2)(rolldown@1.2.4)(rollup@4.62.4)(vite@8.2.1(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))))(@vueuse/core@14.4.0(vue@3.5.41(typescript@5.9.3)))(esbuild@0.28.2)(rolldown@1.2.4)(rollup@4.62.4)(vite@8.2.1(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))
+      unplugin-vue-components: 32.1.0(@nuxt/kit@4.5.2(magic-string@0.30.21)(magicast@0.5.4)(rolldown@1.2.4)(unplugin@3.3.0(esbuild@0.28.2)(rolldown@1.2.4)(rollup@4.62.4)(vite@8.2.1(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))))(esbuild@0.28.2)(rolldown@1.2.4)(rollup@4.62.4)(vite@8.2.1(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))(vue@3.5.41(typescript@5.9.3))
       vaul-vue: 0.4.1(reka-ui@2.10.1(vue@3.5.41(typescript@5.9.3)))(vue@3.5.41(typescript@5.9.3))
       vue-component-type-helpers: 3.3.10
     optionalDependencies:
@@ -13520,7 +13544,7 @@ snapshots:
       unist-util-is: 6.0.1
       unist-util-visit-parents: 6.0.2
 
-  unplugin-auto-import@21.1.0(@nuxt/kit@4.5.2(magic-string@1.2.0)(magicast@0.5.4)(rolldown@1.2.4)(unplugin@3.3.0(esbuild@0.28.2)(rolldown@1.2.4)(rollup@4.62.4)(vite@8.2.1(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))))(@vueuse/core@14.4.0(vue@3.5.41(typescript@5.9.3)))(esbuild@0.28.2)(rolldown@1.2.4)(rollup@4.62.4)(vite@8.2.1(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0)):
+  unplugin-auto-import@21.1.0(@nuxt/kit@4.5.2(magic-string@0.30.21)(magicast@0.5.4)(rolldown@1.2.4)(unplugin@3.3.0(esbuild@0.28.2)(rolldown@1.2.4)(rollup@4.62.4)(vite@8.2.1(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))))(@vueuse/core@14.4.0(vue@3.5.41(typescript@5.9.3)))(esbuild@0.28.2)(rolldown@1.2.4)(rollup@4.62.4)(vite@8.2.1(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0)):
     dependencies:
       local-pkg: 1.2.1
       magic-string: 1.2.0
@@ -13529,7 +13553,7 @@ snapshots:
       unplugin: 3.3.0(esbuild@0.28.2)(rolldown@1.2.4)(rollup@4.62.4)(vite@8.2.1(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))
       unplugin-utils: 0.3.2
     optionalDependencies:
-      '@nuxt/kit': 4.5.2(magic-string@1.2.0)(magicast@0.5.4)(rolldown@1.2.4)(unplugin@3.3.0(esbuild@0.28.2)(rolldown@1.2.4)(rollup@4.62.4)(vite@8.2.1(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0)))
+      '@nuxt/kit': 4.5.2(magic-string@0.30.21)(magicast@0.5.4)(rolldown@1.2.4)(unplugin@3.3.0(esbuild@0.28.2)(rolldown@1.2.4)(rollup@4.62.4)(vite@8.2.1(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0)))
       '@vueuse/core': 14.4.0(vue@3.5.41(typescript@5.9.3))
     transitivePeerDependencies:
       - '@farmfe/core'
@@ -13548,7 +13572,7 @@ snapshots:
       pathe: 2.0.3
       picomatch: 4.0.5
 
-  unplugin-vue-components@32.1.0(@nuxt/kit@4.5.2(magic-string@1.2.0)(magicast@0.5.4)(rolldown@1.2.4)(unplugin@3.3.0(esbuild@0.28.2)(rolldown@1.2.4)(rollup@4.62.4)(vite@8.2.1(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))))(esbuild@0.28.2)(rolldown@1.2.4)(rollup@4.62.4)(vite@8.2.1(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))(vue@3.5.41(typescript@5.9.3)):
+  unplugin-vue-components@32.1.0(@nuxt/kit@4.5.2(magic-string@0.30.21)(magicast@0.5.4)(rolldown@1.2.4)(unplugin@3.3.0(esbuild@0.28.2)(rolldown@1.2.4)(rollup@4.62.4)(vite@8.2.1(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))))(esbuild@0.28.2)(rolldown@1.2.4)(rollup@4.62.4)(vite@8.2.1(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0))(vue@3.5.41(typescript@5.9.3)):
     dependencies:
       chokidar: 5.0.0
       local-pkg: 1.2.1
@@ -13561,7 +13585,7 @@ snapshots:
       unplugin-utils: 0.3.2
       vue: 3.5.41(typescript@5.9.3)
     optionalDependencies:
-      '@nuxt/kit': 4.5.2(magic-string@1.2.0)(magicast@0.5.4)(rolldown@1.2.4)(unplugin@3.3.0(esbuild@0.28.2)(rolldown@1.2.4)(rollup@4.62.4)(vite@8.2.1(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0)))
+      '@nuxt/kit': 4.5.2(magic-string@0.30.21)(magicast@0.5.4)(rolldown@1.2.4)(unplugin@3.3.0(esbuild@0.28.2)(rolldown@1.2.4)(rollup@4.62.4)(vite@8.2.1(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.9.0)))
     transitivePeerDependencies:
       - '@farmfe/core'
       - '@rspack/core'

@@ -69,6 +69,9 @@ export async function createUser(data: {
       role: users.role,
     })
 
+    if (!row)
+      throw new Error('Failed to create user')
+
     return toAuthUser(row)
   }
   catch (err) {
@@ -109,6 +112,9 @@ export async function createSession(userId: string): Promise<string> {
     expiresAt: new Date(now.getTime() + SESSION_DURATION_MS),
     createdAt: now,
   }).returning({ id: sessions.id })
+
+  if (!session)
+    throw new Error('Failed to create session')
 
   return session.id
 }

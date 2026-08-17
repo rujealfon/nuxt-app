@@ -40,36 +40,40 @@ export async function seed(env: NodeJS.Dict<string> = process.env) {
   const name = env.ADMIN_NAME || 'Admin'
   const password = resolveAdminSeedPassword(env)
 
-  const existing = await db.query.users.findFirst({
+  let existing = await db.query.users.findFirst({
     where: eq(users.email, email),
   })
 
-  if (existing) {
-    const passwordHash = await hashPassword(password)
-    await resetUserAsAdmin(existing.id, passwordHash)
+  if (!existing) {
+    const user = await createUser({
+      email,
+      password,
+      name,
+      role: 'admin',
+    })
 
-    const action = existing.role === 'admin'
-      ? 'password reset'
-      : 'password reset and promoted to admin'
-    console.log(`User ${email} already exists; ${action}.`)
-    return
+    if (user) {
+      console.log('Admin user created:')
+      console.log(`  Email:    ${user.email}`)
+      console.log(`  Role:     ${user.role}`)
+      return
+    }
+
+    existing = await db.query.users.findFirst({
+      where: eq(users.email, email),
+    })
+    if (!existing) {
+      throw new Error(`User ${email} could not be created or found`)
+    }
   }
 
-  const user = await createUser({
-    email,
-    password,
-    name,
-    role: 'admin',
-  })
+  const passwordHash = await hashPassword(password)
+  await resetUserAsAdmin(existing.id, passwordHash)
 
-  if (!user) {
-    console.log(`User ${email} already exists`)
-    return
-  }
-
-  console.log('Admin user created:')
-  console.log(`  Email:    ${user.email}`)
-  console.log(`  Role:     ${user.role}`)
+  const action = existing.role === 'admin'
+    ? 'password reset'
+    : 'password reset and promoted to admin'
+  console.log(`User ${email} already exists; ${action}.`)
 }
 
 const invokedDirectly = process.argv[1]?.endsWith('seed.ts')

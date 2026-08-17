@@ -128,6 +128,22 @@ describe('seed', () => {
     expect(await verifyPassword('operator-pass-99', existing!.passwordHash)).toBe(true)
   })
 
+  it('leaves a usable admin if two seeds race on the same email', async () => {
+    const email = `seed-race-${Date.now()}@nuxt-app.com`
+    await Promise.all([
+      seed({ ADMIN_EMAIL: email, ADMIN_NAME: 'Admin', ADMIN_PASSWORD: 'password-aaa' }),
+      seed({ ADMIN_EMAIL: email, ADMIN_NAME: 'Admin', ADMIN_PASSWORD: 'password-bbb' }),
+    ])
+
+    const existing = await db.query.users.findFirst({
+      where: eq(users.email, email),
+    })
+    expect(existing?.role).toBe('admin')
+    const matchesAaa = await verifyPassword('password-aaa', existing!.passwordHash)
+    const matchesBbb = await verifyPassword('password-bbb', existing!.passwordHash)
+    expect(matchesAaa || matchesBbb).toBe(true)
+  })
+
   it('does not create an admin when ADMIN_EMAIL is malformed', async () => {
     await expect(seed({
       ADMIN_EMAIL: 'not-an-email',

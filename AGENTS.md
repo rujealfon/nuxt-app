@@ -8,7 +8,7 @@ This file provides guidance when working with code in this repository.
 pnpm dev              # all apps via Turborepo (api:3001, app:3000, admin:3002, web:3003)
 pnpm dev:api          # single app: turbo run dev --filter=@nuxt-app/api (also dev:app, dev:admin, dev:web)
 pnpm build            # turbo run build (respects dependsOn: ["^build"])
-pnpm type-check       # turbo run type-check
+pnpm type-check       # turbo run type-check (every workspace: tsc or nuxt typecheck)
 pnpm lint / lint:fix  # eslint . (root-level flat config, applies repo-wide; husky pre-commit runs lint-staged)
 pnpm test             # turbo run test (API, Nuxt apps/layers, packages)
 pnpm db:generate      # drizzle-kit generate (run after editing apps/api/src/db/schema/)

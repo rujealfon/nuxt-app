@@ -5,6 +5,7 @@
   "main": "./nuxt.config.ts",
   "scripts": {
     "postinstall": "nuxt prepare",
+    "type-check": "nuxt typecheck",
     "test": "vitest run"
   },
   "dependencies": {
@@ -18,6 +19,8 @@
     "@nuxt/test-utils": "^4.1.0",
     "@vue/test-utils": "^2.4.11",
     "happy-dom": "^20.11.2",
-    "vitest": "^4.1.10"
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.10",
+    "vue-tsc": "^3.3.10"
   }
 }
