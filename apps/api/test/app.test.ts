@@ -171,8 +171,8 @@ describe('api', () => {
     const { pool } = await import('@api/db')
     const email = `sql-id-${Date.now()}@example.com`
     const result = await pool.query<{ public_id: string }>(
-      `INSERT INTO users (email, name, password_hash, created_at, updated_at)
-       VALUES ($1, $2, $3, now(), now())
+      `INSERT INTO users (email, name, password_hash)
+       VALUES ($1, $2, $3)
        RETURNING public_id`,
       [email, 'SqlId', 'x'],
     )

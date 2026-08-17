@@ -44,7 +44,6 @@ async function issueSession(user: AuthUser): Promise<string> {
   const [session] = await db.insert(sessions).values({
     userId,
     expiresAt: new Date(now.getTime() + SESSION_DURATION_MS),
-    createdAt: now,
   }).returning({ id: sessions.id })
 
   if (!session)

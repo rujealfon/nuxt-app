@@ -32,7 +32,6 @@ export async function createUser(data: {
   name: string
   role?: AuthUser['role']
 }): Promise<AuthUser | null> {
-  const now = new Date()
   const passwordHash = await hashPassword(data.password)
 
   try {
@@ -41,8 +40,6 @@ export async function createUser(data: {
       name: data.name,
       passwordHash,
       role: data.role || 'user',
-      createdAt: now,
-      updatedAt: now,
     }).returning({
       publicId: users.publicId,
       email: users.email,
@@ -79,7 +76,6 @@ async function resetUserAsAdmin(userId: string, passwordHash: string) {
     await tx.update(users).set({
       passwordHash,
       role: 'admin',
-      updatedAt: new Date(),
     }).where(eq(users.id, userId))
     await tx.delete(sessions).where(eq(sessions.userId, userId))
   })
