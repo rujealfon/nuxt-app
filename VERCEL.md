@@ -32,16 +32,16 @@ Migrations do **not** run on API boot on Vercel. Apply them from your machine (o
 
 Each app owns its settings in `apps/<name>/vercel.json` (picked up because Root Directory is that folder). Leave dashboard **Override** toggles (Build / Output / Install / Development) off so the files win. Leave **Include files outside the Root Directory** on (pnpm workspaces need `layers/*` and `packages/*`). Node **24.x**. Install stays the default (`pnpm install` from the repo root). App/admin/web `prebuild` runs `nuxt prepare` in the shared layers so Vite can resolve `layers/*/.nuxt/tsconfig.json` (that folder is gitignored and is not created by the app’s own prepare).
 
-| App   | File                     | Framework | Build                          | Output                                      |
-| ----- | ------------------------ | --------- | ------------------------------ | ------------------------------------------- |
-| web   | `apps/web/vercel.json`   | `nuxtjs`  | `pnpm build` (`nuxt generate`) | `.output/public`                            |
-| app   | `apps/app/vercel.json`   | `nuxtjs`  | `pnpm build` (`nuxt build`)    | default (Nitro `vercel` → `.vercel/output`) |
-| admin | `apps/admin/vercel.json` | `nuxtjs`  | `pnpm build` (`nuxt build`)    | default                                     |
-| api   | `apps/api/vercel.json`   | `hono`    | empty (do not run `tsc`)       | default — Vercel bundles `src/app.ts`       |
+| App   | File                     | Framework | Build                          | Output                                             |
+| ----- | ------------------------ | --------- | ------------------------------ | -------------------------------------------------- |
+| web   | `apps/web/vercel.json`   | `nuxtjs`  | `pnpm build` (`nuxt generate`) | `.output/public`                                   |
+| app   | `apps/app/vercel.json`   | `nuxtjs`  | `pnpm build` (`nuxt build`)    | default (Nitro `vercel-static` → `.vercel/output`) |
+| admin | `apps/admin/vercel.json` | `nuxtjs`  | `pnpm build` (`nuxt build`)    | default                                            |
+| api   | `apps/api/vercel.json`   | `hono`    | empty (do not run `tsc`)       | default — Vercel bundles `src/app.ts`              |
 
 Do **not** set `ignoreCommand` / Ignored Build Step to `npx turbo-ignore` (`turbo-ignore` is deprecated). Vercel [skips unaffected projects](https://vercel.com/docs/monorepos#skipping-unaffected-projects) when the commit does not change that package or its workspace deps. That path does not take a concurrent build slot. Leave **Skip deployment** enabled under Root Directory (the default). Leave Ignored Build Step empty.
 
-Do **not** copy web’s `outputDirectory` onto app/admin. Those are `nuxt build` + the Vercel Nitro preset, not a static `generate`.
+Do **not** copy web’s `outputDirectory` onto app/admin. Those use Nitro `vercel-static` (`.vercel/output`), not `nuxt generate`. SPA deep links and `/__api` are CDN rewrites, not a `__fallback` serverless function.
 
 ### Dashboard Framework Preset
 
@@ -183,5 +183,5 @@ Git pushes then deploy all four. Vercel skips a project when that package and it
 - API Vercel build stays empty. `tsc` is not the platform entry.
 - Runtime `DATABASE_URL` is the Neon **pooler**. If the pool is exhausted, set `max: 1` on the `pg` Pool. Migrations use `DATABASE_URL_UNPOOLED` (required in production when `DATABASE_URL` is pooled). Neon URLs use `sslmode=verify-full` (`pg` already treats `require` as `verify-full` and warns).
 - Upstash `REDIS_URL` must be `rediss://` (TLS). `redis://` is only for local Compose.
-- SPA deep links work because Nitro/Vercel serves the fallback. web is fully static.
+- SPA deep links are a CDN rewrite to `index.html`. `/__api` is a CDN rewrite to `NUXT_PUBLIC_API_URL`. There is no `__fallback` serverless function on app/admin. web is fully static.
 - Four projects = four preview URLs per PR. Nothing wires “this preview app talks to that preview API” unless you set Preview env vars.
