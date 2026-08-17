@@ -24,9 +24,12 @@ Nuxt apps extend shared layers:
 - **Frontends**: Nuxt 4
 - **API**: Hono
 - **Auth**: Custom session-based (httpOnly cookies)
-- **DB**: PostgreSQL via Drizzle
+- **DB**: PostgreSQL via Drizzle (Neon in production, `sslmode=verify-full`)
 - **Runtime**: Docker Compose (Postgres + Redis + all apps)
-- **Rate limit**: `redis` (node-redis) + `hono-rate-limiter` RedisStore (in-memory in tests)
+- **Rate limit**: `redis` (node-redis) + `hono-rate-limiter` RedisStore (in-memory in tests). Production: [Upstash Redis](https://upstash.com/docs/redis) over `rediss://` (TLS)
+- **Jobs**: [Upstash QStash](https://upstash.com/docs/qstash) — background jobs, scheduled/delayed tasks, and a message queue for the serverless API
+- **Object storage**: [Cloudflare R2](https://developers.cloudflare.com/r2/) — file/image uploads, S3-compatible, no egress fees
+- **Email**: [Resend](https://resend.com/docs) — transactional email (verification, password reset, notifications)
 
 ## Structure
 
