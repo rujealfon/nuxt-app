@@ -13,6 +13,8 @@ export default defineConfig({
   schema: './src/db/schema/index.ts',
   out: './src/db/migrations',
   dbCredentials: {
-    url: process.env.DATABASE_URL ?? 'postgres://nuxt:nuxt@localhost:5433/nuxt_app',
+    url: process.env.DATABASE_URL_UNPOOLED
+      ?? process.env.DATABASE_URL
+      ?? 'postgres://nuxt:nuxt@localhost:5433/nuxt_app',
   },
 })

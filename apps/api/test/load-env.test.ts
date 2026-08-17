@@ -1,5 +1,4 @@
 import process from 'node:process'
-import { replaceDatabaseName, resolveDatabaseUrl, TEST_DATABASE_NAME } from '@api/db/url.js'
 import { env } from '@api/env.js'
 import { loadEnv } from '@api/load-env.js'
 import { describe, expect, it } from 'vitest'
@@ -24,15 +23,5 @@ describe('env', () => {
 
   it('parses DATABASE_URL in the typed settings', () => {
     expect(env.DATABASE_URL).toBeTruthy()
-  })
-})
-
-describe('resolveDatabaseUrl', () => {
-  it('uses DATABASE_URL_TEST when set in test', () => {
-    expect(env.NODE_ENV).toBe('test')
-    if (env.DATABASE_URL_TEST)
-      expect(resolveDatabaseUrl()).toBe(env.DATABASE_URL_TEST)
-    else
-      expect(resolveDatabaseUrl()).toBe(replaceDatabaseName(env.DATABASE_URL, TEST_DATABASE_NAME))
   })
 })

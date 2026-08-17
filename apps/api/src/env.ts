@@ -1,5 +1,6 @@
 import process from 'node:process'
 import { loadEnv } from '@api/load-env.js'
+import { isPlainRedisToUpstash } from '@api/redis-url.js'
 import { z } from 'zod'
 
 loadEnv()
@@ -14,7 +15,10 @@ const envSchema = z.object({
   ADMIN_URL: z.url().default('http://localhost:3002'),
   WEB_URL: z.url().default('http://localhost:3003'),
   COOKIE_DOMAIN: z.string().optional().transform(value => value || undefined),
-  REDIS_URL: z.url().default('redis://localhost:6380'),
+  REDIS_URL: z.url().default('redis://localhost:6380').refine(
+    value => !isPlainRedisToUpstash(value),
+    { error: 'Use rediss:// (TLS), not redis://, with Upstash — its endpoints enforce TLS.' },
+  ),
   RATE_LIMIT_MAX: z.coerce.number().int().positive().default(120),
   RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(60_000),
   AUTH_RATE_LIMIT_MAX: z.coerce.number().int().positive().default(10),
@@ -25,6 +29,7 @@ const envSchema = z.object({
   }),
   DATABASE_URL: z.url(),
   DATABASE_URL_TEST: z.url().optional(),
+  DATABASE_URL_UNPOOLED: z.url().optional(),
 })
 
 const parsed = envSchema.safeParse(process.env)

@@ -72,8 +72,8 @@ Schema needs **Postgres 18** (`uuidv7()`) and `pgcrypto` (`nanoid()`). Redis is 
 
 On the **API** project (Vercel Marketplace):
 
-1. Storage → Create Database → Neon. Pick Postgres 18. Put the **pooled** (`…-pooler…`) URL in the API’s `DATABASE_URL`.
-2. Storage → Create Database → Upstash Redis. Put the TCP `rediss://…` URL in `REDIS_URL`. Keep the existing `node-redis` client.
+1. Storage → Create Database → Neon. Pick Postgres 18. Put the **pooled** (`…-pooler…`) URL in the API’s `DATABASE_URL` and the **direct** (non-pooler) URL in `DATABASE_URL_UNPOOLED`.
+2. Storage → Create Database → Upstash Redis. Put the TCP `rediss://…` URL in `REDIS_URL` (not `redis://`). Upstash endpoints enforce TLS (`TLS/SSL: Enabled` in the console); `redis://` will fail to connect. Keep the existing `node-redis` client.
 
 ## Env vars
 
@@ -81,18 +81,19 @@ Set on each project (Production + Preview). Projects do not inherit each other�
 
 **`nuxt-app-api`**
 
-| Name            | Production                                                                                                                                   |
-| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| `DATABASE_URL`  | Neon **pooled** URL (runtime)                                                                                                                |
-| `REDIS_URL`     | Upstash `rediss://…`                                                                                                                         |
-| `NODE_ENV`      | `production` (Vercel usually sets this)                                                                                                      |
-| `API_URL`       | `https://api.nuxt-app.com` (or the API `*.vercel.app` URL until DNS is ready)                                                                |
-| `APP_URL`       | `https://app.nuxt-app.com`                                                                                                                   |
-| `ADMIN_URL`     | `https://admin.nuxt-app.com`                                                                                                                 |
-| `WEB_URL`       | `https://nuxt-app.com`                                                                                                                       |
-| `COOKIE_DOMAIN` | `.nuxt-app.com` on custom domains; omit on `*.vercel.app` previews (app/admin use a same-origin `/__api` proxy so the cookie is first-party) |
-| `TRUST_PROXY`   | `true` (Vercel overwrites `X-Forwarded-For`)                                                                                                 |
-| `LOG_LEVEL`     | `info`                                                                                                                                       |
+| Name                    | Production                                                                                                                                   |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`          | Neon **pooled** URL (runtime), `sslmode=verify-full`                                                                                         |
+| `DATABASE_URL_UNPOOLED` | Neon **direct** URL (migrations), `sslmode=verify-full`. Required when `DATABASE_URL` is a pooled endpoint.                                  |
+| `REDIS_URL`             | Upstash `rediss://…` (TLS). Do not use `redis://` — Upstash rejects it.                                                                      |
+| `NODE_ENV`              | `production` (Vercel usually sets this)                                                                                                      |
+| `API_URL`               | `https://api.nuxt-app.com` (or the API `*.vercel.app` URL until DNS is ready)                                                                |
+| `APP_URL`               | `https://app.nuxt-app.com`                                                                                                                   |
+| `ADMIN_URL`             | `https://admin.nuxt-app.com`                                                                                                                 |
+| `WEB_URL`               | `https://nuxt-app.com`                                                                                                                       |
+| `COOKIE_DOMAIN`         | `.nuxt-app.com` on custom domains; omit on `*.vercel.app` previews (app/admin use a same-origin `/__api` proxy so the cookie is first-party) |
+| `TRUST_PROXY`           | `true` (Vercel overwrites `X-Forwarded-For`)                                                                                                 |
+| `LOG_LEVEL`             | `info`                                                                                                                                       |
 
 `APP_URL` / `ADMIN_URL` / `WEB_URL` are the CORS + CSRF allowlist. Exact origin: `https`, no trailing slash.
 
@@ -131,24 +132,24 @@ Until DNS is live: use the four `*.vercel.app` URLs, leave `COOKIE_DOMAIN` unset
 
 ## Migrate
 
-`pnpm db:migrate` (repo root) runs `tsx apps/api/src/db/migrate.ts`. It loads repo-root `.env`, then `apps/api/.env`. A shell `DATABASE_URL` wins.
+`pnpm db:migrate` (repo root) runs `tsx apps/api/src/db/migrate.ts`. It loads repo-root `.env`, then `apps/api/.env`. A shell `DATABASE_URL_UNPOOLED` (then `DATABASE_URL`) wins. API boot also runs migrations and uses `DATABASE_URL_UNPOOLED` when set.
 
-Use Neon’s **direct** host (no `-pooler`). Migrations take a lock; the pooler can hang. Keep the pooler URL for the running API.
+Use Neon’s **direct** host (no `-pooler`) in `DATABASE_URL_UNPOOLED`. Migrations take a lock; the pooler can hang. Keep the pooler URL in `DATABASE_URL` for the running API.
 
 ```bash
-DATABASE_URL='postgres://USER:PASS@ep-xxx.region.aws.neon.tech/neondb?sslmode=require' \
+DATABASE_URL_UNPOOLED='postgresql://USER:PASSWORD@ep-xxx.region.aws.neon.tech:5432/neondb?sslmode=verify-full' \
   pnpm db:migrate
 
-DATABASE_URL='postgres://USER:PASS@ep-xxx.region.aws.neon.tech/neondb?sslmode=require' \
+DATABASE_URL='postgresql://USER:PASSWORD@ep-xxx.region.aws.neon.tech:5432/neondb?sslmode=verify-full' \
   ADMIN_PASSWORD='your-strong-password' \
   pnpm db:seed
 ```
 
-`drizzle-kit` / `tsx` do not load Vercel env files. Pass `DATABASE_URL` on the command line.
+`drizzle-kit` / `tsx` do not load Vercel env files. Pass `DATABASE_URL_UNPOOLED` on the command line for migrate/studio.
 
 Do **not** migrate on every preview deploy against the production database. Unreviewed branch SQL would land on prod. A Vercel rollback restores functions, not schema.
 
-Acceptable: production-only API build hook, additive migrations, direct `DATABASE_URL` at build time. Safest: migrate from your machine (or CI) against prod, then deploy. First Neon stand-up and anything destructive (`DROP` / rename) stay off the preview build.
+Acceptable: production-only API build hook, additive migrations, `DATABASE_URL_UNPOOLED` at build time. Safest: migrate from your machine (or CI) against prod, then deploy. First Neon stand-up and anything destructive (`DROP` / rename) stay off the preview build.
 
 Local Compose:
 
@@ -180,6 +181,7 @@ Git pushes then deploy all four. `turbo-ignore` skips unchanged packages.
 
 - Postgres must be 18. Neon 17 fails the first migration (`uuidv7()`).
 - API Vercel build stays empty. `tsc` is not the platform entry.
-- Runtime `DATABASE_URL` is the Neon **pooler**. If the pool is exhausted, set `max: 1` on the `pg` Pool.
+- Runtime `DATABASE_URL` is the Neon **pooler**. If the pool is exhausted, set `max: 1` on the `pg` Pool. Migrations use `DATABASE_URL_UNPOOLED` (required in production when `DATABASE_URL` is pooled). Neon URLs use `sslmode=verify-full` (`pg` already treats `require` as `verify-full` and warns).
+- Upstash `REDIS_URL` must be `rediss://` (TLS). `redis://` is only for local Compose.
 - SPA deep links work because Nitro/Vercel serves the fallback. web is fully static.
 - Four projects = four preview URLs per PR. Nothing wires “this preview app talks to that preview API” unless you set Preview env vars.
