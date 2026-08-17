@@ -1,0 +1,31 @@
+{
+  "name": "@nuxt-app/admin",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "prebuild": "pnpm --filter @nuxt-app/layer-base nuxt:prepare && pnpm --filter @nuxt-app/layer-auth nuxt:prepare",
+    "build": "nuxt build",
+    "dev": "nuxt dev --port 3002",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare",
+    "type-check": "nuxt typecheck",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@iconify-json/lucide": "^1.2.123",
+    "@nuxt-app/layer-auth": "workspace:*",
+    "@nuxt-app/layer-base": "workspace:*",
+    "nuxt": "^4.5.2",
+    "vue": "^3.5.41",
+    "vue-router": "^5.2.0"
+  },
+  "devDependencies": {
+    "@nuxt/test-utils": "^4.1.0",
+    "@vue/test-utils": "^2.4.11",
+    "happy-dom": "^20.11.2",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.10",
+    "vue-tsc": "^3.3.10"
+  }
+}

@@ -1,0 +1,20 @@
+FROM node:24-alpine AS base
+RUN corepack enable && corepack prepare pnpm@11.22.0 --activate
+WORKDIR /repo
+
+FROM base AS build
+ARG PACKAGE
+ARG NUXT_PUBLIC_APP_URL=http://localhost:3000
+ENV NUXT_PUBLIC_APP_URL=$NUXT_PUBLIC_APP_URL
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
+COPY apps ./apps
+COPY packages ./packages
+COPY layers ./layers
+RUN pnpm install --frozen-lockfile
+RUN pnpm --filter ${PACKAGE} build
+
+FROM nginx:1.31-alpine
+ARG APP_DIR
+COPY --from=build /repo/${APP_DIR}/.output/public /usr/share/nginx/html
+COPY docker/nginx-web.conf /etc/nginx/conf.d/default.conf
+EXPOSE 80

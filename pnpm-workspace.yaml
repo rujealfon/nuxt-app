@@ -1,6 +1,21 @@
+confirmModulesPurge: false
+
+# These transitive packages publish more than once a day (icon sets, browser lists, motion).
+minimumReleaseAgeExclude:
+  - '@iconify/collections'
+  - electron-to-chromium
+  - motion-v
+
+shellEmulator: true
+trustPolicy: no-downgrade
+# Older publishes often lack trusted-publisher evidence; still enforce the policy on new releases.
+trustPolicyIgnoreAfter: 43200
 allowBuilds:
-  '@parcel/watcher': false
-  '@tailwindcss/oxide': false
-  esbuild: false
-  unrs-resolver: false
-  vue-demi: false
+  better-sqlite3: false
+  esbuild: true
+  vue-demi: true
+
+packages:
+  - 'apps/*'
+  - 'packages/*'
+  - 'layers/*'

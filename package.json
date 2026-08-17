@@ -1,38 +1,51 @@
 {
   "name": "nuxt-app",
-  "private": true,
   "type": "module",
-  "scripts": {
-    "build": "nuxt build",
-    "dev": "nuxt dev",
-    "preview": "nuxt preview",
-    "postinstall": "nuxt prepare",
-    "lint": "eslint .",
-    "typecheck": "nuxt typecheck",
-    "test": "vitest",
-    "test:watch": "vitest --watch",
-    "test:coverage": "vitest --coverage",
-    "test:unit": "vitest --project unit",
-    "test:nuxt": "vitest --project nuxt"
+  "private": true,
+  "packageManager": "pnpm@11.22.0",
+  "engines": {
+    "node": ">=24"
   },
-  "dependencies": {
-    "@iconify-json/lucide": "^1.2.117",
-    "@iconify-json/simple-icons": "^1.2.90",
-    "@nuxt/a11y": "1.0.0-alpha.1",
-    "@nuxt/test-utils": "4.0.3",
-    "@nuxt/ui": "^4.10.0",
-    "nuxt": "^4.4.8",
-    "tailwindcss": "^4.3.2"
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "dev:api": "turbo run dev --filter=@nuxt-app/api",
+    "dev:app": "turbo run dev --filter=@nuxt-app/app",
+    "dev:admin": "turbo run dev --filter=@nuxt-app/admin",
+    "dev:web": "turbo run dev --filter=@nuxt-app/web",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "test": "turbo run test",
+    "type-check": "turbo run type-check",
+    "clean": "turbo run clean && rm -rf node_modules",
+    "db:generate": "pnpm --filter @nuxt-app/api db:generate",
+    "db:migrate": "pnpm --filter @nuxt-app/api db:migrate",
+    "db:studio": "pnpm --filter @nuxt-app/api db:studio",
+    "db:seed": "pnpm --filter @nuxt-app/api db:seed",
+    "predocker:up": "bash scripts/ensure-docker-env.sh",
+    "predocker:rebuild": "bash scripts/ensure-docker-env.sh",
+    "predocker:reset": "bash scripts/ensure-docker-env.sh",
+    "docker:up": "docker compose up -d --wait",
+    "docker:down": "docker compose down",
+    "docker:start": "docker compose start",
+    "docker:stop": "docker compose stop",
+    "docker:restart": "docker compose restart",
+    "docker:rebuild": "docker compose up --build -d --wait",
+    "docker:reset": "docker compose down -v && docker compose up --build -d --wait",
+    "docker:db:migrate": "docker compose exec api pnpm db:migrate",
+    "docker:db:seed": "docker compose exec -e ADMIN_PASSWORD -e ADMIN_EMAIL -e ADMIN_NAME api pnpm db:seed",
+    "prepare": "husky"
   },
   "devDependencies": {
-    "@nuxt/eslint": "^1.16.0",
-    "@vitest/coverage-v8": "^4.1.10",
-    "@vue/test-utils": "^2.4.11",
-    "eslint": "^10.7.0",
-    "happy-dom": "^20.11.0",
-    "typescript": "^6.0.3",
-    "vitest": "^4.1.10",
-    "vue-tsc": "^3.3.7"
+    "@antfu/eslint-config": "^9.3.0",
+    "eslint": "^10.8.1",
+    "eslint-plugin-format": "^2.0.1",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.3.0",
+    "turbo": "^2.10.10",
+    "typescript": "^5.9.3"
   },
-  "packageManager": "pnpm@11.13.1"
+  "lint-staged": {
+    "*": "eslint --fix --no-warn-ignored"
+  }
 }

@@ -1,0 +1,32 @@
+{
+  "name": "@nuxt-app/layer-base",
+  "type": "module",
+  "private": true,
+  "exports": {
+    ".": "./nuxt.config.ts",
+    "./load-root-env": "./load-root-env.ts"
+  },
+  "main": "./nuxt.config.ts",
+  "scripts": {
+    "postinstall": "nuxt prepare",
+    "nuxt:prepare": "nuxt prepare",
+    "type-check": "nuxt typecheck",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@iconify-json/lucide": "^1.2.123",
+    "@nuxt/ui": "^4.10.0",
+    "@tailwindcss/vite": "^4.3.3",
+    "dotenv": "^17.4.2",
+    "nuxt": "^4.5.2",
+    "tailwindcss": "^4.3.3"
+  },
+  "devDependencies": {
+    "@nuxt/test-utils": "^4.1.0",
+    "@vue/test-utils": "^2.4.11",
+    "happy-dom": "^20.11.2",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.10",
+    "vue-tsc": "^3.3.10"
+  }
+}

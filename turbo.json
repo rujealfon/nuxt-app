@@ -1,0 +1,27 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "tasks": {
+    "nuxt:prepare": {
+      "outputs": [".nuxt/**"]
+    },
+    "build": {
+      "dependsOn": ["^build", "^nuxt:prepare"],
+      "outputs": ["dist/**", ".output/**", ".nuxt/**"],
+      "env": ["NUXT_PUBLIC_APP_URL", "NUXT_PUBLIC_API_URL", "APP_URL"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "lint": {},
+    "test": {
+      "env": ["DATABASE_URL", "DATABASE_URL_TEST"]
+    },
+    "type-check": {
+      "dependsOn": ["^build"]
+    },
+    "clean": {
+      "cache": false
+    }
+  }
+}

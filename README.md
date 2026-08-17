@@ -1,64 +1,133 @@
-# Nuxt Starter Template
+# Nuxt App Monorepo Starter
 
-[![Nuxt UI](https://img.shields.io/badge/Made%20with-Nuxt%20UI-00DC82?logo=nuxt&labelColor=020420)](https://ui.nuxt.com)
+A production-ready monorepo for:
 
-Use this template to get started with [Nuxt UI](https://ui.nuxt.com) quickly.
+| Domain               | App   | Description                 |
+| -------------------- | ----- | --------------------------- |
+| `nuxt-app.com`       | web   | Public marketing site (SSG) |
+| `app.nuxt-app.com`   | app   | Authenticated product (SPA) |
+| `admin.nuxt-app.com` | admin | Admin panel (SPA)           |
+| `api.nuxt-app.com`   | api   | Hono API + custom auth      |
 
-- [Live demo](https://starter-template.nuxt.dev/)
-- [Documentation](https://ui.nuxt.com/docs/getting-started/installation/nuxt)
+## Layers
 
-<a href="https://starter-template.nuxt.dev/" target="_blank">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://ui.nuxt.com/assets/templates/nuxt/starter-dark.png">
-    <source media="(prefers-color-scheme: light)" srcset="https://ui.nuxt.com/assets/templates/nuxt/starter-light.png">
-    <img alt="Nuxt Starter Template" src="https://ui.nuxt.com/assets/templates/nuxt/starter-light.png" width="830" height="466">
-  </picture>
-</a>
+Nuxt apps extend shared layers:
 
-> The starter template for Vue is on https://github.com/nuxt-ui-templates/starter-vue.
+| Layer         | Package                | Used by         | Provides                                         |
+| ------------- | ---------------------- | --------------- | ------------------------------------------------ |
+| `layers/base` | `@nuxt-app/layer-base` | app, admin, web | Tailwind, UI components, Nitro/devtools          |
+| `layers/auth` | `@nuxt-app/layer-auth` | app, admin      | `useAuth`, `auth` / `guest` / `admin` middleware |
 
-## Quick Start
+## Stack
 
-```bash [Terminal]
-npm create nuxt@latest -- -t ui
+- **Monorepo**: pnpm + Turborepo
+- **Frontends**: Nuxt 4
+- **API**: Hono
+- **Auth**: Custom session-based (httpOnly cookies)
+- **DB**: PostgreSQL via Drizzle
+- **Runtime**: Docker Compose (Postgres + Redis + all apps)
+- **Rate limit**: `redis` (node-redis) + `hono-rate-limiter` RedisStore (in-memory in tests)
+
+## Structure
+
+```
+nuxt-app/
+├── apps/
+│   ├── api/          # Hono backend (port 3001)
+│   ├── app/          # User app (port 3000)
+│   ├── admin/        # Admin panel (port 3002)
+│   └── web/          # Public marketing site (port 3003)
+├── layers/
+│   ├── base/         # Tailwind, UI components, shared Nuxt config
+│   └── auth/         # useAuth, auth/guest/admin middleware
+├── packages/
+│   ├── auth/         # Shared auth HTTP client
+│   └── types/        # Shared TypeScript types
+├── docker/
+│   ├── Dockerfile.nuxt
+│   └── Dockerfile.static
+├── docker-compose.yml
+├── DOCKER.md
+├── package.json
+├── pnpm-workspace.yaml
+└── turbo.json
 ```
 
-## Deploy your own
+## Quick start
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-name=starter&repository-url=https%3A%2F%2Fgithub.com%2Fnuxt-ui-templates%2Fstarter&demo-image=https%3A%2F%2Fui.nuxt.com%2Fassets%2Ftemplates%2Fnuxt%2Fstarter-dark.png&demo-url=https%3A%2F%2Fstarter-template.nuxt.dev%2F&demo-title=Nuxt%20Starter%20Template&demo-description=A%20minimal%20template%20to%20get%20started%20with%20Nuxt%20UI.)
-
-## Setup
-
-Make sure to install the dependencies:
+See [DOCKER.md](./DOCKER.md) for Compose commands, ports, and images.
 
 ```bash
+cp .env.example .env
+pnpm docker:up
+```
+
+## Lint
+
+[@antfu/eslint-config](https://github.com/antfu/eslint-config) at the repo root (Vue + TypeScript + CSS formatters).
+
+```bash
+pnpm lint
+pnpm lint:fix
+```
+
+A Husky pre-commit hook runs `lint-staged` (`eslint --fix` on staged files).
+
+## Local development (apps on the host)
+
+Start Postgres and Redis with Compose (see [DOCKER.md](./DOCKER.md)), then:
+
+```bash
+cp .env.example .env
 pnpm install
-```
-
-## Development Server
-
-Start the development server on `http://localhost:3000`:
-
-```bash
+pnpm db:migrate
 pnpm dev
 ```
 
-## Production
-
-Build the application for production:
+Or individually:
 
 ```bash
-pnpm build
+pnpm dev:api        # http://localhost:3001
+pnpm dev:app        # http://localhost:3000
+pnpm dev:admin      # http://localhost:3002
+pnpm dev:web        # http://localhost:3003
 ```
 
-Locally preview production build:
+## Authentication
+
+Custom session-based auth:
+
+- Password hashed with **bcrypt**
+- Sessions stored in Postgres
+- **httpOnly** cookie (`nuxt_app_session`)
+- Cross-subdomain ready (set `COOKIE_DOMAIN=.nuxt-app.com` in production)
+
+### Create first admin user
 
 ```bash
-pnpm preview
+ADMIN_PASSWORD='your-strong-password' pnpm db:seed
 ```
 
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+`ADMIN_PASSWORD` is required. Optional: `ADMIN_EMAIL` (default `admin@nuxt-app.com`) and `ADMIN_NAME`.
 
-## Renovate integration
+Or register normally, then promote the user:
 
-Install [Renovate GitHub app](https://github.com/apps/renovate/installations/select_target) on your repository and you are good to go.
+```sql
+UPDATE users SET role = 'admin' WHERE email = 'you@example.com';
+```
+
+### API Endpoints
+
+| Method | Path               | Description    |
+| ------ | ------------------ | -------------- |
+| POST   | `/auth/register`   | Create account |
+| POST   | `/auth/login`      | Login          |
+| POST   | `/auth/logout`     | Logout         |
+| GET    | `/auth/me`         | Current user   |
+| GET    | `/admin/dashboard` | Admin only     |
+
+## Notes
+
+- Cookies work across subdomains when `COOKIE_DOMAIN=.nuxt-app.com`
+- For local development, `COOKIE_DOMAIN` can stay `localhost`
+- Preview `*.vercel.app` hosts are distinct sites: leave `COOKIE_DOMAIN` unset; the app/admin clients use a same-origin `/__api` proxy so the session cookie is first-party

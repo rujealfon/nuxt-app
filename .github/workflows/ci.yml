@@ -1,34 +1,66 @@
-name: ci
+name: CI
 
-on: push
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  DATABASE_URL: postgres://nuxt:nuxt@localhost:5432/nuxt_app
+  DATABASE_URL_TEST: postgres://nuxt:nuxt@localhost:5432/nuxt_app_test
 
 jobs:
   ci:
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        os: [ubuntu-latest]
-        node: [22]
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: nuxt
+          POSTGRES_PASSWORD: nuxt
+          POSTGRES_DB: nuxt_app
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U nuxt -d nuxt_app"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v7
+      - name: Checkout repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v6
+      - name: Setup pnpm
+        uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
 
-      - name: Install node
-        uses: actions/setup-node@v6
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version: ${{ matrix.node }}
+          node-version: 24
           cache: pnpm
 
       - name: Install dependencies
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
+        env:
+          HUSKY: '0'
 
       - name: Lint
-        run: pnpm run lint
+        run: pnpm lint
 
-      - name: Typecheck
-        run: pnpm run typecheck
+      - name: Type-check
+        run: pnpm type-check
+
+      - name: Test
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build
