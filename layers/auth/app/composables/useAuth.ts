@@ -75,8 +75,7 @@ export function useAuth() {
   }
 
   async function ensureUser() {
-    if (me.status.value !== 'success')
-      await me.refresh()
+    await me.refresh()
     return me.data.value ?? null
   }
 

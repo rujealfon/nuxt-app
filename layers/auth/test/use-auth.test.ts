@@ -38,7 +38,10 @@ const Harness = defineComponent({
       queryCache.setQueryData(authKeys.me, null)
       auth.error.value = null
     }
-    return { ...auth, reset }
+    function markMeStale() {
+      return queryCache.invalidateQueries({ key: [...authKeys.me] }, false)
+    }
+    return { ...auth, reset, markMeStale }
   },
   template: '<div />',
 })
@@ -131,5 +134,22 @@ describe('useAuth', () => {
     const wrapper = await mountAuth()
     await wrapper.vm.login('ada@example.com', 'password12')
     expect(wrapper.vm.isAdmin).toBe(true)
+  })
+
+  it('revalidates a stale successful me query on ensureUser', async () => {
+    vi.mocked(authClient.login).mockResolvedValue({ user })
+    const wrapper = await mountAuth()
+    await wrapper.vm.login('ada@example.com', 'password12')
+    vi.mocked(authClient.me).mockClear()
+    vi.mocked(authClient.me).mockResolvedValue({ user: null })
+
+    await wrapper.vm.ensureUser()
+    expect(wrapper.vm.user).toEqual(user)
+    expect(authClient.me).not.toHaveBeenCalled()
+
+    await wrapper.vm.markMeStale()
+    await wrapper.vm.ensureUser()
+    expect(wrapper.vm.user).toBeNull()
+    expect(authClient.me).toHaveBeenCalled()
   })
 })

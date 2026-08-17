@@ -55,6 +55,17 @@ describe('api', () => {
       .toBe('Password must be at least 8 characters')
   })
 
+  it('rejects a register password longer than 72 bytes', async () => {
+    const { res, body } = await json('/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: 'ada@example.com', password: 'a'.repeat(73), name: 'Ada' }),
+    })
+    expect(res.status).toBe(422)
+    expect((body.error as { issues: Array<{ message?: string }> }).issues[0]?.message)
+      .toBe('Password must be at most 72 bytes')
+  })
+
   it('rejects a malformed register email', async () => {
     const { res, body } = await json('/auth/register', {
       method: 'POST',

@@ -54,6 +54,38 @@ describe('registerSchema', () => {
       expect(result.error.issues[0]?.message).toBe('Password must be at least 8 characters')
   })
 
+  it('accepts a 72-byte password', () => {
+    const password = 'a'.repeat(72)
+    expect(registerSchema.parse({
+      email: 'ada@example.com',
+      password,
+      name: 'Ada',
+    }).password).toBe(password)
+  })
+
+  it('rejects a password longer than 72 UTF-8 bytes', () => {
+    const result = registerSchema.safeParse({
+      email: 'ada@example.com',
+      password: 'a'.repeat(73),
+      name: 'Ada',
+    })
+    expect(result.success).toBe(false)
+    if (!result.success)
+      expect(result.error.issues[0]?.message).toBe('Password must be at most 72 bytes')
+  })
+
+  it('rejects a password whose UTF-8 encoding exceeds 72 bytes', () => {
+    // 24 snowmen × 3 bytes = 72; one more exceeds bcrypt's limit under 72 characters
+    const result = registerSchema.safeParse({
+      email: 'ada@example.com',
+      password: `${'☃'.repeat(24)}!`,
+      name: 'Ada',
+    })
+    expect(result.success).toBe(false)
+    if (!result.success)
+      expect(result.error.issues[0]?.message).toBe('Password must be at most 72 bytes')
+  })
+
   it('rejects a missing name', () => {
     const result = registerSchema.safeParse({
       email: 'ada@example.com',

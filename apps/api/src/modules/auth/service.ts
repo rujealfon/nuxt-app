@@ -141,6 +141,13 @@ export async function deleteSession(sessionId: string) {
   await db.delete(sessions).where(eq(sessions.id, id))
 }
 
-export async function deleteUserSessions(userId: string) {
-  await db.delete(sessions).where(eq(sessions.userId, userId))
+export async function resetUserAsAdmin(userId: string, passwordHash: string) {
+  await db.transaction(async (tx) => {
+    await tx.update(users).set({
+      passwordHash,
+      role: 'admin',
+      updatedAt: new Date(),
+    }).where(eq(users.id, userId))
+    await tx.delete(sessions).where(eq(sessions.userId, userId))
+  })
 }

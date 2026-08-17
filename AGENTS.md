@@ -9,7 +9,7 @@ pnpm dev              # all apps via Turborepo (api:3001, app:3000, admin:3002, 
 pnpm dev:api          # single app: turbo run dev --filter=@nuxt-app/api (also dev:app, dev:admin, dev:web)
 pnpm build            # turbo run build (respects dependsOn: ["^build"])
 pnpm type-check       # turbo run type-check
-pnpm lint / lint:fix  # eslint . (root-level flat config, applies repo-wide)
+pnpm lint / lint:fix  # eslint . (root-level flat config, applies repo-wide; husky pre-commit runs lint-staged)
 pnpm test             # turbo run test (API, Nuxt apps/layers, packages)
 pnpm db:generate      # drizzle-kit generate (run after editing apps/api/src/db/schema/)
 pnpm db:migrate       # applies migrations (also runs automatically on API boot, see apps/api/src/index.ts)

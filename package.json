@@ -33,13 +33,19 @@
     "docker:rebuild": "docker compose up --build -d --wait",
     "docker:reset": "docker compose down -v && docker compose up --build -d --wait",
     "docker:db:migrate": "docker compose exec api pnpm db:migrate",
-    "docker:db:seed": "docker compose exec -e ADMIN_PASSWORD -e ADMIN_EMAIL -e ADMIN_NAME api pnpm db:seed"
+    "docker:db:seed": "docker compose exec -e ADMIN_PASSWORD -e ADMIN_EMAIL -e ADMIN_NAME api pnpm db:seed",
+    "prepare": "husky"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^9.3.0",
     "eslint": "^10.8.1",
     "eslint-plugin-format": "^2.0.1",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.3.0",
     "turbo": "^2.10.10",
     "typescript": "^5.9.3"
+  },
+  "lint-staged": {
+    "*": "eslint --fix --no-warn-ignored"
   }
 }

@@ -71,6 +71,8 @@ pnpm lint
 pnpm lint:fix
 ```
 
+A Husky pre-commit hook runs `lint-staged` (`eslint --fix` on staged files).
+
 ## Local development (apps on the host)
 
 Start Postgres and Redis with Compose (see [DOCKER.md](./DOCKER.md)), then:

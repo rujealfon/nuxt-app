@@ -5,7 +5,7 @@
  */
 import process from 'node:process'
 import { db, pool, users } from '@api/db'
-import { createUser, deleteUserSessions, hashPassword } from '@api/modules/auth/service.js'
+import { createUser, hashPassword, resetUserAsAdmin } from '@api/modules/auth/service.js'
 import { registerSchema } from '@nuxt-app/types'
 import { eq } from 'drizzle-orm'
 
@@ -36,12 +36,7 @@ export async function seed(env: NodeJS.Dict<string> = process.env) {
 
   if (existing) {
     const passwordHash = await hashPassword(password)
-    await db.update(users).set({
-      passwordHash,
-      role: 'admin',
-      updatedAt: new Date(),
-    }).where(eq(users.id, existing.id))
-    await deleteUserSessions(existing.id)
+    await resetUserAsAdmin(existing.id, passwordHash)
 
     const action = existing.role === 'admin'
       ? 'password reset'
