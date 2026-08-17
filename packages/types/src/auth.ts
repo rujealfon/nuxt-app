@@ -24,7 +24,9 @@ export const registerSchema = z.object({
 
 export const loginSchema = z.object({
   email: emailField(loginRequired),
-  password: z.string(loginRequired).min(1, loginRequired),
+  password: z.string(loginRequired)
+    .min(1, loginRequired)
+    .refine(fitsBcrypt, { error: passwordTooLong }),
 })
 
 export type LoginInput = z.infer<typeof loginSchema>

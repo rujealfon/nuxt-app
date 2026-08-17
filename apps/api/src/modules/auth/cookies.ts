@@ -14,15 +14,11 @@ export function sessionCookieOptions(input: {
   cookieDomain: env.COOKIE_DOMAIN,
 }): CookieOptions {
   const isProd = input.nodeEnv === 'production'
-  // vercel.app is on the public suffix list, so each *.vercel.app project is
-  // its own site. Without a shared COOKIE_DOMAIN the session must be
-  // SameSite=None; Secure or credentialed fetches from the preview app omit it.
-  const crossSite = isProd && !input.cookieDomain
 
   return {
     httpOnly: true,
     secure: isProd,
-    sameSite: crossSite ? 'None' : 'Lax',
+    sameSite: 'Lax',
     path: '/',
     maxAge: 60 * 60 * 24 * 7,
     domain: input.cookieDomain,

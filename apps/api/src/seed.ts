@@ -10,8 +10,8 @@ import { registerSchema } from '@nuxt-app/types'
 import { eq } from 'drizzle-orm'
 
 export function resolveAdminSeedPassword(env: NodeJS.Dict<string> = process.env): string {
-  const password = env.ADMIN_PASSWORD?.trim()
-  if (!password) {
+  const password = env.ADMIN_PASSWORD
+  if (!password?.trim()) {
     throw new Error(
       'ADMIN_PASSWORD is required to seed an admin user. Set it explicitly, e.g. ADMIN_PASSWORD=... pnpm db:seed',
     )

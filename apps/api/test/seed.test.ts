@@ -22,6 +22,10 @@ describe('resolveAdminSeedPassword', () => {
   it('returns an explicit password', () => {
     expect(resolveAdminSeedPassword({ ADMIN_PASSWORD: 'correct-horse' })).toBe('correct-horse')
   })
+
+  it('preserves leading and trailing spaces', () => {
+    expect(resolveAdminSeedPassword({ ADMIN_PASSWORD: '  correct-horse  ' })).toBe('  correct-horse  ')
+  })
 })
 
 describe('resolveAdminSeedEmail', () => {

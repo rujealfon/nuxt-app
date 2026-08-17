@@ -109,6 +109,20 @@ describe('api', () => {
     }
   })
 
+  it('rejects a login password longer than 72 bytes', async () => {
+    const { res, body } = await json('/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: 'ada@example.com',
+        password: 'a'.repeat(73),
+      }),
+    })
+    expect(res.status).toBe(422)
+    expect((body.error as { issues: Array<{ message?: string }> }).issues[0]?.message)
+      .toBe('Password must be at most 72 bytes')
+  })
+
   it('returns null user when unauthenticated', async () => {
     const { res, body } = await json('/auth/me')
     expect(res.status).toBe(200)

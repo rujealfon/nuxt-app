@@ -1,7 +1,10 @@
-import { setAuthApiUrl } from '@nuxt-app/auth/client'
+import { resolveAuthApiBase, setAuthApiUrl } from '@nuxt-app/auth'
 
 export default defineNuxtPlugin(() => {
   const config = useRuntimeConfig()
-  if (config.public.apiUrl)
-    setAuthApiUrl(config.public.apiUrl as string)
+  const apiUrl = String(config.public.apiUrl || '')
+  if (!apiUrl)
+    return
+  const pageHref = import.meta.client ? window.location.href : undefined
+  setAuthApiUrl(resolveAuthApiBase(apiUrl, pageHref))
 })

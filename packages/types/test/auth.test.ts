@@ -28,6 +28,24 @@ describe('loginSchema', () => {
     if (!result.success)
       expect(result.error.issues[0]?.message).toBe('Invalid email')
   })
+
+  it('accepts a 72-byte password', () => {
+    const password = 'a'.repeat(72)
+    expect(loginSchema.parse({
+      email: 'ada@example.com',
+      password,
+    }).password).toBe(password)
+  })
+
+  it('rejects a password longer than 72 UTF-8 bytes', () => {
+    const result = loginSchema.safeParse({
+      email: 'ada@example.com',
+      password: 'a'.repeat(73),
+    })
+    expect(result.success).toBe(false)
+    if (!result.success)
+      expect(result.error.issues[0]?.message).toBe('Password must be at most 72 bytes')
+  })
 })
 
 describe('registerSchema', () => {

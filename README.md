@@ -118,17 +118,16 @@ UPDATE users SET role = 'admin' WHERE email = 'you@example.com';
 
 ### API Endpoints
 
-| Method | Path               | Description             |
-| ------ | ------------------ | ----------------------- |
-| POST   | `/auth/register`   | Create account          |
-| POST   | `/auth/login`      | Login                   |
-| POST   | `/auth/logout`     | Logout                  |
-| GET    | `/auth/me`         | Current user            |
-| GET    | `/me`              | Protected route example |
-| GET    | `/admin/dashboard` | Admin only              |
+| Method | Path               | Description    |
+| ------ | ------------------ | -------------- |
+| POST   | `/auth/register`   | Create account |
+| POST   | `/auth/login`      | Login          |
+| POST   | `/auth/logout`     | Logout         |
+| GET    | `/auth/me`         | Current user   |
+| GET    | `/admin/dashboard` | Admin only     |
 
 ## Notes
 
 - Cookies work across subdomains when `COOKIE_DOMAIN=.nuxt-app.com`
 - For local development, `COOKIE_DOMAIN` can stay `localhost`
-- Preview `*.vercel.app` hosts are cross-site: leave `COOKIE_DOMAIN` unset so the API uses `SameSite=None; Secure`
+- Preview `*.vercel.app` hosts are distinct sites: leave `COOKIE_DOMAIN` unset; the app/admin clients use a same-origin `/__api` proxy so the session cookie is first-party

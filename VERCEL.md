@@ -2,12 +2,12 @@
 
 Four separate projects, one GitHub repo (`rujealfon/nuxt-app`). Each has its own Root Directory, env, domains, and rollback.
 
-| Project | Root Directory | Runtime | Serves |
-| --- | --- | --- | --- |
-| `nuxt-app-web` | `apps/web` | Static (`nuxt generate`) | Marketing site |
-| `nuxt-app-app` | `apps/app` | Nuxt SPA (`ssr: false`) | Logged-in product |
-| `nuxt-app-admin` | `apps/admin` | Nuxt SPA | Admin |
-| `nuxt-app-api` | `apps/api` | Hono on Node (Fluid Compute) | Auth, sessions, DB |
+| Project          | Root Directory | Runtime                      | Serves             |
+| ---------------- | -------------- | ---------------------------- | ------------------ |
+| `nuxt-app-web`   | `apps/web`     | Static (`nuxt generate`)     | Marketing site     |
+| `nuxt-app-app`   | `apps/app`     | Nuxt SPA (`ssr: false`)      | Logged-in product  |
+| `nuxt-app-admin` | `apps/admin`   | Nuxt SPA                     | Admin              |
+| `nuxt-app-api`   | `apps/api`     | Hono on Node (Fluid Compute) | Auth, sessions, DB |
 
 Custom domains (attach when DNS is ready):
 
@@ -32,12 +32,12 @@ Migrations do **not** run on API boot on Vercel. Apply them from your machine (o
 
 Each app owns its settings in `apps/<name>/vercel.json` (picked up because Root Directory is that folder). Leave dashboard **Override** toggles (Build / Output / Install / Development) off so the files win. Leave **Include files outside the Root Directory** on (pnpm workspaces need `layers/*` and `packages/*`). Node **24.x**. Install stays the default (`pnpm install` from the repo root).
 
-| App | File | Framework | Build | Output |
-| --- | --- | --- | --- | --- |
-| web | `apps/web/vercel.json` | `nuxtjs` | `pnpm build` (`nuxt generate`) | `.output/public` |
-| app | `apps/app/vercel.json` | `nuxtjs` | `pnpm build` (`nuxt build`) | default (Nitro `vercel` → `.vercel/output`) |
-| admin | `apps/admin/vercel.json` | `nuxtjs` | `pnpm build` (`nuxt build`) | default |
-| api | `apps/api/vercel.json` | `hono` | empty (do not run `tsc`) | default — Vercel bundles `src/app.ts` |
+| App   | File                     | Framework | Build                          | Output                                      |
+| ----- | ------------------------ | --------- | ------------------------------ | ------------------------------------------- |
+| web   | `apps/web/vercel.json`   | `nuxtjs`  | `pnpm build` (`nuxt generate`) | `.output/public`                            |
+| app   | `apps/app/vercel.json`   | `nuxtjs`  | `pnpm build` (`nuxt build`)    | default (Nitro `vercel` → `.vercel/output`) |
+| admin | `apps/admin/vercel.json` | `nuxtjs`  | `pnpm build` (`nuxt build`)    | default                                     |
+| api   | `apps/api/vercel.json`   | `hono`    | empty (do not run `tsc`)       | default — Vercel bundles `src/app.ts`       |
 
 `ignoreCommand` is `npx turbo-ignore` in every file. That skips a project when that package and its workspace deps did not change.
 
@@ -49,12 +49,12 @@ Do **not** copy web’s `outputDirectory` onto app/admin. Those are `nuxt build`
 
 On each project: **Settings → Build and Deployment → Framework Preset**:
 
-| Project | Framework Preset |
-| --- | --- |
-| `nuxt-app-web` | Nuxt |
-| `nuxt-app-app` | Nuxt |
-| `nuxt-app-admin` | Nuxt |
-| `nuxt-app-api` | **Hono** |
+| Project          | Framework Preset |
+| ---------------- | ---------------- |
+| `nuxt-app-web`   | Nuxt             |
+| `nuxt-app-app`   | Nuxt             |
+| `nuxt-app-admin` | Nuxt             |
+| `nuxt-app-api`   | **Hono**         |
 
 If `nuxt-app-api` still shows Nuxt, switch it to Hono, save, and redeploy. Leave the four Override toggles off.
 
@@ -81,32 +81,32 @@ Set on each project (Production + Preview). Projects do not inherit each other�
 
 **`nuxt-app-api`**
 
-| Name | Production |
-| --- | --- |
-| `DATABASE_URL` | Neon **pooled** URL (runtime) |
-| `REDIS_URL` | Upstash `rediss://…` |
-| `NODE_ENV` | `production` (Vercel usually sets this) |
-| `API_URL` | `https://api.nuxt-app.com` (or the API `*.vercel.app` URL until DNS is ready) |
-| `APP_URL` | `https://app.nuxt-app.com` |
-| `ADMIN_URL` | `https://admin.nuxt-app.com` |
-| `WEB_URL` | `https://nuxt-app.com` |
-| `COOKIE_DOMAIN` | `.nuxt-app.com` on custom domains; omit on `*.vercel.app` previews (API then sets `SameSite=None; Secure` so the cookie is sent on the app’s credentialed fetches) |
-| `LOG_LEVEL` | `info` |
+| Name            | Production                                                                                                                                   |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`  | Neon **pooled** URL (runtime)                                                                                                                |
+| `REDIS_URL`     | Upstash `rediss://…`                                                                                                                         |
+| `NODE_ENV`      | `production` (Vercel usually sets this)                                                                                                      |
+| `API_URL`       | `https://api.nuxt-app.com` (or the API `*.vercel.app` URL until DNS is ready)                                                                |
+| `APP_URL`       | `https://app.nuxt-app.com`                                                                                                                   |
+| `ADMIN_URL`     | `https://admin.nuxt-app.com`                                                                                                                 |
+| `WEB_URL`       | `https://nuxt-app.com`                                                                                                                       |
+| `COOKIE_DOMAIN` | `.nuxt-app.com` on custom domains; omit on `*.vercel.app` previews (app/admin use a same-origin `/__api` proxy so the cookie is first-party) |
+| `LOG_LEVEL`     | `info`                                                                                                                                       |
 
 `APP_URL` / `ADMIN_URL` / `WEB_URL` are the CORS + CSRF allowlist. Exact origin: `https`, no trailing slash.
 
 **`nuxt-app-app` and `nuxt-app-admin`**
 
-| Name | Value |
-| --- | --- |
+| Name                  | Value                      |
+| --------------------- | -------------------------- |
 | `NUXT_PUBLIC_API_URL` | `https://api.nuxt-app.com` |
 
 Baked in at **build** time (`layers/auth` `runtimeConfig.public.apiUrl`). Change it, then redeploy those two projects.
 
 **`nuxt-app-web`**
 
-| Name | Value |
-| --- | --- |
+| Name                  | Value                      |
+| --------------------- | -------------------------- |
 | `NUXT_PUBLIC_APP_URL` | `https://app.nuxt-app.com` |
 
 Baked into the static site at **generate** time (`runtimeConfig.public.appUrl`). Change it, then redeploy web. Falls back to `APP_URL` if unset.
@@ -117,16 +117,16 @@ Preview: either Preview-scoped URL vars, or preview frontends call the productio
 
 Settings → Domains on each project:
 
-| Domain | Project |
-| --- | --- |
-| `nuxt-app.com` + `www` | `nuxt-app-web` |
-| `app.nuxt-app.com` | `nuxt-app-app` |
-| `admin.nuxt-app.com` | `nuxt-app-admin` |
-| `api.nuxt-app.com` | `nuxt-app-api` |
+| Domain                 | Project          |
+| ---------------------- | ---------------- |
+| `nuxt-app.com` + `www` | `nuxt-app-web`   |
+| `app.nuxt-app.com`     | `nuxt-app-app`   |
+| `admin.nuxt-app.com`   | `nuxt-app-admin` |
+| `api.nuxt-app.com`     | `nuxt-app-api`   |
 
 Add the DNS records Vercel shows. Then set `COOKIE_DOMAIN=.nuxt-app.com` on the API and redeploy it.
 
-Until DNS is live: use the four `*.vercel.app` URLs, leave `COOKIE_DOMAIN` unset, and put those exact origins in `APP_URL` / `ADMIN_URL` / `WEB_URL` / `NUXT_PUBLIC_API_URL` / `NUXT_PUBLIC_APP_URL`. Each `*.vercel.app` hostname is its own site, so the session cookie is `SameSite=None; Secure` when `COOKIE_DOMAIN` is omitted in production. After custom domains are attached, set `COOKIE_DOMAIN=.nuxt-app.com` to go back to `SameSite=Lax` on the shared parent.
+Until DNS is live: use the four `*.vercel.app` URLs, leave `COOKIE_DOMAIN` unset, and put those exact origins in `APP_URL` / `ADMIN_URL` / `WEB_URL` / `NUXT_PUBLIC_API_URL` / `NUXT_PUBLIC_APP_URL`. Each `*.vercel.app` hostname is its own site, so the app/admin clients call the API through a same-origin `/__api` proxy and the session cookie stays first-party (`SameSite=Lax`). After custom domains are attached, set `COOKIE_DOMAIN=.nuxt-app.com` so app and admin share the cookie on the parent domain.
 
 ## Migrate
 
