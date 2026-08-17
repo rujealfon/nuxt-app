@@ -26,7 +26,7 @@ export function resolveAdminSeedPassword(env: NodeJS.Dict<string> = process.env)
 }
 
 export async function seed(env: NodeJS.Dict<string> = process.env) {
-  const email = env.ADMIN_EMAIL || 'admin@nuxt-app.com'
+  const email = (env.ADMIN_EMAIL || 'admin@nuxt-app.com').toLowerCase()
   const name = env.ADMIN_NAME || 'Admin'
   const password = resolveAdminSeedPassword(env)
 

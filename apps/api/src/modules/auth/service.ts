@@ -4,6 +4,14 @@ import bcrypt from 'bcryptjs'
 import { and, eq, gt } from 'drizzle-orm'
 import { HTTPException } from 'hono/http-exception'
 import * as HttpStatusCodes from 'stoker/http-status-codes'
+import { z } from 'zod'
+
+const sessionIdSchema = z.uuid()
+
+function asSessionId(sessionId: string | undefined): string | undefined {
+  const parsed = sessionIdSchema.safeParse(sessionId)
+  return parsed.success ? parsed.data : undefined
+}
 
 const SESSION_DURATION_MS = 1000 * 60 * 60 * 24 * 7
 const SALT_ROUNDS = 12
@@ -102,7 +110,8 @@ export async function createSession(userId: string): Promise<string> {
 }
 
 export async function getSessionUser(sessionId: string): Promise<AuthUser | null> {
-  if (!sessionId)
+  const id = asSessionId(sessionId)
+  if (!id)
     return null
 
   const result = await db
@@ -115,7 +124,7 @@ export async function getSessionUser(sessionId: string): Promise<AuthUser | null
     })
     .from(sessions)
     .innerJoin(users, eq(sessions.userId, users.id))
-    .where(and(eq(sessions.id, sessionId), gt(sessions.expiresAt, new Date())))
+    .where(and(eq(sessions.id, id), gt(sessions.expiresAt, new Date())))
     .limit(1)
 
   const row = result[0]
@@ -126,9 +135,10 @@ export async function getSessionUser(sessionId: string): Promise<AuthUser | null
 }
 
 export async function deleteSession(sessionId: string) {
-  if (!sessionId)
+  const id = asSessionId(sessionId)
+  if (!id)
     return
-  await db.delete(sessions).where(eq(sessions.id, sessionId))
+  await db.delete(sessions).where(eq(sessions.id, id))
 }
 
 export async function deleteUserSessions(userId: string) {

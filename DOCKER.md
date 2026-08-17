@@ -57,9 +57,12 @@ Inside Compose, the API uses `postgres:5432` and `redis://redis:6379`. The host 
 ```bash
 docker compose up postgres redis -d
 cp .env.example .env
+pnpm install
+pnpm db:migrate
+pnpm dev
 ```
 
-Point `DATABASE_URL` at `localhost:5433` and `REDIS_URL` at `redis://localhost:6380` (see `.env.example`). Then `pnpm install`, `pnpm db:migrate`, `pnpm dev`.
+`.env.example` already uses the published Compose ports (`localhost:5433` for Postgres, `localhost:6380` for Redis). Change those only if Postgres or Redis is running natively on the default ports.
 
 The API rate-limits by client IP (Redis in Compose/production, in-memory in tests). A reverse proxy should overwrite `X-Forwarded-For` — the limiter keys on that address, not the proxy socket. Do not trust a client-supplied value.
 

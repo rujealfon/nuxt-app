@@ -48,11 +48,22 @@ describe('api', () => {
     const { res, body } = await json('/auth/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: 'a@b.c', password: 'short', name: 'A' }),
+      body: JSON.stringify({ email: 'ada@example.com', password: 'short', name: 'A' }),
     })
     expect(res.status).toBe(422)
     expect((body.error as { issues: Array<{ message?: string }> }).issues[0]?.message)
       .toBe('Password must be at least 8 characters')
+  })
+
+  it('rejects a malformed register email', async () => {
+    const { res, body } = await json('/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: 'x', password: 'password12', name: 'Ada' }),
+    })
+    expect(res.status).toBe(422)
+    expect((body.error as { issues: Array<{ message?: string }> }).issues[0]?.message)
+      .toBe('Invalid email')
   })
 
   it('rejects empty login payload', async () => {
@@ -70,6 +81,23 @@ describe('api', () => {
     const { res, body } = await json('/auth/me')
     expect(res.status).toBe(200)
     expect(body).toEqual({ user: null })
+  })
+
+  it('treats a malformed session cookie as no session', async () => {
+    const cookie = 'nuxt_app_session=not-a-uuid'
+    const me = await json('/auth/me', { headers: { Cookie: cookie } })
+    expect(me.res.status).toBe(200)
+    expect(me.body).toEqual({ user: null })
+
+    const logout = await json('/auth/logout', {
+      method: 'POST',
+      headers: {
+        Cookie: cookie,
+        Origin: 'http://localhost:3000',
+      },
+    })
+    expect(logout.res.status).toBe(200)
+    expect(logout.body).toEqual({ message: 'Logged out' })
   })
 
   it('rejects unauthenticated admin routes', async () => {

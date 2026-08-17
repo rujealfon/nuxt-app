@@ -91,4 +91,22 @@ describe('seed', () => {
     expect(await verifyPassword('operator-pass-99', existing!.passwordHash)).toBe(true)
     expect(await getSessionUser(sessionId)).toBeNull()
   })
+
+  it('finds an existing user when ADMIN_EMAIL differs only by case', async () => {
+    const local = `seed-case-${Date.now()}`
+    const email = `${local}@nuxt-app.com`
+    await createUser({ email, password: 'attacker-pass', name: 'Pre' })
+
+    await seed({
+      ADMIN_EMAIL: `${local.toUpperCase()}@Nuxt-App.COM`,
+      ADMIN_NAME: 'Admin',
+      ADMIN_PASSWORD: 'operator-pass-99',
+    })
+
+    const existing = await db.query.users.findFirst({
+      where: eq(users.email, email),
+    })
+    expect(existing?.role).toBe('admin')
+    expect(await verifyPassword('operator-pass-99', existing!.passwordHash)).toBe(true)
+  })
 })

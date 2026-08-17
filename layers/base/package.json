@@ -4,7 +4,8 @@
   "private": true,
   "main": "./nuxt.config.ts",
   "scripts": {
-    "postinstall": "nuxt prepare"
+    "postinstall": "nuxt prepare",
+    "test": "vitest run"
   },
   "dependencies": {
     "@iconify-json/lucide": "^1.2.123",
@@ -12,5 +13,11 @@
     "@tailwindcss/vite": "^4.3.3",
     "nuxt": "^4.5.2",
     "tailwindcss": "^4.3.3"
+  },
+  "devDependencies": {
+    "@nuxt/test-utils": "^4.1.0",
+    "@vue/test-utils": "^2.4.11",
+    "happy-dom": "^20.11.2",
+    "vitest": "^4.1.10"
   }
 }

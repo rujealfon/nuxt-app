@@ -10,7 +10,7 @@ pnpm dev:api          # single app: turbo run dev --filter=@nuxt-app/api (also d
 pnpm build            # turbo run build (respects dependsOn: ["^build"])
 pnpm type-check       # turbo run type-check
 pnpm lint / lint:fix  # eslint . (root-level flat config, applies repo-wide)
-pnpm test             # turbo run test (API vitest via app.request(); uses nuxt_app_test)
+pnpm test             # turbo run test (API, Nuxt apps/layers, packages)
 pnpm db:generate      # drizzle-kit generate (run after editing apps/api/src/db/schema/)
 pnpm db:migrate       # applies migrations (also runs automatically on API boot, see apps/api/src/index.ts)
 pnpm db:studio        # drizzle-kit studio on the host
@@ -22,7 +22,9 @@ Vercel: [VERCEL.md](VERCEL.md) (four projects: `nuxt-app-web`, `nuxt-app-app`, `
 
 API tests live in `apps/api/test/` and call the mounted Hono app via `app.request()` (no HTTP server). They use database `nuxt_app_test` on the same Postgres as `DATABASE_URL` (override with `DATABASE_URL_TEST`). Setup creates that database and runs migrations. Rate limiting uses an in-memory store in tests (no Redis).
 
-Local host apps: Compose Postgres + Redis (see [DOCKER.md](DOCKER.md)), then `pnpm install`, `pnpm db:migrate`, `pnpm dev`.
+Nuxt apps and layers use `@nuxt/test-utils` + Vitest (`environment: 'nuxt'`, files under each package's `test/`). `packages/types` and `packages/auth` use plain Vitest.
+
+Local host apps: Compose Postgres + Redis (see [DOCKER.md](DOCKER.md)), then `pnpm install`, `pnpm db:migrate`, `pnpm dev`. `.env.example` points `DATABASE_URL` at Compose’s published Postgres port (5433).
 
 ## Architecture
 
@@ -50,6 +52,6 @@ Imports:
 
 When changing a shared package's public surface (`packages/*/src/index.ts` exports), check all consuming apps/layers, not just the one you're editing.
 
-Env vars are shared across all apps from repo-root `.env` (see `.env.example`): `DATABASE_URL`, `REDIS_URL`, `SESSION_SECRET`, `COOKIE_DOMAIN`, per-app `*_URL` vars used both for CORS allowlisting in `apps/api/src/app.ts` and for cross-subdomain cookie config in production. The marketing site bakes `NUXT_PUBLIC_APP_URL` (falls back to `APP_URL`) into Login/register CTAs at generate time. Rate-limit knobs: `RATE_LIMIT_MAX`, `RATE_LIMIT_WINDOW_MS`, `AUTH_RATE_LIMIT_MAX`. Log level: `LOG_LEVEL` (pino; tests use `silent`). A reverse proxy should overwrite `X-Forwarded-For`.
+Env vars are shared across all apps from repo-root `.env` (see `.env.example`): `DATABASE_URL`, `REDIS_URL`, `SESSION_SECRET`, `COOKIE_DOMAIN`, per-app `*_URL` vars used both for CORS allowlisting in `apps/api/src/app.ts` and for cross-subdomain cookie config in production. Production without `COOKIE_DOMAIN` (documented `*.vercel.app` previews) sets the session cookie `SameSite=None; Secure` so credentialed cross-site fetches include it. The marketing site bakes `NUXT_PUBLIC_APP_URL` (falls back to `APP_URL`) into Login/register CTAs at generate time. Rate-limit knobs: `RATE_LIMIT_MAX`, `RATE_LIMIT_WINDOW_MS`, `AUTH_RATE_LIMIT_MAX`. Log level: `LOG_LEVEL` (pino; tests use `silent`). A reverse proxy should overwrite `X-Forwarded-For`.
 
 Lint: `@antfu/eslint-config` (Vue + TypeScript + formatters) at repo root — no per-package eslint config.

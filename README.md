@@ -129,3 +129,4 @@ UPDATE users SET role = 'admin' WHERE email = 'you@example.com';
 
 - Cookies work across subdomains when `COOKIE_DOMAIN=.nuxt-app.com`
 - For local development, `COOKIE_DOMAIN` can stay `localhost`
+- Preview `*.vercel.app` hosts are cross-site: leave `COOKIE_DOMAIN` unset so the API uses `SameSite=None; Secure`
