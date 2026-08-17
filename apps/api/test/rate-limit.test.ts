@@ -1,4 +1,4 @@
-import { createRateLimit, resolveClientKey } from '@api/middleware/rate-limit.js'
+import { createRateLimit, resolveClientKey, skipPublic } from '@api/middleware/rate-limit.js'
 import { Hono } from 'hono'
 import { MemoryStore } from 'hono-rate-limiter'
 import { describe, expect, it } from 'vitest'
@@ -28,11 +28,7 @@ describe('rate limit', () => {
         limit: 1,
         windowMs: 60_000,
         store: new MemoryStore(),
-        skip: (c) => {
-          if (c.req.method === 'OPTIONS')
-            return true
-          return c.req.path === '/health'
-        },
+        skip: skipPublic,
       }))
       .get('/health', c => c.json({ status: 'ok' }))
       .get('/limited', c => c.json({ ok: true }))

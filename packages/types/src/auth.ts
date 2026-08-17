@@ -31,3 +31,12 @@ export const loginSchema = z.object({
 
 export type LoginInput = z.infer<typeof loginSchema>
 export type RegisterInput = z.infer<typeof registerSchema>
+
+export const authUserSchema = z.object({
+  id: z.string(),
+  email: z.string(),
+  name: z.string(),
+  role: z.enum(['user', 'admin']),
+})
+
+export type AuthUser = z.infer<typeof authUserSchema>

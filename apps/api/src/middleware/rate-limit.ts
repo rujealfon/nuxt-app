@@ -1,9 +1,9 @@
 import type { Context } from 'hono'
-import type { Store } from 'hono-rate-limiter'
+import type { MemoryStore, Store } from 'hono-rate-limiter'
 import { env } from '@api/env.js'
 import { rateLimitRedis } from '@api/redis.js'
 import { getConnInfo } from '@hono/node-server/conninfo'
-import { MemoryStore, rateLimiter, RedisStore } from 'hono-rate-limiter'
+import { rateLimiter, RedisStore } from 'hono-rate-limiter'
 import * as HttpStatusPhrases from 'stoker/http-status-phrases'
 
 const tooMany = { message: HttpStatusPhrases.TOO_MANY_REQUESTS } as const
@@ -48,11 +48,18 @@ function clientKey(c: Context): string {
   })
 }
 
-function skipPublic(c: Context) {
+export function skipPublic(c: Context) {
   if (c.req.method === 'OPTIONS')
     return true
   const path = c.req.path
   return path === '/' || path === '/health'
+}
+
+let rateLimitStoreFactory: (prefix: string) => Store = prefix => createRedisStore(prefix)
+
+/** Tests inject MemoryStore. Production keeps the Redis factory. */
+export function setRateLimitStoreFactory(factory: (prefix: string) => Store) {
+  rateLimitStoreFactory = factory
 }
 
 function createRedisStore(prefix: string): Store {
@@ -79,10 +86,28 @@ function createRedisStore(prefix: string): Store {
   }
 }
 
-function createStore(prefix: string) {
-  if (env.NODE_ENV === 'test')
-    return new MemoryStore()
-  return createRedisStore(prefix)
+function createStore(prefix: string): Store {
+  let inner: Store | undefined
+  let initOptions: Parameters<RedisStore['init']>[0] | undefined
+
+  function store() {
+    if (!inner) {
+      inner = rateLimitStoreFactory(prefix)
+      if (initOptions)
+        inner.init?.(initOptions)
+    }
+    return inner
+  }
+
+  return {
+    init(options) {
+      initOptions = options
+    },
+    increment: key => store().increment(key),
+    decrement: key => store().decrement(key),
+    resetKey: key => store().resetKey(key),
+    get: key => store().get?.(key),
+  }
 }
 
 export function createRateLimit(options: {

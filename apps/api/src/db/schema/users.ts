@@ -1,7 +1,6 @@
 import { sql } from 'drizzle-orm'
 import { pgEnum, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core'
 import { createSelectSchema } from 'drizzle-zod'
-import { z } from 'zod'
 
 export const userRole = pgEnum('user_role', ['user', 'admin'])
 
@@ -19,10 +18,3 @@ export const users = pgTable('users', {
 export type User = typeof users.$inferSelect
 
 export const selectUserSchema = createSelectSchema(users)
-export const authUserSelectSchema = selectUserSchema.pick({
-  email: true,
-  name: true,
-  role: true,
-}).extend({
-  id: z.string(),
-})

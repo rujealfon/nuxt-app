@@ -5,6 +5,7 @@ import { env } from '@api/env.js'
 import { deleteCookie, setCookie } from 'hono/cookie'
 
 export const SESSION_COOKIE = 'nuxt_app_session'
+export const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 7
 
 export function sessionCookieOptions(input: {
   nodeEnv: string
@@ -20,7 +21,7 @@ export function sessionCookieOptions(input: {
     secure: isProd,
     sameSite: 'Lax',
     path: '/',
-    maxAge: 60 * 60 * 24 * 7,
+    maxAge: SESSION_MAX_AGE_SECONDS,
     domain: input.cookieDomain,
   }
 }

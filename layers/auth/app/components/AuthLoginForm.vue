@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { AuthResponse, LoginInput } from '@nuxt-app/types'
 import { loginSchema } from '@nuxt-app/types'
+import { matchesRequiredRole } from '../utils/routeAccess'
 
 const props = withDefaults(defineProps<{
   title?: string
@@ -32,7 +33,7 @@ async function onSubmit(event: { data: LoginInput }) {
   roleError.value = ''
   try {
     const res = await login(event.data.email, event.data.password)
-    if (props.requireRole && res.user.role !== props.requireRole) {
+    if (!matchesRequiredRole(res.user, props.requireRole)) {
       roleError.value = `This account is not an ${props.requireRole}.`
       await logout('')
       return

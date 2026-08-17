@@ -39,7 +39,7 @@ pnpm + Turborepo monorepo, three layers: `apps/*` (deployables), `layers/*` (Nux
 - **packages/types** — shared Zod request schemas (`loginSchema`, `registerSchema`) plus inferred/plain types (`LoginInput`, `AuthUser`, …). API and Nuxt forms use the same schemas. Request bodies that are not table-shaped stay here; row/select Zod comes from drizzle-zod in `apps/api/src/db`.
 - **packages/auth** — Hono RPC client (`hc<AppType>` from `@nuxt-app/api/rpc`) for `/auth/*`, consumed by `layer-auth`'s `useAuth`.
 
-Auth flow: `apps/api/src/modules/auth/` owns password hashing (bcrypt), session CRUD, cookies, and `/auth/*` routes. `src/middleware/` exposes `sessionMiddleware`/`requireAuth`/`requireAdmin`. Sessions are opaque IDs in an httpOnly cookie (`nuxt_app_session`), not JWTs — `getSessionUser` joins `sessions` + `users` on every request. Frontend layer middleware (`layers/auth/app/middleware/*`) mirrors this by calling the API rather than reading cookies directly. Route guards use `ensureUser()` → `refresh()`, which honors Pinia Colada’s 30s `staleTime`: a revoked or demoted session can still pass a guard until the cache is stale. That is intentional (dedupe + fewer `/auth/me` calls). Use `fetchUser()` / `refetch()` when a surface must see the current session immediately.
+Auth flow: `apps/api/src/modules/auth/identity.ts` owns users and passwords (`createUser`, `authenticateUser`, `ensureAdmin`). `session.ts` owns start/end/currentUser — cookie + row + 7-day expiry. Routes map HTTP; they do not see the user PK. `src/middleware/` exposes `sessionMiddleware`/`requireAuth`/`requireAdmin`. Sessions are opaque IDs in an httpOnly cookie (`nuxt_app_session`), not JWTs — `currentUser` joins `sessions` + `users` on every request. The public user is `authUserSchema` in `@nuxt-app/types` (`id` is `public_id`). Frontend layer middleware calls the API rather than reading cookies. `resolveRouteAccess` is the route-access policy; the four Nuxt guards are adapters over it. Guards use `ensureUser()` → `refresh()`, which honors Pinia Colada’s 30s `staleTime`: a revoked or demoted session can still pass a guard until the cache is stale. That is intentional (dedupe + fewer `/auth/me` calls). Use `fetchUser()` / `refetch()` when a surface must see the current session immediately. Rate-limit tests inject `MemoryStore` via `setRateLimitStoreFactory`; production uses Redis.
 
 `src/index.ts` is process boot (`runMigrations()` + `serve`). CORS allowlisting lives in `src/app.ts`.
 
@@ -55,3 +55,17 @@ When changing a shared package's public surface (`packages/*/src/index.ts` expor
 Env vars are shared across all apps from repo-root `.env` (see `.env.example`). The API loads that file (then `apps/api/.env`) before parsing settings in `src/env.ts`. Nuxt layers/apps call `loadRootEnv()` before reading `NUXT_PUBLIC_*` (Turbo runs those tasks from each workspace directory): `DATABASE_URL`, `REDIS_URL`, `SESSION_SECRET`, `COOKIE_DOMAIN`, per-app `*_URL` vars used both for CORS allowlisting in `apps/api/src/app.ts` and for cross-subdomain cookie config in production. Documented `*.vercel.app` previews are distinct sites; app/admin call the API via a same-origin `/__api` Nitro proxy so the session cookie is first-party (`SameSite=Lax`). Production custom domains set `COOKIE_DOMAIN=.nuxt-app.com` to share the cookie across app and admin. The marketing site bakes `NUXT_PUBLIC_APP_URL` (falls back to `APP_URL`) into Login/register CTAs at generate time. Rate-limit knobs: `RATE_LIMIT_MAX`, `RATE_LIMIT_WINDOW_MS`, `AUTH_RATE_LIMIT_MAX`. Log level: `LOG_LEVEL` (pino; tests use `silent`). Rate limiting uses the socket address unless `TRUST_PROXY` is set (then the first `X-Forwarded-For` hop). A reverse proxy that overwrites `X-Forwarded-For` should set `TRUST_PROXY`.
 
 Lint: `@antfu/eslint-config` (Vue + TypeScript + formatters) at repo root — no per-package eslint config.
+
+## Agent skills
+
+### Issue tracker
+
+Issues live as markdown under `.scratch/<feature>/`. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Canonical roles map 1:1 to `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: one root `CONTEXT.md` and `docs/adr/`. See `docs/agents/domain.md`.

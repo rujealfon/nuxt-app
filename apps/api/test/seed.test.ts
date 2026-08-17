@@ -1,8 +1,24 @@
+import app from '@api/app.js'
 import { db, users } from '@api/db'
-import { createSession, createUser, getSessionUser, verifyPassword } from '@api/modules/auth/service.js'
+import { authenticateUser, createUser } from '@api/modules/auth/identity.js'
 import { resolveAdminSeedEmail, resolveAdminSeedPassword, seed } from '@api/seed'
 import { eq } from 'drizzle-orm'
 import { describe, expect, it } from 'vitest'
+
+async function login(email: string, password: string) {
+  return app.request('/auth/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  })
+}
+
+function sessionCookie(res: Response): string | undefined {
+  const header = res.headers.getSetCookie?.().find(value => value.startsWith('nuxt_app_session='))
+    ?? res.headers.get('set-cookie')
+    ?? undefined
+  return header?.split(';')[0]
+}
 
 describe('resolveAdminSeedPassword', () => {
   it('rejects a missing password', () => {
@@ -49,10 +65,7 @@ describe('seed', () => {
       /ADMIN_PASSWORD is required/,
     )
 
-    const existing = await db.query.users.findFirst({
-      where: eq(users.email, email),
-    })
-    expect(existing).toBeUndefined()
+    expect(await authenticateUser(email, 'unique-pass-99')).toBeNull()
   })
 
   it('creates an admin when ADMIN_PASSWORD is set', async () => {
@@ -63,11 +76,8 @@ describe('seed', () => {
       ADMIN_PASSWORD: 'unique-pass-99',
     })
 
-    const existing = await db.query.users.findFirst({
-      where: eq(users.email, email),
-    })
-    expect(existing?.role).toBe('admin')
-    expect(existing?.name).toBe('Admin')
+    const user = await authenticateUser(email, 'unique-pass-99')
+    expect(user).toMatchObject({ email, name: 'Admin', role: 'admin' })
   })
 
   it('does not promote a pre-existing account when ADMIN_PASSWORD is unset', async () => {
@@ -78,22 +88,19 @@ describe('seed', () => {
       /ADMIN_PASSWORD is required/,
     )
 
-    const existing = await db.query.users.findFirst({
-      where: eq(users.email, email),
-    })
-    expect(existing?.role).toBe('user')
-    expect(await verifyPassword('attacker-pass', existing!.passwordHash)).toBe(true)
+    const user = await authenticateUser(email, 'attacker-pass')
+    expect(user).toMatchObject({ email, role: 'user' })
   })
 
   it('resets the password and sessions when promoting a pre-existing account', async () => {
     const email = `seed-takeover-${Date.now()}@nuxt-app.com`
-    const created = await createUser({ email, password: 'attacker-pass', name: 'Pre' })
-    const row = await db.query.users.findFirst({
-      where: eq(users.email, email),
+    await createUser({ email, password: 'attacker-pass', name: 'Pre' })
+    const loggedIn = await login(email, 'attacker-pass')
+    const cookie = sessionCookie(loggedIn)
+    expect(cookie).toBeTruthy()
+    expect((await (await app.request('/auth/me', { headers: { Cookie: cookie! } })).json())).toMatchObject({
+      user: { email, role: 'user' },
     })
-    const sessionId = await createSession(row!.id)
-    expect(created?.role).toBe('user')
-    expect(await getSessionUser(sessionId)).not.toBeNull()
 
     await seed({
       ADMIN_EMAIL: email,
@@ -101,13 +108,14 @@ describe('seed', () => {
       ADMIN_PASSWORD: 'operator-pass-99',
     })
 
-    const existing = await db.query.users.findFirst({
-      where: eq(users.email, email),
+    expect(await authenticateUser(email, 'attacker-pass')).toBeNull()
+    expect(await authenticateUser(email, 'operator-pass-99')).toMatchObject({
+      email,
+      role: 'admin',
     })
-    expect(existing?.role).toBe('admin')
-    expect(await verifyPassword('attacker-pass', existing!.passwordHash)).toBe(false)
-    expect(await verifyPassword('operator-pass-99', existing!.passwordHash)).toBe(true)
-    expect(await getSessionUser(sessionId)).toBeNull()
+    expect(await (await app.request('/auth/me', { headers: { Cookie: cookie! } })).json()).toEqual({
+      user: null,
+    })
   })
 
   it('finds an existing user when ADMIN_EMAIL differs only by case', async () => {
@@ -121,11 +129,10 @@ describe('seed', () => {
       ADMIN_PASSWORD: 'operator-pass-99',
     })
 
-    const existing = await db.query.users.findFirst({
-      where: eq(users.email, email),
+    expect(await authenticateUser(email, 'operator-pass-99')).toMatchObject({
+      email,
+      role: 'admin',
     })
-    expect(existing?.role).toBe('admin')
-    expect(await verifyPassword('operator-pass-99', existing!.passwordHash)).toBe(true)
   })
 
   it('leaves a usable admin if two seeds race on the same email', async () => {
@@ -135,13 +142,10 @@ describe('seed', () => {
       seed({ ADMIN_EMAIL: email, ADMIN_NAME: 'Admin', ADMIN_PASSWORD: 'password-bbb' }),
     ])
 
-    const existing = await db.query.users.findFirst({
-      where: eq(users.email, email),
-    })
-    expect(existing?.role).toBe('admin')
-    const matchesAaa = await verifyPassword('password-aaa', existing!.passwordHash)
-    const matchesBbb = await verifyPassword('password-bbb', existing!.passwordHash)
-    expect(matchesAaa || matchesBbb).toBe(true)
+    const matchesAaa = await authenticateUser(email, 'password-aaa')
+    const matchesBbb = await authenticateUser(email, 'password-bbb')
+    expect(Boolean(matchesAaa) || Boolean(matchesBbb)).toBe(true)
+    expect((matchesAaa ?? matchesBbb)?.role).toBe('admin')
   })
 
   it('does not create an admin when ADMIN_EMAIL is malformed', async () => {

@@ -1,28 +1,7 @@
-export interface User {
-  id: string
-  email: string
-  name: string
-  role: 'user' | 'admin'
-  createdAt: string
-  updatedAt: string
-}
+import type { AuthUser } from './auth'
 
-export interface Session {
-  id: string
-  userId: string
-  expiresAt: string
-  createdAt: string
-}
-
-export interface AuthUser {
-  id: string
-  email: string
-  name: string
-  role: 'user' | 'admin'
-}
-
-export { loginSchema, registerSchema } from './auth'
-export type { LoginInput, RegisterInput } from './auth'
+export { authUserSchema, loginSchema, registerSchema } from './auth'
+export type { AuthUser, LoginInput, RegisterInput } from './auth'
 
 export interface AuthResponse {
   user: AuthUser

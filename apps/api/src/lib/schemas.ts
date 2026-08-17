@@ -1,5 +1,5 @@
-import { authUserSelectSchema } from '@api/db'
 import { z } from '@hono/zod-openapi'
+import { authUserSchema } from '@nuxt-app/types'
 import getParamsSchema from 'stoker/openapi/schemas/get-params-schema'
 
 export const idParamsSchema = getParamsSchema({
@@ -7,15 +7,15 @@ export const idParamsSchema = getParamsSchema({
   validator: 'nanoid',
 })
 
-export const authUserSchema = authUserSelectSchema
+export { authUserSchema }
 
 export const authResponseSchema = z.object({
-  user: authUserSelectSchema,
+  user: authUserSchema,
   message: z.string().optional(),
 })
 
 export const meResponseSchema = z.object({
-  user: authUserSelectSchema.nullable(),
+  user: authUserSchema.nullable(),
 })
 
 export const healthSchema = z.object({
@@ -29,5 +29,5 @@ export const serviceHealthSchema = z.object({
 
 export const adminDashboardSchema = z.object({
   message: z.string(),
-  user: authUserSelectSchema,
+  user: authUserSchema,
 })
