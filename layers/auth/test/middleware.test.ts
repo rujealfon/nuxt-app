@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import adminMiddleware from '../app/middleware/admin'
 import authMiddleware from '../app/middleware/auth'
 import guestMiddleware from '../app/middleware/guest'
+import guestAdminMiddleware from '../app/middleware/guest-admin'
 
 const { getUser, setUser, ensureUser, navigateTo } = vi.hoisted(() => {
   let user: AuthUser | null = null
@@ -80,6 +81,32 @@ describe('guest middleware', () => {
   })
 })
 
+describe('guest-admin middleware', () => {
+  beforeEach(() => {
+    setUser(null)
+    ensureUser.mockClear()
+    navigateTo.mockClear()
+  })
+
+  it('lets a guest through', async () => {
+    const result = await guestAdminMiddleware(to, to)
+    expect(result).toBeUndefined()
+  })
+
+  it('lets a signed-in non-admin through so they can switch accounts', async () => {
+    setUser({ id: 'u1', email: 'a@b.c', name: 'Ada', role: 'user' })
+    const result = await guestAdminMiddleware(to, to)
+    expect(result).toBeUndefined()
+    expect(navigateTo).not.toHaveBeenCalled()
+  })
+
+  it('sends a signed-in admin home', async () => {
+    setUser({ id: 'u1', email: 'a@b.c', name: 'Ada', role: 'admin' })
+    const result = await guestAdminMiddleware(to, to)
+    expect(result).toBe('/')
+  })
+})
+
 describe('admin middleware', () => {
   beforeEach(() => {
     setUser(null)
@@ -95,12 +122,10 @@ describe('admin middleware', () => {
     })
   })
 
-  it('blocks a signed-in non-admin', async () => {
+  it('sends a signed-in non-admin to login', async () => {
     setUser({ id: 'u1', email: 'a@b.c', name: 'Ada', role: 'user' })
-    await expect(adminMiddleware(to, to)).rejects.toMatchObject({
-      statusCode: 403,
-      statusMessage: 'Admin access required',
-    })
+    const result = await adminMiddleware(to, to)
+    expect(result).toBe('/login')
   })
 
   it('lets an admin through', async () => {

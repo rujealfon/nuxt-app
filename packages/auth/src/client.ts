@@ -51,11 +51,6 @@ export const authClient = {
   },
 
   async me(): Promise<{ user: AuthUser | null }> {
-    try {
-      return await unwrap<{ user: AuthUser | null }>(await client().auth.me.$get())
-    }
-    catch {
-      return { user: null }
-    }
+    return unwrap<{ user: AuthUser | null }>(await client().auth.me.$get())
   },
 }

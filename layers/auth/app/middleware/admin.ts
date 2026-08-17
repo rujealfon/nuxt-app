@@ -9,12 +9,6 @@ export default defineNuxtRouteMiddleware(async (to) => {
     })
   }
 
-  if (user.value.role !== 'admin') {
-    return abortNavigation(
-      createError({
-        statusCode: 403,
-        statusMessage: 'Admin access required',
-      }),
-    )
-  }
+  if (user.value.role !== 'admin')
+    return navigateTo('/login')
 })

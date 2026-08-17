@@ -1,6 +1,7 @@
 import app from '@api/app.js'
 import { idParamsSchema } from '@api/lib/schemas.js'
-import { describe, expect, it } from 'vitest'
+import bcrypt from 'bcryptjs'
+import { describe, expect, it, vi } from 'vitest'
 
 async function json(path: string, init?: RequestInit) {
   const res = await app.request(path, init)
@@ -86,6 +87,26 @@ describe('api', () => {
     expect(res.status).toBe(422)
     expect((body.error as { issues: Array<{ message?: string }> }).issues[0]?.message)
       .toBe('Email and password are required')
+  })
+
+  it('compares a password hash even when the email is unknown', async () => {
+    const compare = vi.spyOn(bcrypt, 'compare')
+    try {
+      const { res, body } = await json('/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: `nouser-${Date.now()}@example.com`,
+          password: 'password12',
+        }),
+      })
+      expect(res.status).toBe(401)
+      expect(body).toEqual({ message: 'Invalid email or password' })
+      expect(compare).toHaveBeenCalled()
+    }
+    finally {
+      compare.mockRestore()
+    }
   })
 
   it('returns null user when unauthenticated', async () => {

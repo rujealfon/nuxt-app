@@ -35,7 +35,7 @@ pnpm + Turborepo monorepo, three layers: `apps/*` (deployables), `layers/*` (Nux
 - **apps/admin** — Nuxt 4 SPA (`ssr: false`) for admins. Extends `layer-auth` + `layer-base`.
 - **apps/web** — Nuxt 4 SSG marketing site (`nuxt generate`, `nitro.preset: 'static'`). Extends `layer-base` only. Prefer prerender; do not add a Node server unless a page needs per-request data.
 - **layers/base** (`@nuxt-app/layer-base`) — Tailwind v4 + `@nuxt/ui` + shared Nitro config. Every Nuxt app depends on this. Wrap pages in `UApp`.
-- **layers/auth** (`@nuxt-app/layer-auth`) — Pinia Colada + `useAuth` (query key `['auth', 'me']`), `AuthLoginForm`/`AuthRegisterForm`, and `auth`/`guest`/`admin` route middleware.
+- **layers/auth** (`@nuxt-app/layer-auth`) — Pinia Colada + `useAuth` (query key `['auth', 'me']`), `AuthLoginForm`/`AuthRegisterForm`, and `auth`/`guest`/`guest-admin`/`admin` route middleware. `guest-admin` redirects only administrators so a shared-cookie regular user can reach admin login.
 - **packages/types** — shared Zod request schemas (`loginSchema`, `registerSchema`) plus inferred/plain types (`LoginInput`, `AuthUser`, …). API and Nuxt forms use the same schemas. Request bodies that are not table-shaped stay here; row/select Zod comes from drizzle-zod in `apps/api/src/db`.
 - **packages/auth** — Hono RPC client (`hc<AppType>` from `@nuxt-app/api/rpc`) for `/auth/*`, consumed by `layer-auth`'s `useAuth`.
 

@@ -107,9 +107,21 @@ describe('authClient', () => {
     expect(String(url)).toContain('/auth/me')
   })
 
-  it('returns a null user when me fails', async () => {
-    fetchMock.mockResolvedValue(jsonResponse(500, { message: 'boom' }))
+  it('returns a null user when me succeeds without a session', async () => {
+    fetchMock.mockResolvedValue(jsonResponse(200, { user: null }))
 
     await expect(authClient.me()).resolves.toEqual({ user: null })
+  })
+
+  it('throws when me returns a server error', async () => {
+    fetchMock.mockResolvedValue(jsonResponse(500, { message: 'boom' }))
+
+    await expect(authClient.me()).rejects.toThrow('boom')
+  })
+
+  it('throws when me cannot be reached', async () => {
+    fetchMock.mockRejectedValue(new Error('network down'))
+
+    await expect(authClient.me()).rejects.toThrow('network down')
   })
 })

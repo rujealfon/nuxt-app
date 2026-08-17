@@ -33,6 +33,9 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
   return bcrypt.compare(password, hash)
 }
 
+/** 12-round bcrypt of an unused secret so missing-user logins pay the same compare cost. */
+const DUMMY_PASSWORD_HASH = '$2b$12$Q2I7Jb2EcItOFdLKT4YIV.KlwoZPbbrnVz4WKArwpvQBgcolUqD9m'
+
 function pgConstraint(err: unknown): string | undefined {
   let current: unknown = err
   while (current && typeof current === 'object') {
@@ -83,12 +86,8 @@ export async function authenticateUser(email: string, password: string): Promise
     where: eq(users.email, email.toLowerCase()),
   })
 
-  if (!user) {
-    throw new HTTPException(HttpStatusCodes.UNAUTHORIZED, { message: 'Invalid email or password' })
-  }
-
-  const valid = await verifyPassword(password, user.passwordHash)
-  if (!valid) {
+  const valid = await verifyPassword(password, user?.passwordHash ?? DUMMY_PASSWORD_HASH)
+  if (!user || !valid) {
     throw new HTTPException(HttpStatusCodes.UNAUTHORIZED, { message: 'Invalid email or password' })
   }
 
