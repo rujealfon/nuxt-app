@@ -1,7 +1,7 @@
 import type { AuthUser } from '@nuxt-app/types'
 import { db, sessions, users } from '@api/db'
 import bcrypt from 'bcryptjs'
-import { and, eq, gt } from 'drizzle-orm'
+import { and, eq, gt, lte } from 'drizzle-orm'
 import { HTTPException } from 'hono/http-exception'
 import * as HttpStatusCodes from 'stoker/http-status-codes'
 import { z } from 'zod'
@@ -98,8 +98,13 @@ export async function authenticateUser(email: string, password: string): Promise
   }
 }
 
+export async function deleteExpiredSessions(now = new Date()) {
+  await db.delete(sessions).where(lte(sessions.expiresAt, now))
+}
+
 export async function createSession(userId: string): Promise<string> {
   const now = new Date()
+  await deleteExpiredSessions(now)
   const [session] = await db.insert(sessions).values({
     userId,
     expiresAt: new Date(now.getTime() + SESSION_DURATION_MS),

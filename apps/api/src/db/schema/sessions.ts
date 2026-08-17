@@ -11,6 +11,7 @@ export const sessions = pgTable('sessions', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull(),
 }, table => ({
   userIdIdx: index('sessions_user_id_idx').on(table.userId),
+  expiresAtIdx: index('sessions_expires_at_idx').on(table.expiresAt),
 }))
 
 export type Session = typeof sessions.$inferSelect
