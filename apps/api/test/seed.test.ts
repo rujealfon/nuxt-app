@@ -1,6 +1,6 @@
 import { db, users } from '@api/db'
 import { createSession, createUser, getSessionUser, verifyPassword } from '@api/modules/auth/service.js'
-import { resolveAdminSeedPassword, seed } from '@api/seed'
+import { resolveAdminSeedEmail, resolveAdminSeedPassword, seed } from '@api/seed'
 import { eq } from 'drizzle-orm'
 import { describe, expect, it } from 'vitest'
 
@@ -21,6 +21,20 @@ describe('resolveAdminSeedPassword', () => {
 
   it('returns an explicit password', () => {
     expect(resolveAdminSeedPassword({ ADMIN_PASSWORD: 'correct-horse' })).toBe('correct-horse')
+  })
+})
+
+describe('resolveAdminSeedEmail', () => {
+  it('defaults to the documented admin address', () => {
+    expect(resolveAdminSeedEmail({})).toBe('admin@nuxt-app.com')
+  })
+
+  it('trims whitespace and lowercases', () => {
+    expect(resolveAdminSeedEmail({ ADMIN_EMAIL: '  Admin@Nuxt-App.COM  ' })).toBe('admin@nuxt-app.com')
+  })
+
+  it('rejects a malformed email', () => {
+    expect(() => resolveAdminSeedEmail({ ADMIN_EMAIL: 'not-an-email' })).toThrow('Invalid email')
   })
 })
 
@@ -108,5 +122,18 @@ describe('seed', () => {
     })
     expect(existing?.role).toBe('admin')
     expect(await verifyPassword('operator-pass-99', existing!.passwordHash)).toBe(true)
+  })
+
+  it('does not create an admin when ADMIN_EMAIL is malformed', async () => {
+    await expect(seed({
+      ADMIN_EMAIL: 'not-an-email',
+      ADMIN_NAME: 'Admin',
+      ADMIN_PASSWORD: 'unique-pass-99',
+    })).rejects.toThrow('Invalid email')
+
+    const existing = await db.query.users.findFirst({
+      where: eq(users.email, 'not-an-email'),
+    })
+    expect(existing).toBeUndefined()
   })
 })

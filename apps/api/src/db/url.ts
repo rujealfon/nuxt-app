@@ -1,13 +1,7 @@
-import { resolve } from 'node:path'
 import process from 'node:process'
-import { config } from 'dotenv'
+import { loadEnv } from '@api/load-env.js'
 
 export const TEST_DATABASE_NAME = 'nuxt_app_test'
-
-function loadEnv() {
-  config({ path: resolve(process.cwd(), '../../.env') })
-  config({ path: resolve(process.cwd(), '.env') })
-}
 
 export function replaceDatabaseName(connectionString: string, name: string) {
   const url = new URL(connectionString)

@@ -25,8 +25,18 @@ export function resolveAdminSeedPassword(env: NodeJS.Dict<string> = process.env)
   return parsed.data
 }
 
+export function resolveAdminSeedEmail(env: NodeJS.Dict<string> = process.env): string {
+  const email = (env.ADMIN_EMAIL?.trim() || 'admin@nuxt-app.com').toLowerCase()
+  const parsed = registerSchema.shape.email.safeParse(email)
+  if (!parsed.success) {
+    throw new Error(parsed.error.issues[0]?.message ?? 'ADMIN_EMAIL is invalid')
+  }
+
+  return parsed.data
+}
+
 export async function seed(env: NodeJS.Dict<string> = process.env) {
-  const email = (env.ADMIN_EMAIL || 'admin@nuxt-app.com').toLowerCase()
+  const email = resolveAdminSeedEmail(env)
   const name = env.ADMIN_NAME || 'Admin'
   const password = resolveAdminSeedPassword(env)
 

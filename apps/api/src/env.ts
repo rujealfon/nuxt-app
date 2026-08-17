@@ -1,5 +1,8 @@
 import process from 'node:process'
+import { loadEnv } from '@api/load-env.js'
 import { z } from 'zod'
+
+loadEnv()
 
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
