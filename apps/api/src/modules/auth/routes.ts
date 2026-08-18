@@ -1,9 +1,9 @@
 import { createRouter } from '@api/factory.js'
 import { authRateLimit } from '@api/middleware/rate-limit.js'
-import { authenticateUser, createUser } from '@api/modules/auth/identity.js'
-import { endSession, startSession } from '@api/modules/auth/session.js'
-import { createRoute, z } from '@hono/zod-openapi'
-import { authUserSchema, loginSchema, registerSchema } from '@nuxt-app/types'
+import { createUser, signIn } from '@api/modules/auth/identity.js'
+import { attachSessionCookie, endSession } from '@api/modules/auth/session.js'
+import { createRoute } from '@hono/zod-openapi'
+import { authHttp, authResponseSchema, loginSchema, meResponseSchema, registerSchema } from '@nuxt-app/types'
 import { HTTPException } from 'hono/http-exception'
 import * as HttpStatusCodes from 'stoker/http-status-codes'
 import * as HttpStatusPhrases from 'stoker/http-status-phrases'
@@ -13,17 +13,8 @@ import createMessageObjectSchema from 'stoker/openapi/schemas/create-message-obj
 
 const tags = ['Auth']
 
-const authResponseSchema = z.object({
-  user: authUserSchema,
-  message: z.string().optional(),
-})
-
-const meResponseSchema = z.object({
-  user: authUserSchema.nullable(),
-})
-
 const register = createRoute({
-  path: '/register',
+  path: authHttp.register.route,
   method: 'post',
   tags,
   summary: 'Register',
@@ -44,7 +35,7 @@ const register = createRoute({
 })
 
 const login = createRoute({
-  path: '/login',
+  path: authHttp.login.route,
   method: 'post',
   tags,
   summary: 'Log in',
@@ -58,6 +49,10 @@ const login = createRoute({
       createMessageObjectSchema('Invalid email or password'),
       HttpStatusPhrases.UNAUTHORIZED,
     ),
+    [HttpStatusCodes.FORBIDDEN]: jsonContent(
+      createMessageObjectSchema('This account is not an admin.'),
+      HttpStatusPhrases.FORBIDDEN,
+    ),
     [HttpStatusCodes.UNPROCESSABLE_ENTITY]: jsonContent(
       createErrorSchema(loginSchema),
       'Validation error',
@@ -66,7 +61,7 @@ const login = createRoute({
 })
 
 const logout = createRoute({
-  path: '/logout',
+  path: authHttp.logout.route,
   method: 'post',
   tags,
   summary: 'Log out',
@@ -76,7 +71,7 @@ const logout = createRoute({
 })
 
 const me = createRoute({
-  path: '/me',
+  path: authHttp.me.route,
   method: 'get',
   tags,
   summary: 'Current user',
@@ -92,17 +87,22 @@ export const authRoutes = createRouter()
     return c.json({ message: 'Registered successfully' }, HttpStatusCodes.OK)
   })
   .openapi(login, async (c) => {
-    const { email, password } = c.req.valid('json')
-    const user = await authenticateUser(email, password)
-    if (!user) {
+    const { email, password, requireRole } = c.req.valid('json')
+    const result = await signIn(email, password, requireRole)
+    if (!result) {
       throw new HTTPException(HttpStatusCodes.UNAUTHORIZED, {
         message: 'Invalid email or password',
       })
     }
-    await startSession(c, user)
+    if ('denied' in result) {
+      throw new HTTPException(HttpStatusCodes.FORBIDDEN, {
+        message: result.message,
+      })
+    }
+    attachSessionCookie(c, result.sessionId)
 
     return c.json({
-      user,
+      user: result.user,
       message: 'Logged in successfully',
     }, HttpStatusCodes.OK)
   })

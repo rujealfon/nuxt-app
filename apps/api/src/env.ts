@@ -1,9 +1,20 @@
 import process from 'node:process'
 import { loadEnv } from '@api/load-env.js'
-import { isPlainRedisToUpstash } from '@api/redis-url.js'
 import { z } from 'zod'
 
 loadEnv()
+
+export function isPlainRedisToUpstash(connectionString: string) {
+  let url: URL
+  try {
+    url = new URL(connectionString)
+  }
+  catch {
+    return false
+  }
+
+  return url.protocol === 'redis:' && url.hostname.endsWith('.upstash.io')
+}
 
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),

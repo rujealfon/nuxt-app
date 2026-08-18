@@ -1,5 +1,5 @@
 import type { AuthUser, LoginInput, RegisterInput } from '@nuxt-app/types'
-import { createAuthClient, resolveAuthApiBase } from '@nuxt-app/auth'
+import { createAuthClient } from '@nuxt-app/auth'
 import { defineQuery, useMutation, useQuery, useQueryCache } from '@pinia/colada'
 
 export const authKeys = {
@@ -10,7 +10,7 @@ function runtimeAuthClient() {
   const config = useRuntimeConfig()
   const apiUrl = String(config.public.apiUrl || 'http://localhost:3001')
   const pageHref = import.meta.client ? window.location.href : undefined
-  return createAuthClient(resolveAuthApiBase(apiUrl, pageHref))
+  return createAuthClient(apiUrl, pageHref)
 }
 
 const useAuthMe = defineQuery(() => {
@@ -54,20 +54,20 @@ export function useAuth() {
     return me.data.value ?? null
   }
 
-  async function login(email: string, password: string) {
+  async function login(input: LoginInput) {
     error.value = null
     try {
-      return await loginMutation.mutateAsync({ email, password })
+      return await loginMutation.mutateAsync(input)
     }
     catch (e) {
       fail(e)
     }
   }
 
-  async function register(email: string, password: string, name: string) {
+  async function register(input: RegisterInput) {
     error.value = null
     try {
-      return await registerMutation.mutateAsync({ email, password, name })
+      return await registerMutation.mutateAsync(input)
     }
     catch (e) {
       fail(e)
@@ -81,24 +81,14 @@ export function useAuth() {
       await navigateTo(redirectTo)
   }
 
-  /** refresh() respects staleTime (30s); a revoked/demoted session can pass guards until then. */
-  async function ensureUser() {
-    await me.refresh()
-    return me.data.value ?? null
-  }
-
   const user = computed(() => me.data.value ?? null)
 
   return {
     user,
-    loading: computed(() => me.status.value === 'pending'),
     error,
     fetchUser,
     login,
     register,
     logout,
-    ensureUser,
-    isAuthenticated: computed(() => !!me.data.value),
-    isAdmin: computed(() => me.data.value?.role === 'admin'),
   }
 }

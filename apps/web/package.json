@@ -15,6 +15,7 @@
   "dependencies": {
     "@iconify-json/lucide": "^1.2.123",
     "@nuxt-app/layer-base": "workspace:*",
+    "@nuxt-app/types": "workspace:*",
     "nuxt": "^4.5.2",
     "vue": "^3.5.41",
     "vue-router": "^5.2.0"

@@ -34,4 +34,9 @@ export function resolveRouteAccess(
   }
 }
 
-export { matchesRequiredRole }
+/** Guards always refetch Session so a revoked cookie cannot pass on stale cache. */
+export async function applyRouteAccess(gate: RouteGate, to: { fullPath: string }) {
+  const { fetchUser } = useAuth()
+  const user = await fetchUser()
+  return resolveRouteAccess(user, gate, to)
+}

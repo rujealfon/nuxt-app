@@ -33,7 +33,7 @@ pnpm + Turborepo monorepo, three layers: `apps/*` (deployables), `layers/*` (Nux
 - **layers/base** (`@nuxt-app/layer-base`) — Tailwind v4 + `@nuxt/ui` + shared Nitro config. Every Nuxt app depends on this. `app.vue` wraps pages in `UApp`.
 - **layers/auth** (`@nuxt-app/layer-auth`) — Pinia Colada + `useAuth` (query key `['auth', 'me']`), `AuthLoginForm`/`AuthRegisterForm`, and `auth`/`guest`/`guest-admin`/`admin` route middleware. `guest-admin` redirects only administrators so a shared-cookie regular user can reach admin login.
 - **packages/types** — shared Zod request schemas (`loginSchema`, `registerSchema`) plus inferred/plain types (`LoginInput`, `AuthUser`, …). API and Nuxt forms use the same schemas. Request bodies that are not table-shaped stay here. The public user shape (`authUserSchema`) lives here too.
-- **packages/auth** — `createAuthClient(baseUrl)` fetch client for `/auth/*`, consumed by `layer-auth`'s `useAuth`. Does not import API route types.
+- **packages/auth** — `createAuthClient(apiUrl, pageHref?)` fetch client for `/auth/*`, consumed by `layer-auth`'s `useAuth`. Chooses the first-party `/__api` base on preview `*.vercel.app` hosts. Does not import API route types.
 
 Sessions are opaque IDs in an httpOnly cookie (`nuxt_app_session`), not JWTs. `resolveRouteAccess` is the route-access policy; the four Nuxt guards are adapters over it.
 

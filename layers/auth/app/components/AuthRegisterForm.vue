@@ -28,7 +28,7 @@ const fields = [
 async function onSubmit(event: { data: RegisterInput }) {
   pending.value = true
   try {
-    await register(event.data.email, event.data.password, event.data.name)
+    await register(event.data)
     emit('success')
   }
   catch {

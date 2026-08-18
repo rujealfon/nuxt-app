@@ -13,11 +13,11 @@ The public user: `id` (the `public_id`), email, name, and role. Never the UUID P
 _Avoid_: User DTO, session user payload
 
 **Session**:
-An opaque id stored in the `nuxt_app_session` cookie and a matching row. Login starts it, logout ends it, every request reads the current user from it.
+An opaque id stored in the `nuxt_app_session` cookie and a matching row. Login starts it only when admission passes, logout ends it, every request reads the current user from it.
 _Avoid_: Token, JWT, auth ticket
 
 **Admin**:
-A user whose role is `admin`. Seed promotes an email to this role and revokes their sessions.
+A user whose role is `admin`. Seed promotes an email to this role and revokes their sessions. Admin login does not start a Session for a non-admin.
 _Avoid_: Superuser, operator
 
 **Route access**:

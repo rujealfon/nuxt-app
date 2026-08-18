@@ -22,9 +22,9 @@ Auth stays in `layers/auth`. Do not add another Colada plugin or per-feature def
 
 ## Route access
 
-Guards are adapters over `resolveRouteAccess` in `layers/auth`. `/` uses `auth`; `/login` and `/register` use `guest`. Guards use `ensureUser()` → `refresh()` (honors Colada’s 30s `staleTime`). Use `fetchUser()` / `refetch()` when a surface must see the current session immediately.
+Guards are adapters over `resolveRouteAccess` in `layers/auth`. `/` uses `auth`; `/login` and `/register` use `guest`. Guards use `applyRouteAccess` → `fetchUser()` so a revoked Session cannot pass on a stale cache.
 
-`useAuth` constructs `createAuthClient(resolveAuthApiBase(...))`. The Nitro `/__api` proxy rule is built from `API_PROXY_PREFIX` so preview `*.vercel.app` hosts keep the session cookie first-party. Failed bodies map through `messageFromFailedBody` / `failedResponseBody`.
+`useAuth` constructs `createAuthClient(apiUrl, pageHref)`. The client picks the first-party `/__api` base on preview `*.vercel.app` hosts. The Nitro `/__api` proxy rule is built from `API_PROXY_PREFIX`. Failed bodies map through `messageFromFailedBody` / `failedResponseBody`.
 
 ## Imports
 

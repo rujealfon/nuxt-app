@@ -6,14 +6,14 @@ import authMiddleware from '../app/middleware/auth'
 import guestMiddleware from '../app/middleware/guest'
 import guestAdminMiddleware from '../app/middleware/guest-admin'
 
-const { getUser, setUser, ensureUser, navigateTo } = vi.hoisted(() => {
+const { getUser, setUser, fetchUser, navigateTo } = vi.hoisted(() => {
   let user: AuthUser | null = null
   return {
     getUser: () => user,
     setUser: (next: AuthUser | null) => {
       user = next
     },
-    ensureUser: vi.fn(async () => user),
+    fetchUser: vi.fn(async () => user),
     navigateTo: vi.fn((to: unknown) => to),
   }
 })
@@ -22,7 +22,7 @@ mockNuxtImport('useAuth', () => () => ({
   user: { get value() {
     return getUser()
   } },
-  ensureUser,
+  fetchUser,
 }))
 
 mockNuxtImport('navigateTo', () => navigateTo)
@@ -41,13 +41,13 @@ const to = {
 describe('auth middleware', () => {
   beforeEach(() => {
     setUser(null)
-    ensureUser.mockClear()
+    fetchUser.mockClear()
     navigateTo.mockClear()
   })
 
   it('sends guests to login with a redirect back', async () => {
     const result = await authMiddleware(to, to)
-    expect(ensureUser).toHaveBeenCalled()
+    expect(fetchUser).toHaveBeenCalled()
     expect(result).toEqual({
       path: '/login',
       query: { redirect: '/secret' },
@@ -65,7 +65,7 @@ describe('auth middleware', () => {
 describe('guest middleware', () => {
   beforeEach(() => {
     setUser(null)
-    ensureUser.mockClear()
+    fetchUser.mockClear()
     navigateTo.mockClear()
   })
 
@@ -84,7 +84,7 @@ describe('guest middleware', () => {
 describe('guest-admin middleware', () => {
   beforeEach(() => {
     setUser(null)
-    ensureUser.mockClear()
+    fetchUser.mockClear()
     navigateTo.mockClear()
   })
 
@@ -110,7 +110,7 @@ describe('guest-admin middleware', () => {
 describe('admin middleware', () => {
   beforeEach(() => {
     setUser(null)
-    ensureUser.mockClear()
+    fetchUser.mockClear()
     navigateTo.mockClear()
   })
 

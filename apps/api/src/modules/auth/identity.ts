@@ -1,6 +1,7 @@
 import type { AuthUser } from '@nuxt-app/types'
 import { db, sessions, users } from '@api/db'
-import { toAuthUser } from '@api/modules/auth/to-auth-user.js'
+import { issueSession, toAuthUser } from '@api/modules/auth/session.js'
+import { matchesRequiredRole } from '@nuxt-app/types'
 import bcrypt from 'bcryptjs'
 import { eq } from 'drizzle-orm'
 
@@ -59,7 +60,7 @@ export async function createUser(data: {
   }
 }
 
-export async function authenticateUser(email: string, password: string): Promise<AuthUser | null> {
+async function verifyCredentials(email: string, password: string) {
   const user = await db.query.users.findFirst({
     where: eq(users.email, email.toLowerCase()),
   })
@@ -68,7 +69,34 @@ export async function authenticateUser(email: string, password: string): Promise
   if (!user || !valid)
     return null
 
-  return toAuthUser(user)
+  return user
+}
+
+export async function signIn(
+  email: string,
+  password: string,
+  requireRole?: AuthUser['role'],
+): Promise<
+  | { user: AuthUser, sessionId: string }
+  | { denied: true, message: string }
+  | null
+> {
+  const user = await verifyCredentials(email, password)
+  if (!user)
+    return null
+
+  const authUser = toAuthUser(user)
+  if (!matchesRequiredRole(authUser, requireRole)) {
+    return {
+      denied: true,
+      message: `This account is not an ${requireRole}.`,
+    }
+  }
+
+  return {
+    user: authUser,
+    sessionId: await issueSession(user.id),
+  }
 }
 
 async function resetUserAsAdmin(userId: string, passwordHash: string) {

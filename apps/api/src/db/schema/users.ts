@@ -1,7 +1,8 @@
+import { USER_ROLES } from '@nuxt-app/types'
 import { sql } from 'drizzle-orm'
 import { pgEnum, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core'
 
-export const userRole = pgEnum('user_role', ['user', 'admin'])
+export const userRole = pgEnum('user_role', USER_ROLES)
 
 export const users = pgTable('users', {
   id: uuid('id').primaryKey().default(sql`uuidv7()`),

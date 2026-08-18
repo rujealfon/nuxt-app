@@ -1,6 +1,6 @@
 import type { AuthUser } from '@nuxt-app/types'
 import { describe, expect, it } from 'vitest'
-import { matchesRequiredRole, resolveRouteAccess } from '../app/utils/routeAccess'
+import { resolveRouteAccess } from '../app/utils/routeAccess'
 
 const user: AuthUser = { id: 'u1', email: 'a@b.c', name: 'Ada', role: 'user' }
 const admin: AuthUser = { ...user, role: 'admin' }
@@ -45,17 +45,5 @@ describe('resolveRouteAccess', () => {
 
   it('lets an admin through', () => {
     expect(resolveRouteAccess(admin, 'admin', to)).toEqual({ allow: true })
-  })
-})
-
-describe('matchesRequiredRole', () => {
-  it('allows any role when none is required', () => {
-    expect(matchesRequiredRole(user)).toBe(true)
-    expect(matchesRequiredRole(admin)).toBe(true)
-  })
-
-  it('requires an exact role match', () => {
-    expect(matchesRequiredRole(user, 'admin')).toBe(false)
-    expect(matchesRequiredRole(admin, 'admin')).toBe(true)
   })
 })

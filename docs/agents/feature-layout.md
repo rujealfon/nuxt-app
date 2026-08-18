@@ -56,7 +56,7 @@ Leave `srcDir` as `app/`. Do not register feature routes with a hand-rolled rout
 
 `@pinia/nuxt` + `@pinia/colada-nuxt` load from `layers/auth`. Global defaults live in `layers/auth/colada.options.ts` (`staleTime: 30_000`). Do not add another Colada plugin or per-feature defaults in `apps/app` or `apps/admin`. Change `colada.options.ts` only when the default should apply to every query in both SPAs.
 
-Session / `AuthUser` stays in `useAuth` (key `['auth', 'me']`). Features do not re-query `/auth/me`. Guards use `ensureUser()` → `refresh()` (honors staleTime). Use `fetchUser()` / `refetch()` when a surface must see the current session immediately.
+Session / `AuthUser` stays in `useAuth` (key `['auth', 'me']`). Features do not re-query `/auth/me`. Guards use `applyRouteAccess` (in `routeAccess.ts`) → `fetchUser()` / `refetch()` so a revoked Session cannot pass on a stale cache.
 
 | Concern                                | Place                                                          |
 | -------------------------------------- | -------------------------------------------------------------- |

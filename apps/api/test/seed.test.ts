@@ -1,6 +1,6 @@
 import app from '@api/app.js'
 import { db, users } from '@api/db'
-import { authenticateUser, createUser } from '@api/modules/auth/identity.js'
+import { createUser } from '@api/modules/auth/identity.js'
 import { resolveAdminSeedEmail, resolveAdminSeedPassword, seed } from '@api/seed'
 import { eq } from 'drizzle-orm'
 import { describe, expect, it } from 'vitest'
@@ -11,6 +11,11 @@ async function login(email: string, password: string) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password }),
   })
+}
+
+async function loginJson(email: string, password: string) {
+  const res = await login(email, password)
+  return { status: res.status, body: await res.json() as { user?: { email: string, name?: string, role: string } } }
 }
 
 function sessionCookie(res: Response): string | undefined {
@@ -65,7 +70,7 @@ describe('seed', () => {
       /ADMIN_PASSWORD is required/,
     )
 
-    expect(await authenticateUser(email, 'unique-pass-99')).toBeNull()
+    expect((await loginJson(email, 'unique-pass-99')).status).toBe(401)
   })
 
   it('creates an admin when ADMIN_PASSWORD is set', async () => {
@@ -76,8 +81,9 @@ describe('seed', () => {
       ADMIN_PASSWORD: 'unique-pass-99',
     })
 
-    const user = await authenticateUser(email, 'unique-pass-99')
-    expect(user).toMatchObject({ email, name: 'Admin', role: 'admin' })
+    const { status, body } = await loginJson(email, 'unique-pass-99')
+    expect(status).toBe(200)
+    expect(body.user).toMatchObject({ email, name: 'Admin', role: 'admin' })
   })
 
   it('does not promote a pre-existing account when ADMIN_PASSWORD is unset', async () => {
@@ -88,8 +94,9 @@ describe('seed', () => {
       /ADMIN_PASSWORD is required/,
     )
 
-    const user = await authenticateUser(email, 'attacker-pass')
-    expect(user).toMatchObject({ email, role: 'user' })
+    const { status, body } = await loginJson(email, 'attacker-pass')
+    expect(status).toBe(200)
+    expect(body.user).toMatchObject({ email, role: 'user' })
   })
 
   it('resets the password and sessions when promoting a pre-existing account', async () => {
@@ -108,11 +115,10 @@ describe('seed', () => {
       ADMIN_PASSWORD: 'operator-pass-99',
     })
 
-    expect(await authenticateUser(email, 'attacker-pass')).toBeNull()
-    expect(await authenticateUser(email, 'operator-pass-99')).toMatchObject({
-      email,
-      role: 'admin',
-    })
+    expect((await loginJson(email, 'attacker-pass')).status).toBe(401)
+    const promoted = await loginJson(email, 'operator-pass-99')
+    expect(promoted.status).toBe(200)
+    expect(promoted.body.user).toMatchObject({ email, role: 'admin' })
     expect(await (await app.request('/auth/me', { headers: { Cookie: cookie! } })).json()).toEqual({
       user: null,
     })
@@ -129,10 +135,9 @@ describe('seed', () => {
       ADMIN_PASSWORD: 'operator-pass-99',
     })
 
-    expect(await authenticateUser(email, 'operator-pass-99')).toMatchObject({
-      email,
-      role: 'admin',
-    })
+    const { status, body } = await loginJson(email, 'operator-pass-99')
+    expect(status).toBe(200)
+    expect(body.user).toMatchObject({ email, role: 'admin' })
   })
 
   it('leaves a usable admin if two seeds race on the same email', async () => {
@@ -142,10 +147,11 @@ describe('seed', () => {
       seed({ ADMIN_EMAIL: email, ADMIN_NAME: 'Admin', ADMIN_PASSWORD: 'password-bbb' }),
     ])
 
-    const matchesAaa = await authenticateUser(email, 'password-aaa')
-    const matchesBbb = await authenticateUser(email, 'password-bbb')
-    expect(Boolean(matchesAaa) || Boolean(matchesBbb)).toBe(true)
-    expect((matchesAaa ?? matchesBbb)?.role).toBe('admin')
+    const matchesAaa = await loginJson(email, 'password-aaa')
+    const matchesBbb = await loginJson(email, 'password-bbb')
+    const winner = matchesAaa.status === 200 ? matchesAaa : matchesBbb
+    expect(winner.status).toBe(200)
+    expect(winner.body.user?.role).toBe('admin')
   })
 
   it('does not create an admin when ADMIN_EMAIL is malformed', async () => {

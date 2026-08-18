@@ -9,6 +9,7 @@ import { authRoutes } from '@api/modules/auth/routes.js'
 import { configureOpenAPI } from '@api/modules/docs/routes.js'
 import { healthRoutes } from '@api/modules/health/routes.js'
 import { resolveCorsOrigin } from '@api/request-policy.js'
+import { AUTH_MOUNT } from '@nuxt-app/types'
 import { bodyLimit } from 'hono/body-limit'
 import { cors } from 'hono/cors'
 import { csrf } from 'hono/csrf'
@@ -57,7 +58,7 @@ if (isDev)
 
 const app = base
   .route('/', healthRoutes)
-  .route('/auth', authRoutes)
+  .route(AUTH_MOUNT, authRoutes)
   .route('/admin', adminRoutes)
 
 export default app

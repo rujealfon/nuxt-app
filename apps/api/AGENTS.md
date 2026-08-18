@@ -24,7 +24,7 @@ Scalar is at http://localhost:3001/docs when `NODE_ENV=development`. Spec: `/ope
 
 Domain lives in `src/modules/<name>/`. See `docs/agents/module-layout.md` when adding a module, choosing module vs package, splitting `routes.ts` from domain files, or mounting a router in `app.ts`.
 
-Copy `src/modules/auth/`. `routes.ts` maps HTTP with chained `createRoute` + `createRouter().openapi()`; handlers stay inline. `identity.ts` owns users and passwords (`createUser`, `authenticateUser`, `ensureAdmin`). `session.ts` owns start/end/currentUser — cookie + row + 7-day expiry. Routes do not see the user PK.
+Copy `src/modules/auth/`. `routes.ts` maps HTTP with chained `createRoute` + `createRouter().openapi()`; handlers stay inline. `identity.ts` owns users and passwords (`createUser`, `signIn`, `ensureAdmin`). `signIn` issues the Session from the User PK only when `requireRole` admission passes. `session.ts` owns cookie + row + 7-day expiry and maps rows to AuthUser. Routes do not see the user PK.
 
 `health` and `docs` stay route-only. `admin` is a mount prefix.
 

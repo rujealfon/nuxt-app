@@ -4,7 +4,7 @@ import LoginPage from '@app/pages/login.vue'
 import RegisterPage from '@app/pages/register.vue'
 import { mockNuxtImport, mountSuspended } from '@nuxt/test-utils/runtime'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { computed, ref } from 'vue'
+import { ref } from 'vue'
 
 const { logout, login, register } = vi.hoisted(() => ({
   logout: vi.fn(),
@@ -26,9 +26,6 @@ mockNuxtImport('useAuth', () => () => ({
   login,
   register,
   error,
-  ensureUser: vi.fn(),
-  isAuthenticated: computed(() => !!user.value),
-  isAdmin: computed(() => user.value?.role === 'admin'),
 }))
 
 describe('app pages', () => {

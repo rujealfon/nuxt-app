@@ -28,8 +28,14 @@ describe('sessions', () => {
 
     const loggedIn = await login(email, password)
     expect(loggedIn.status).toBe(200)
+    const setCookie = loggedIn.headers.getSetCookie?.().find(value => value.startsWith('nuxt_app_session='))
+      ?? loggedIn.headers.get('set-cookie')
+      ?? ''
+    expect(setCookie).toMatch(/^nuxt_app_session=/)
+    expect(setCookie).toMatch(/HttpOnly/i)
+    expect(setCookie).toMatch(/SameSite=Lax/i)
+    expect(setCookie).not.toMatch(/Secure/i)
     const cookie = sessionCookie(loggedIn)
-    expect(cookie).toMatch(/^nuxt_app_session=/)
 
     const me = await app.request('/auth/me', { headers: { Cookie: cookie! } })
     expect(me.status).toBe(200)

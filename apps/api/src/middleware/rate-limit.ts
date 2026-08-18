@@ -50,35 +50,19 @@ function clientKey(c: Context): string {
   })
 }
 
-let rateLimitStoreFactory: (prefix: string) => Store = prefix => createRedisStore(prefix)
+let rateLimitStoreFactory: (prefix: string) => Store = prefix =>
+  new RedisStore({ client: rateLimitRedis, prefix })
+
+let authRateLimitMax = env.AUTH_RATE_LIMIT_MAX
 
 /** Tests inject MemoryStore. Production keeps the Redis factory. */
 export function setRateLimitStoreFactory(factory: (prefix: string) => Store) {
   rateLimitStoreFactory = factory
 }
 
-function createRedisStore(prefix: string): Store {
-  let inner: RedisStore | undefined
-  let initOptions: Parameters<RedisStore['init']>[0] | undefined
-
-  function store() {
-    if (!inner) {
-      inner = new RedisStore({ client: rateLimitRedis, prefix })
-      if (initOptions)
-        inner.init(initOptions)
-    }
-    return inner
-  }
-
-  return {
-    init(options) {
-      initOptions = options
-    },
-    increment: key => store().increment(key),
-    decrement: key => store().decrement(key),
-    resetKey: key => store().resetKey(key),
-    get: key => store().get(key),
-  }
+/** Tests lower the auth cap without re-mounting the app. */
+export function setAuthRateLimitMax(max: number) {
+  authRateLimitMax = max
 }
 
 function createStore(prefix: string): Store {
@@ -106,7 +90,7 @@ function createStore(prefix: string): Store {
 }
 
 export function createRateLimit(options: {
-  limit: number
+  limit: number | ((c: Context) => number)
   windowMs?: number
   prefix?: string
   skip?: (c: Context) => boolean
@@ -129,6 +113,6 @@ export const rateLimit = createRateLimit({
 })
 
 export const authRateLimit = createRateLimit({
-  limit: env.AUTH_RATE_LIMIT_MAX,
+  limit: () => authRateLimitMax,
   prefix: 'rl:auth:',
 })

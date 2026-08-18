@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { API_PROXY_PREFIX } from '../src/api-url'
 import { createAuthClient } from '../src/client'
 
 const user = {
@@ -99,6 +100,71 @@ describe('createAuthClient', () => {
     expect(init.credentials).toBe('include')
   })
 
+  it('calls me through /__api when the page is a distinct vercel.app host', async () => {
+    fetchMock.mockResolvedValue(jsonResponse(200, { user }))
+    const client = createAuthClient(
+      'https://nuxt-app-api-git-feat.vercel.app',
+      'https://nuxt-app-app-git-feat.vercel.app/login',
+    )
+
+    await client.me()
+
+    const [url] = fetchMock.mock.calls[0] as [string]
+    expect(String(url)).toContain(`${API_PROXY_PREFIX}/auth/me`)
+  })
+
+  it('keeps sibling custom domains so COOKIE_DOMAIN can share the Session', async () => {
+    fetchMock.mockResolvedValue(jsonResponse(200, { user }))
+    const client = createAuthClient(
+      'https://api.nuxt-app.com',
+      'https://app.nuxt-app.com/login',
+    )
+
+    await client.me()
+
+    const [url] = fetchMock.mock.calls[0] as [string]
+    expect(String(url)).toContain('https://api.nuxt-app.com/auth/me')
+  })
+
+  it('uses the proxy when a vercel.app page calls a custom API host', async () => {
+    fetchMock.mockResolvedValue(jsonResponse(200, { user }))
+    const client = createAuthClient(
+      'https://api.nuxt-app.com',
+      'https://nuxt-app-app-git-feat.vercel.app/login',
+    )
+
+    await client.me()
+
+    const [url] = fetchMock.mock.calls[0] as [string]
+    expect(String(url)).toContain(`${API_PROXY_PREFIX}/auth/me`)
+  })
+
+  it('keeps a same-origin API URL', async () => {
+    fetchMock.mockResolvedValue(jsonResponse(200, { user }))
+    const client = createAuthClient(
+      'https://app-preview.vercel.app',
+      'https://app-preview.vercel.app/login',
+    )
+
+    await client.me()
+
+    const [url] = fetchMock.mock.calls[0] as [string]
+    expect(String(url)).toContain('https://app-preview.vercel.app/auth/me')
+  })
+
+  it('keeps local host ports', async () => {
+    fetchMock.mockResolvedValue(jsonResponse(200, { user }))
+    const client = createAuthClient(
+      'http://localhost:3001',
+      'http://localhost:3000/login',
+    )
+
+    await client.me()
+
+    const [url] = fetchMock.mock.calls[0] as [string]
+    expect(String(url)).toContain('http://localhost:3001/auth/me')
+  })
+
   it('returns the current user from me', async () => {
     fetchMock.mockResolvedValue(jsonResponse(200, { user }))
 
@@ -123,5 +189,22 @@ describe('createAuthClient', () => {
     fetchMock.mockRejectedValue(new Error('network down'))
 
     await expect(authClient.me()).rejects.toThrow('network down')
+  })
+
+  it('throws when me returns a malformed user', async () => {
+    fetchMock.mockResolvedValue(jsonResponse(200, {
+      user: { ...user, role: 'nope' },
+    }))
+
+    await expect(authClient.me()).rejects.toThrow('Invalid response')
+  })
+
+  it('throws when the body is not JSON', async () => {
+    fetchMock.mockResolvedValue(new Response('nope', {
+      status: 200,
+      headers: { 'Content-Type': 'text/plain' },
+    }))
+
+    await expect(authClient.me()).rejects.toThrow('Request failed')
   })
 })
