@@ -49,12 +49,21 @@ if ! command -v corepack >/dev/null; then
   exit 1
 fi
 pm=$(node -p "require('$root/package.json').packageManager")
-echo "vercel-install: activating $pm (bundled pnpm=$(pnpm --version 2>/dev/null || echo none))"
+echo "vercel-install: activating $pm (PATH pnpm=$(command -v pnpm || echo none) $(pnpm --version 2>/dev/null || echo none))"
 corepack enable
 corepack prepare "$pm" --activate
-echo "vercel-install: pnpm $(pnpm --version)"
+hash -r
+# Vercel puts pnpm 6 on PATH ahead of Corepack shims. Invoke through corepack.
+pnpm_cmd=(corepack pnpm)
+echo "vercel-install: $($pnpm_cmd --version) via corepack pnpm"
 
-pnpm --dir "$root" install --frozen-lockfile
+pnpm_ver=$($pnpm_cmd --version)
+if [ "${pnpm_ver%%.*}" -lt 9 ]; then
+  echo "vercel-install: expected $pm, got $pnpm_ver" >&2
+  exit 1
+fi
+
+$pnpm_cmd --dir "$root" install --frozen-lockfile
 
 if [ ! -d node_modules ] && [ -d "$root/apps/api/node_modules" ]; then
   echo "vercel-install: linking $root/apps/api/node_modules -> $(pwd)/node_modules"
