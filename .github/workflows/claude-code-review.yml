@@ -1,7 +1,8 @@
 name: Claude Code Review
 
-# pull_request:
-#   types: [opened, synchronize, ready_for_review, reopened]
+# on:
+#   pull_request:
+#     types: [opened, synchronize, ready_for_review, reopened]
 
 # Paused: no automatic PR reviews. Restore the pull_request trigger to re-enable.
 on:

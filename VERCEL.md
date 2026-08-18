@@ -30,14 +30,14 @@ Migrations do **not** run on API boot on Vercel. Apply them from your machine (o
 
 ## Project settings
 
-Each app owns its settings in `apps/<name>/vercel.json` (picked up because Root Directory is that folder). Leave dashboard **Override** toggles (Build / Output / Install / Development) off so the files win. Leave **Include files outside the Root Directory** on (pnpm workspaces need `layers/*` and `packages/*`). Node **24.x**. Install stays the default (`pnpm install` from the repo root). App/admin/web `prebuild` runs `nuxt prepare` in the shared layers so Vite can resolve `layers/*/.nuxt/tsconfig.json` (that folder is gitignored and is not created by the app’s own prepare).
+Each app owns its settings in `apps/<name>/vercel.json` (picked up because Root Directory is that folder). Leave dashboard **Override** toggles (Build / Output / Install / Development) off so the files win. Leave **Include files outside the Root Directory** on (pnpm workspaces need `layers/*` and `packages/*`). Node **24.x**. Install stays the default (`pnpm install` from the repo root). App/admin/web `buildCommand` runs `nuxt prepare` in the shared layers so Vite can resolve `layers/*/.nuxt/tsconfig.json` (that folder is gitignored and is not created by the app’s own prepare). CI/`turbo run build` does the same via `^nuxt:prepare` instead of a per-app `prebuild`, so parallel app builds do not race on `layers/*/.nuxt`.
 
-| App   | File                     | Framework | Build                          | Output                                      |
-| ----- | ------------------------ | --------- | ------------------------------ | ------------------------------------------- |
-| web   | `apps/web/vercel.json`   | `nuxtjs`  | `pnpm build` (`nuxt generate`) | `.output/public`                            |
-| app   | `apps/app/vercel.json`   | `nuxtjs`  | `pnpm build` (`nuxt build`)    | default (Nitro `vercel` → `.vercel/output`) |
-| admin | `apps/admin/vercel.json` | `nuxtjs`  | `pnpm build` (`nuxt build`)    | default                                     |
-| api   | `apps/api/vercel.json`   | `hono`    | empty (do not run `tsc`)       | default — Vercel bundles `src/app.ts`       |
+| App   | File                     | Framework | Build                                                 | Output                                      |
+| ----- | ------------------------ | --------- | ----------------------------------------------------- | ------------------------------------------- |
+| web   | `apps/web/vercel.json`   | `nuxtjs`  | layer `nuxt:prepare` + `pnpm build` (`nuxt generate`) | `.output/public`                            |
+| app   | `apps/app/vercel.json`   | `nuxtjs`  | layer `nuxt:prepare` + `pnpm build` (`nuxt build`)    | default (Nitro `vercel` → `.vercel/output`) |
+| admin | `apps/admin/vercel.json` | `nuxtjs`  | layer `nuxt:prepare` + `pnpm build` (`nuxt build`)    | default                                     |
+| api   | `apps/api/vercel.json`   | `hono`    | empty (do not run `tsc`)                              | default — Vercel bundles `src/app.ts`       |
 
 Do **not** set `ignoreCommand` / Ignored Build Step to `npx turbo-ignore` (`turbo-ignore` is deprecated). Vercel [skips unaffected projects](https://vercel.com/docs/monorepos#skipping-unaffected-projects) when the commit does not change that package or its workspace deps. That path does not take a concurrent build slot. Leave **Skip deployment** enabled under Root Directory (the default). Leave Ignored Build Step empty.
 
