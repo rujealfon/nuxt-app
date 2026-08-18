@@ -1,9 +1,11 @@
 <script setup lang="ts">
+import HomeWelcomeCard from '@admin/features/home/components/HomeWelcomeCard.vue'
+
 definePageMeta({
   middleware: 'admin',
 })
 
-const { user, logout } = useAuth()
+const { logout } = useAuth()
 </script>
 
 <template>
@@ -17,16 +19,6 @@ const { user, logout } = useAuth()
       </UButton>
     </header>
 
-    <UCard>
-      <h2 class="mb-1 text-lg font-semibold">
-        Hello, {{ user?.name }}
-      </h2>
-      <p class="mb-6 text-slate-400">
-        {{ user?.email }} · role: {{ user?.role }}
-      </p>
-      <p class="text-sm text-slate-500">
-        This is the admin area. You can manage posts, users, and site content from here.
-      </p>
-    </UCard>
+    <HomeWelcomeCard />
   </div>
 </template>

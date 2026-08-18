@@ -31,8 +31,8 @@ Local host apps: Compose Postgres + Redis (see [DOCKER.md](DOCKER.md)), then `pn
 pnpm + Turborepo monorepo, three layers: `apps/*` (deployables), `layers/*` (Nuxt layers, extended by apps), `packages/*` (plain TS packages, no Nuxt).
 
 - **apps/api** — Hono server (not Nuxt). Feature modules live under `src/modules/*` and are mounted from `src/app.ts` with `app.route()`. Drizzle lives in `src/db/` (`schema/`: `users`, `sessions` + `user_role` pgEnum), the Postgres client, and `runMigrations()` (called on API boot in `src/index.ts`). The public user shape is `authUserSchema` in `@nuxt-app/types` — never leak `passwordHash`. PKs and FKs are `uuid` columns with SQL default `uuidv7()` (Postgres 18). Leave `id` off inserts and read it back with `.returning()`. `created_at` / `updated_at` use SQL `now()`; leave them off inserts. The Postgres pool uses `max: 5` on Vercel and `max: 10` locally. Public API/URL identifiers are `public_id` with SQL default `nanoid()` — add that column only when the row is addressable from the API. JSON `id` is that `public_id`, never the PK. Sessions and other non-addressable rows stay PK-only. Path params that identify a user use `getParamsSchema({ validator: 'nanoid' })`. A new API feature is a new `src/modules/<name>/` folder: define `createRoute` + `createRouter().openapi()` in `routes.ts` so the spec stays generated. Cross-cutting middleware stays in `src/middleware/`. Env is parsed once in `src/env.ts`. Logging is pino via `hono-pino` (`c.var.logger`, `LOG_LEVEL`). Scalar is at `http://localhost:3001/docs` when `NODE_ENV=development` (Compose API uses that). Spec: `/openapi.json` (generated from routes, not hand-written). Rate limit uses `hono-rate-limiter` `RedisStore` + node-redis over `REDIS_URL` (global skip `/`, `/health`, `/docs`, `/openapi.json`, `OPTIONS`; tighter cap on `POST /auth/login` and `POST /auth/register`).
-- **apps/app** — Nuxt 4 SPA (`ssr: false`) for the authenticated product. Extends `layer-auth` + `layer-base`.
-- **apps/admin** — Nuxt 4 SPA (`ssr: false`) for admins. Extends `layer-auth` + `layer-base`.
+- **apps/app** — Nuxt 4 SPA (`ssr: false`) for the authenticated product. Extends `layer-auth` + `layer-base`. Domain UI lives in `app/features/<name>/`; `app/pages/` stays the route adapter.
+- **apps/admin** — Nuxt 4 SPA (`ssr: false`) for admins. Extends `layer-auth` + `layer-base`. Same `app/features/<name>/` layout as the user app.
 - **apps/web** — Nuxt 4 SSG marketing site (`nuxt generate`, `nitro.preset: 'static'`). Extends `layer-base` only. Prefer prerender; do not add a Node server unless a page needs per-request data.
 - **layers/base** (`@nuxt-app/layer-base`) — Tailwind v4 + `@nuxt/ui` + shared Nitro config. Every Nuxt app depends on this. `app.vue` wraps pages in `UApp`.
 - **layers/auth** (`@nuxt-app/layer-auth`) — Pinia Colada + `useAuth` (query key `['auth', 'me']`), `AuthLoginForm`/`AuthRegisterForm`, and `auth`/`guest`/`guest-admin`/`admin` route middleware. `guest-admin` redirects only administrators so a shared-cookie regular user can reach admin login.
@@ -47,6 +47,7 @@ Imports:
 
 - Another package or layer: `@nuxt-app/types`, `@nuxt-app/auth`, `@nuxt-app/layer-base`, `@nuxt-app/layer-auth`. Do not add short aliases (`@types`, `@auth`) — `@types` collides with DefinitelyTyped, and `@auth` is both a package and a layer.
 - Same-app source: `@api/`, `@app/`, `@admin/`, `@web/` (that app's `src/` or `app/`).
+- Inside `app/features/<name>/`: relative paths that stay in that feature. Pages import `@app/features/<name>/...` (or `@admin/...`). A feature does not import another feature or `pages/`.
 - Inside `packages/*`: relative `./` to local files. Public surface stays `src/index.ts`.
 - Layers: `extends: '@nuxt-app/layer-*'`. Components and composables are auto-imported. A specific layer file is `#layers/base` or `#layers/auth`.
 
@@ -69,3 +70,7 @@ Canonical roles map 1:1 to `needs-triage`, `needs-info`, `ready-for-agent`, `rea
 ### Domain docs
 
 Single-context: one root `CONTEXT.md` and `docs/adr/`. See `docs/agents/domain.md`.
+
+### Feature layout
+
+Product Nuxt SPAs keep domain code in `app/features/<name>/`. See `docs/agents/feature-layout.md` when adding a feature, choosing feature vs layer, placing Pinia Colada queries or mutations, or moving pages/composables.
