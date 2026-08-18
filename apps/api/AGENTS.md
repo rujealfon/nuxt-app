@@ -8,7 +8,7 @@ Hono server. Repo-root `AGENTS.md` covers monorepo commands, shared imports, and
 pnpm dev:api                         # tsx watch, http://localhost:3001
 pnpm --filter @nuxt-app/api test     # vitest, app.request(), db nuxt_app_test
 pnpm db:generate                     # after editing src/db/schema/
-pnpm db:migrate                      # also runs on boot in src/index.ts
+pnpm db:migrate                      # also runs on boot in src/index.ts and on Vercel API builds (production and preview)
 pnpm db:seed                         # ADMIN_PASSWORD required
 ```
 
@@ -16,7 +16,7 @@ Scalar is at http://localhost:3001/docs when `NODE_ENV=development`. Spec: `/ope
 
 ## Architecture
 
-`src/index.ts` is process boot (`runMigrations()` + `serve`). Vercel serves `src/app.ts` (`export default app`) and does not run `index.ts` — apply migrations from your machine.
+`src/index.ts` is process boot (`runMigrations()` + `serve`). Vercel serves `src/app.ts` (`export default app`) and does not run `index.ts`. API builds run `pnpm db:migrate` (production and preview). Preview must use its own `DATABASE_URL` / `DATABASE_URL_UNPOOLED`.
 
 `app.ts` is the framework surface: global middleware and `.route()` mounts. `factory.ts` is `createFactory<AppEnv>` + `OpenAPIHono`. Cross-cutting middleware stays in `src/middleware/`. Origin policy lives in `src/request-policy.ts` (`resolveCorsOrigin`, `skipPublic`).
 

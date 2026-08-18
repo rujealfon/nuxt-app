@@ -24,9 +24,9 @@ Custom domains (attach when DNS is ready):
 - Projects exist: `nuxt-app-web`, `nuxt-app-app`, `nuxt-app-admin`, `nuxt-app-api`.
 - Nitro: `layers/base` uses `vercel` when `VERCEL` is set, `node-server` otherwise. `apps/web` still overrides to `static`.
 - Redis: `connectRedis()` is lazy and coalesced. Rate limiting works when Vercel serves `src/app.ts` and never runs `src/index.ts`.
-- Vercel entry for the API is `src/app.ts` (`export default app`). Do not use `apps/api` `build` (`tsc`) as the Vercel build command.
+- Vercel entry for the API is `src/app.ts` (`export default app`). Do not use `apps/api` `build` (`tsc`) as the Vercel build command. The API `buildCommand` is `pnpm db:migrate`.
 
-Migrations do **not** run on API boot on Vercel. Apply them from your machine (or a production-only API build hook). See [Migrate](#migrate).
+Migrations do **not** run on API boot on Vercel. Production and preview API builds run `pnpm db:migrate`. Preview must use a different database than production. See [Migrate](#migrate).
 
 ## Project settings
 
@@ -37,7 +37,7 @@ Each app owns its settings in `apps/<name>/vercel.json` (picked up because Root 
 | web   | `apps/web/vercel.json`   | `nuxtjs`  | layer `nuxt:prepare` + `pnpm build` (`nuxt generate`) | `.output/public`                            |
 | app   | `apps/app/vercel.json`   | `nuxtjs`  | layer `nuxt:prepare` + `pnpm build` (`nuxt build`)    | default (Nitro `vercel` → `.vercel/output`) |
 | admin | `apps/admin/vercel.json` | `nuxtjs`  | layer `nuxt:prepare` + `pnpm build` (`nuxt build`)    | default                                     |
-| api   | `apps/api/vercel.json`   | `hono`    | empty (do not run `tsc`)                              | default — Vercel bundles `src/app.ts`       |
+| api   | `apps/api/vercel.json`   | `hono`    | `pnpm db:migrate` (not `tsc`)                         | default — Vercel bundles `src/app.ts`       |
 
 Do **not** set `ignoreCommand` / Ignored Build Step to `npx turbo-ignore` (`turbo-ignore` is deprecated). Vercel [skips unaffected projects](https://vercel.com/docs/monorepos#skipping-unaffected-projects) when the commit does not change that package or its workspace deps. That path does not take a concurrent build slot. Leave **Skip deployment** enabled under Root Directory (the default). Leave Ignored Build Step empty.
 
@@ -81,19 +81,19 @@ Set on each project (Production + Preview). Projects do not inherit each other�
 
 **`nuxt-app-api`**
 
-| Name                    | Production                                                                                                                                   |
-| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| `DATABASE_URL`          | Neon **pooled** URL (runtime), `sslmode=verify-full`                                                                                         |
-| `DATABASE_URL_UNPOOLED` | Neon **direct** URL (migrations), `sslmode=verify-full`. Required when `DATABASE_URL` is a pooled endpoint.                                  |
-| `REDIS_URL`             | Upstash `rediss://…` (TLS). Do not use `redis://` — Upstash rejects it.                                                                      |
-| `NODE_ENV`              | `production` (Vercel usually sets this)                                                                                                      |
-| `API_URL`               | `https://api.nuxt-app.com` (or the API `*.vercel.app` URL until DNS is ready)                                                                |
-| `APP_URL`               | `https://app.nuxt-app.com`                                                                                                                   |
-| `ADMIN_URL`             | `https://admin.nuxt-app.com`                                                                                                                 |
-| `WEB_URL`               | `https://nuxt-app.com`                                                                                                                       |
-| `COOKIE_DOMAIN`         | `.nuxt-app.com` on custom domains; omit on `*.vercel.app` previews (app/admin use a same-origin `/__api` proxy so the cookie is first-party) |
-| `TRUST_PROXY`           | `true` (Vercel overwrites `X-Forwarded-For`)                                                                                                 |
-| `LOG_LEVEL`             | `info`                                                                                                                                       |
+| Name                    | Production                                                                                                                                                                                                   |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `DATABASE_URL`          | Neon **pooled** URL (runtime), `sslmode=verify-full`                                                                                                                                                         |
+| `DATABASE_URL_UNPOOLED` | Neon **direct** URL (migrations), `sslmode=verify-full`. Required when `DATABASE_URL` is a pooled endpoint. Must be available at **build** time. Preview scope must be a different database than Production. |
+| `REDIS_URL`             | Upstash `rediss://…` (TLS). Do not use `redis://` — Upstash rejects it.                                                                                                                                      |
+| `NODE_ENV`              | `production` (Vercel usually sets this)                                                                                                                                                                      |
+| `API_URL`               | `https://api.nuxt-app.com` (or the API `*.vercel.app` URL until DNS is ready)                                                                                                                                |
+| `APP_URL`               | `https://app.nuxt-app.com`                                                                                                                                                                                   |
+| `ADMIN_URL`             | `https://admin.nuxt-app.com`                                                                                                                                                                                 |
+| `WEB_URL`               | `https://nuxt-app.com`                                                                                                                                                                                       |
+| `COOKIE_DOMAIN`         | `.nuxt-app.com` on custom domains; omit on `*.vercel.app` previews (app/admin use a same-origin `/__api` proxy so the cookie is first-party)                                                                 |
+| `TRUST_PROXY`           | `true` (Vercel overwrites `X-Forwarded-For`)                                                                                                                                                                 |
+| `LOG_LEVEL`             | `info`                                                                                                                                                                                                       |
 
 `APP_URL` / `ADMIN_URL` / `WEB_URL` are the CORS + CSRF allowlist. Exact origin: `https`, no trailing slash.
 
@@ -132,7 +132,9 @@ Until DNS is live: use the four `*.vercel.app` URLs, leave `COOKIE_DOMAIN` unset
 
 ## Migrate
 
-`pnpm db:migrate` (repo root) runs `tsx apps/api/src/db/migrate.ts`. It loads repo-root `.env`, then `apps/api/.env`. A shell `DATABASE_URL_UNPOOLED` (then `DATABASE_URL`) wins. API boot also runs migrations and uses `DATABASE_URL_UNPOOLED` when set.
+`pnpm db:migrate` (repo root) runs `tsx apps/api/src/db/migrate.ts`. It loads repo-root `.env`, then `apps/api/.env`. A shell `DATABASE_URL_UNPOOLED` (then `DATABASE_URL`) wins. API boot also runs migrations locally and uses `DATABASE_URL_UNPOOLED` when set.
+
+Vercel API builds (production and preview) run `pnpm db:migrate`. Mark `DATABASE_URL` and `DATABASE_URL_UNPOOLED` available at **build** time on `nuxt-app-api` (not Runtime-only). Set Preview-scoped URLs to a different Neon database (or branch) than Production.
 
 Use Neon’s **direct** host (no `-pooler`) in `DATABASE_URL_UNPOOLED`. Migrations take a lock; the pooler can hang. Keep the pooler URL in `DATABASE_URL` for the running API.
 
@@ -147,9 +149,9 @@ DATABASE_URL='postgresql://USER:PASSWORD@ep-xxx.region.aws.neon.tech:5432/neondb
 
 `drizzle-kit` / `tsx` do not load Vercel env files. Pass `DATABASE_URL_UNPOOLED` on the command line for migrate/studio.
 
-Do **not** migrate on every preview deploy against the production database. Unreviewed branch SQL would land on prod. A Vercel rollback restores functions, not schema.
+Preview deploys apply that branch’s SQL to the **preview** database. Do not point Preview `DATABASE_URL` / `DATABASE_URL_UNPOOLED` at production. A Vercel rollback restores functions, not schema.
 
-Acceptable: production-only API build hook, additive migrations, `DATABASE_URL_UNPOOLED` at build time. Safest: migrate from your machine (or CI) against prod, then deploy. First Neon stand-up and anything destructive (`DROP` / rename) stay off the preview build.
+Keep migrations additive. First Neon stand-up and anything destructive (`DROP` / rename) stay off the automatic hook — run those from your machine.
 
 Local Compose:
 
@@ -162,7 +164,7 @@ pnpm db:migrate
 
 1. API (env vars set).
 2. `https://<api>/health`.
-3. Migrate + seed if the database is new or migrations changed.
+3. Confirm the API build applied migrations (`Running migrations...` / `Migrations completed.`). Seed if the database is new.
 4. app, admin, web.
 
 Git pushes then deploy all four. Vercel skips a project when that package and its workspace deps did not change.
@@ -180,7 +182,7 @@ Git pushes then deploy all four. Vercel skips a project when that package and it
 ## Gotchas
 
 - Postgres must be 18. Neon 17 fails the first migration (`uuidv7()`).
-- API Vercel build stays empty. `tsc` is not the platform entry.
+- API Vercel build is `pnpm db:migrate`, not `tsc`. `tsc` is not the platform entry. Preview must not share production `DATABASE_URL`.
 - Runtime `DATABASE_URL` is the Neon **pooler**. If the pool is exhausted, set `max: 1` on the `pg` Pool. Migrations use `DATABASE_URL_UNPOOLED` (required in production when `DATABASE_URL` is pooled). Neon URLs use `sslmode=verify-full` (`pg` already treats `require` as `verify-full` and warns).
 - Upstash `REDIS_URL` must be `rediss://` (TLS). `redis://` is only for local Compose.
 - SPA deep links work because Nitro/Vercel serves the fallback. web is fully static.
