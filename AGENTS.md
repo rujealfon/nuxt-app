@@ -20,28 +20,22 @@ pnpm db:seed          # seed an admin user (requires ADMIN_PASSWORD), tsx apps/a
 Docker: [DOCKER.md](DOCKER.md) (`pnpm docker:up`, ports, images, Postgres 5433, Redis 6380).
 Vercel: [VERCEL.md](VERCEL.md) (four projects: `nuxt-app-web`, `nuxt-app-app`, `nuxt-app-admin`, `nuxt-app-api`; env, domains, migrate).
 
-API tests live in `apps/api/test/` and call the mounted Hono app via `app.request()` (no HTTP server). They use database `nuxt_app_test` on the same Postgres as `DATABASE_URL` (override with `DATABASE_URL_TEST`). Setup creates that database and runs migrations. Rate limiting uses an in-memory store in tests (no Redis).
-
-Nuxt apps and layers use `@nuxt/test-utils` + Vitest (`environment: 'nuxt'`, files under each package's `test/`). `packages/types` and `packages/auth` use plain Vitest.
-
 Local host apps: Compose Postgres + Redis (see [DOCKER.md](DOCKER.md)), then `pnpm install`, `pnpm db:migrate`, `pnpm dev`. `.env.example` points `DATABASE_URL` at Compose’s published Postgres port (5433).
 
 ## Architecture
 
-pnpm + Turborepo monorepo, three layers: `apps/*` (deployables), `layers/*` (Nuxt layers, extended by apps), `packages/*` (plain TS packages, no Nuxt).
+pnpm + Turborepo monorepo, three layers: `apps/*` (deployables), `layers/*` (Nuxt layers, extended by apps), `packages/*` (plain TS packages, no Nuxt). Each deployable has `apps/<name>/AGENTS.md` and `apps/<name>/README.md`.
 
-- **apps/api** — Hono server (not Nuxt). Feature modules live under `src/modules/*` and are mounted from `src/app.ts` with `app.route()`. Drizzle lives in `src/db/` (`schema/`: `users`, `sessions` + `user_role` pgEnum), the Postgres client, and `runMigrations()` (called on API boot in `src/index.ts`). The public user shape is `authUserSchema` in `@nuxt-app/types` — never leak `passwordHash`. PKs and FKs are `uuid` columns with SQL default `uuidv7()` (Postgres 18). Leave `id` off inserts and read it back with `.returning()`. `created_at` / `updated_at` use SQL `now()`; leave them off inserts. The Postgres pool uses `max: 5` on Vercel and `max: 10` locally. Public API/URL identifiers are `public_id` with SQL default `nanoid()` — add that column only when the row is addressable from the API. JSON `id` is that `public_id`, never the PK. Sessions and other non-addressable rows stay PK-only. Path params that identify a user use `getParamsSchema({ validator: 'nanoid' })`. A new API feature is a new `src/modules/<name>/` folder: define `createRoute` + `createRouter().openapi()` in `routes.ts` so the spec stays generated. Cross-cutting middleware stays in `src/middleware/`. Env is parsed once in `src/env.ts`. Logging is pino via `hono-pino` (`c.var.logger`, `LOG_LEVEL`). Scalar is at `http://localhost:3001/docs` when `NODE_ENV=development` (Compose API uses that). Spec: `/openapi.json` (generated from routes, not hand-written). Rate limit uses `hono-rate-limiter` `RedisStore` + node-redis over `REDIS_URL` (global skip `/`, `/health`, `/docs`, `/openapi.json`, `OPTIONS`; tighter cap on `POST /auth/login` and `POST /auth/register`).
-- **apps/app** — Nuxt 4 SPA (`ssr: false`) for the authenticated product. Extends `layer-auth` + `layer-base`. Domain UI lives in `app/features/<name>/`; `app/pages/` stays the route adapter.
-- **apps/admin** — Nuxt 4 SPA (`ssr: false`) for admins. Extends `layer-auth` + `layer-base`. Same `app/features/<name>/` layout as the user app.
-- **apps/web** — Nuxt 4 SSG marketing site (`nuxt generate`, `nitro.preset: 'static'`). Extends `layer-base` only. Prefer prerender; do not add a Node server unless a page needs per-request data.
+- **apps/api** — Hono server. Modules under `src/modules/*`, mounted from `src/app.ts`. See `apps/api/AGENTS.md`.
+- **apps/app** — Nuxt 4 SPA (`ssr: false`) for the authenticated product. Extends `layer-auth` + `layer-base`. See `apps/app/AGENTS.md`.
+- **apps/admin** — Nuxt 4 SPA (`ssr: false`) for admins. Extends `layer-auth` + `layer-base`. See `apps/admin/AGENTS.md`.
+- **apps/web** — Nuxt 4 SSG marketing site (`nuxt generate`, `nitro.preset: 'static'`). Extends `layer-base` only. See `apps/web/AGENTS.md`.
 - **layers/base** (`@nuxt-app/layer-base`) — Tailwind v4 + `@nuxt/ui` + shared Nitro config. Every Nuxt app depends on this. `app.vue` wraps pages in `UApp`.
 - **layers/auth** (`@nuxt-app/layer-auth`) — Pinia Colada + `useAuth` (query key `['auth', 'me']`), `AuthLoginForm`/`AuthRegisterForm`, and `auth`/`guest`/`guest-admin`/`admin` route middleware. `guest-admin` redirects only administrators so a shared-cookie regular user can reach admin login.
 - **packages/types** — shared Zod request schemas (`loginSchema`, `registerSchema`) plus inferred/plain types (`LoginInput`, `AuthUser`, …). API and Nuxt forms use the same schemas. Request bodies that are not table-shaped stay here. The public user shape (`authUserSchema`) lives here too.
 - **packages/auth** — `createAuthClient(baseUrl)` fetch client for `/auth/*`, consumed by `layer-auth`'s `useAuth`. Does not import API route types.
 
-Auth flow: `apps/api/src/modules/auth/identity.ts` owns users and passwords (`createUser`, `authenticateUser`, `ensureAdmin`). `session.ts` owns start/end/currentUser — cookie + row + 7-day expiry. Routes map HTTP; they do not see the user PK. `src/middleware/` exposes `sessionMiddleware`/`requireAdmin`. `requireAdmin` uses `matchesRequiredRole` from `@nuxt-app/types`. Sessions are opaque IDs in an httpOnly cookie (`nuxt_app_session`), not JWTs — `currentUser` joins `sessions` + `users` on every request. Public paths (`/`, `/health`, `/docs`, `/openapi.json`, `OPTIONS`) skip Session via `skipPublic` in `request-policy.ts`. The public user is `authUserSchema` in `@nuxt-app/types` (`id` is `public_id`). Frontend layer middleware calls the API rather than reading cookies. `resolveRouteAccess` is the route-access policy; the four Nuxt guards are adapters over it. Guards use `ensureUser()` → `refresh()`, which honors Pinia Colada’s 30s `staleTime`: a revoked or demoted session can still pass a guard until the cache is stale. That is intentional (dedupe + fewer `/auth/me` calls). Use `fetchUser()` / `refetch()` when a surface must see the current session immediately. Rate-limit tests inject `MemoryStore` via `setRateLimitStoreFactory`; production uses Redis. `useAuth` constructs `createAuthClient(resolveAuthApiBase(...))`. The Nitro `/__api` proxy rule is built from `API_PROXY_PREFIX`. Failed bodies map through `messageFromFailedBody` / `failedResponseBody`.
-
-`src/index.ts` is process boot (`runMigrations()` + `serve`). Origin policy lives in `src/request-policy.ts` (`resolveCorsOrigin`, `skipPublic`).
+Sessions are opaque IDs in an httpOnly cookie (`nuxt_app_session`), not JWTs. `resolveRouteAccess` is the route-access policy; the four Nuxt guards are adapters over it.
 
 Imports:
 
@@ -53,11 +47,15 @@ Imports:
 
 When changing a shared package's public surface (`packages/*/src/index.ts` exports), check all consuming apps/layers, not just the one you're editing.
 
-Env vars are shared across all apps from repo-root `.env` (see `.env.example`). The API loads that file (then `apps/api/.env`) once in `src/env.ts`, which also parses `DATABASE_URL` / `DATABASE_URL_TEST` / `DATABASE_URL_UNPOOLED`. `resolveDatabaseUrl()` is the runtime (pooled) URL; `resolveMigrationDatabaseUrl()` is the direct URL used only by `runMigrations()` / drizzle-kit. `DATABASE_URL_UNPOOLED` is required in production when `DATABASE_URL` is a pooled (PgBouncer) endpoint, e.g. Neon. Neon connection strings use `sslmode=verify-full`. Upstash `REDIS_URL` must be `rediss://` (TLS); local Compose stays `redis://`. Both resolvers read those typed settings — they do not load files again. Nuxt layers/apps call `loadRootEnv()` before reading `NUXT_PUBLIC_*` (Turbo runs those tasks from each workspace directory): `DATABASE_URL`, `REDIS_URL`, `COOKIE_DOMAIN`, per-app `*_URL` vars used both for CORS allowlisting and for cross-subdomain cookie config in production. Documented `*.vercel.app` previews are distinct sites; app/admin call the API via a same-origin `/__api` Nitro proxy so the session cookie is first-party (`SameSite=Lax`). Production custom domains set `COOKIE_DOMAIN=.nuxt-app.com` to share the cookie across app and admin. The marketing site bakes `NUXT_PUBLIC_APP_URL` (falls back to `APP_URL`) into Login/register CTAs at generate time. Rate-limit knobs: `RATE_LIMIT_MAX`, `RATE_LIMIT_WINDOW_MS`, `AUTH_RATE_LIMIT_MAX`. Log level: `LOG_LEVEL` (pino; tests use `silent`). Rate limiting uses the socket address unless `TRUST_PROXY` is set (then the first `X-Forwarded-For` hop). A reverse proxy that overwrites `X-Forwarded-For` should set `TRUST_PROXY`.
+Env vars are shared across all apps from repo-root `.env` (see `.env.example`). Nuxt layers/apps call `loadRootEnv()` before reading `NUXT_PUBLIC_*` (Turbo runs those tasks from each workspace directory). `DATABASE_URL`, `REDIS_URL`, `COOKIE_DOMAIN`, and per-app `*_URL` vars are used for CORS allowlisting and cross-subdomain cookies. Documented `*.vercel.app` previews are distinct sites; app/admin call the API via a same-origin `/__api` Nitro proxy so the session cookie is first-party (`SameSite=Lax`). Production custom domains set `COOKIE_DOMAIN=.nuxt-app.com`. API database and rate-limit env: `apps/api/AGENTS.md`.
 
 Lint: `@antfu/eslint-config` (Vue + TypeScript + formatters) at repo root — no per-package eslint config.
 
 ## Agent skills
+
+### App guides
+
+Each deployable has `apps/<name>/AGENTS.md`. Read it when adding a route or module in the API, a page or feature in app/admin, a marketing page in web, or changing that app's tests, env, or deploy entry.
 
 ### Issue tracker
 
@@ -70,11 +68,3 @@ Canonical roles map 1:1 to `needs-triage`, `needs-info`, `ready-for-agent`, `rea
 ### Domain docs
 
 Single-context: one root `CONTEXT.md` and `docs/adr/`. See `docs/agents/domain.md`.
-
-### Feature layout
-
-Product Nuxt SPAs keep domain code in `app/features/<name>/`. See `docs/agents/feature-layout.md` when adding a feature, choosing feature vs layer, placing Pinia Colada queries or mutations, or moving pages/composables.
-
-### Module layout
-
-The Hono API keeps domain code in `src/modules/<name>/`. See `docs/agents/module-layout.md` when adding a module, choosing module vs package, splitting `routes.ts` from domain files, or mounting a router in `app.ts`.

@@ -1,75 +1,37 @@
-# Nuxt Minimal Starter
+# Admin (`@nuxt-app/admin`)
 
-Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
+Admin panel SPA (Nuxt 4, `ssr: false`). Production host: `admin.nuxt-app.com`. Local: http://localhost:3002.
 
-## Setup
-
-Make sure to install dependencies:
+Extends `@nuxt-app/layer-base` and `@nuxt-app/layer-auth`. Color mode defaults to dark. Install and env live at the repo root.
 
 ```bash
-# npm
-npm install
-
-# pnpm
 pnpm install
-
-# yarn
-yarn install
-
-# bun
-bun install
+pnpm dev:admin
 ```
 
-## Development Server
+Needs the API on http://localhost:3001 (`pnpm dev:api` or Compose). Seed an admin first — see [apps/api/README.md](../api/README.md).
 
-Start the development server on `http://localhost:3000`:
+## Routes
+
+| Path     | Access        |
+| -------- | ------------- |
+| `/`      | `admin`       |
+| `/login` | `guest-admin` |
+
+There is no register page. `guest-admin` redirects only administrators, so a shared-cookie regular user can still reach this login. Session is the same `nuxt_app_session` cookie as the product app. Preview `*.vercel.app` hosts call the API through this app’s same-origin `/__api` Nitro proxy.
+
+## Tests
 
 ```bash
-# npm
-npm run dev
-
-# pnpm
-pnpm dev
-
-# yarn
-yarn dev
-
-# bun
-bun run dev
+pnpm --filter @nuxt-app/admin test
 ```
 
-## Production
+`@nuxt/test-utils` + Vitest (`environment: 'nuxt'`), files under `test/`.
 
-Build the application for production:
+## Env
 
-```bash
-# npm
-npm run build
+From the repo-root `.env`. `ADMIN_URL` is this app’s public origin (CORS + cookie). Production custom domains share the session with the product app via `COOKIE_DOMAIN=.nuxt-app.com`.
 
-# pnpm
-pnpm build
+## Deploy
 
-# yarn
-yarn build
-
-# bun
-bun run build
-```
-
-Locally preview production build:
-
-```bash
-# npm
-npm run preview
-
-# pnpm
-pnpm preview
-
-# yarn
-yarn preview
-
-# bun
-bun run preview
-```
-
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+Vercel project `nuxt-app-admin` (`nuxt build`). Details: [VERCEL.md](../../VERCEL.md). Compose: [DOCKER.md](../../DOCKER.md).

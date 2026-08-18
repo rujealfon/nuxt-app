@@ -17,7 +17,7 @@ Custom domains (attach when DNS is ready):
 - `api.nuxt-app.com` → api
 - `COOKIE_DOMAIN=.nuxt-app.com`
 
-`*.vercel.app` URLs work for a first smoke test. Cross-subdomain cookies match the README only after those custom domains are attached.
+`*.vercel.app` URLs work for a first smoke test. Cross-subdomain cookies match [apps/api/README.md](apps/api/README.md) only after those custom domains are attached.
 
 ## Already done
 
