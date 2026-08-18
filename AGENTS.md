@@ -74,3 +74,7 @@ Single-context: one root `CONTEXT.md` and `docs/adr/`. See `docs/agents/domain.m
 ### Feature layout
 
 Product Nuxt SPAs keep domain code in `app/features/<name>/`. See `docs/agents/feature-layout.md` when adding a feature, choosing feature vs layer, placing Pinia Colada queries or mutations, or moving pages/composables.
+
+### Module layout
+
+The Hono API keeps domain code in `src/modules/<name>/`. See `docs/agents/module-layout.md` when adding a module, choosing module vs package, splitting `routes.ts` from domain files, or mounting a router in `app.ts`.
