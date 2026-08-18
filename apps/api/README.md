@@ -37,7 +37,7 @@ pnpm db:migrate
 pnpm db:studio
 ```
 
-Migrations also run on API boot (`src/index.ts`) except on Vercel — apply those from your machine. See [VERCEL.md](../../VERCEL.md).
+Migrations also run on API boot (`src/index.ts`) and on every Vercel API build (`pnpm db:migrate`). Preview must use its own database. See [VERCEL.md](../../VERCEL.md).
 
 Seed an admin (`ADMIN_PASSWORD` is required). Optional: `ADMIN_EMAIL` (default `admin@nuxt-app.com`), `ADMIN_NAME`.
 

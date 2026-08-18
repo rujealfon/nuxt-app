@@ -12,7 +12,7 @@ pnpm type-check       # turbo run type-check (every workspace: tsc or nuxt typec
 pnpm lint / lint:fix  # eslint . (root-level flat config, applies repo-wide; husky pre-commit runs lint-staged)
 pnpm test             # turbo run test (API, Nuxt apps/layers, packages)
 pnpm db:generate      # drizzle-kit generate (run after editing apps/api/src/db/schema/)
-pnpm db:migrate       # applies migrations (also runs automatically on API boot, see apps/api/src/index.ts)
+pnpm db:migrate       # applies migrations (API boot locally; production and preview Vercel API builds)
 pnpm db:studio        # drizzle-kit studio on the host
 pnpm db:seed          # seed an admin user (requires ADMIN_PASSWORD), tsx apps/api/src/seed.ts
 ```
