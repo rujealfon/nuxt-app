@@ -3,7 +3,6 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "prebuild": "pnpm --filter @nuxt-app/layer-base nuxt:prepare",
     "build": "nuxt generate",
     "dev": "nuxt dev --port 3003",
     "generate": "nuxt generate",
