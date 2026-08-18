@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "hono",
-  "installCommand": "pnpm --dir ../.. install --frozen-lockfile",
-  "buildCommand": "pnpm run build && pnpm db:migrate"
+  "installCommand": "bash scripts/vercel-install.sh",
+  "buildCommand": "pnpm db:migrate"
 }
