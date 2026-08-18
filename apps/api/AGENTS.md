@@ -1,0 +1,57 @@
+# API (`apps/api`)
+
+Hono server. Repo-root `AGENTS.md` covers monorepo commands, shared imports, and root `.env`. This file is this app only.
+
+## Commands
+
+```bash
+pnpm dev:api                         # tsx watch, http://localhost:3001
+pnpm --filter @nuxt-app/api test     # vitest, app.request(), db nuxt_app_test
+pnpm db:generate                     # after editing src/db/schema/
+pnpm db:migrate                      # also runs on boot in src/index.ts
+pnpm db:seed                         # ADMIN_PASSWORD required
+```
+
+Scalar is at http://localhost:3001/docs when `NODE_ENV=development`. Spec: `/openapi.json` (generated from routes).
+
+## Architecture
+
+`src/index.ts` is process boot (`runMigrations()` + `serve`). Vercel serves `src/app.ts` (`export default app`) and does not run `index.ts` — apply migrations from your machine.
+
+`app.ts` is the framework surface: global middleware and `.route()` mounts. `factory.ts` is `createFactory<AppEnv>` + `OpenAPIHono`. Cross-cutting middleware stays in `src/middleware/`. Origin policy lives in `src/request-policy.ts` (`resolveCorsOrigin`, `skipPublic`).
+
+## Module layout
+
+Domain lives in `src/modules/<name>/`. See `docs/agents/module-layout.md` when adding a module, choosing module vs package, splitting `routes.ts` from domain files, or mounting a router in `app.ts`.
+
+Copy `src/modules/auth/`. `routes.ts` maps HTTP with chained `createRoute` + `createRouter().openapi()`; handlers stay inline. `identity.ts` owns users and passwords (`createUser`, `signIn`, `ensureAdmin`). `signIn` issues the Session from the User PK only when `requireRole` admission passes. `session.ts` owns cookie + row + 7-day expiry and maps rows to AuthUser. Routes do not see the user PK.
+
+`health` and `docs` stay route-only. `admin` is a mount prefix.
+
+## Database
+
+Drizzle lives in `src/db/`. PKs and FKs are `uuid` with SQL default `uuidv7()` (Postgres 18). Leave `id` off inserts and read it back with `.returning()`. `created_at` / `updated_at` use SQL `now()`; leave them off inserts. The pool is `max: 5` on Vercel and `max: 10` locally.
+
+Public API/URL identifiers are `public_id` with SQL default `nanoid()` — add that column only when the row is addressable from the API. JSON `id` is that `public_id`, never the PK. Sessions and other non-addressable rows stay PK-only. Path params that identify a user use `getParamsSchema({ validator: 'nanoid' })`.
+
+The public user is `authUserSchema` in `@nuxt-app/types` (`id` is `public_id`). Never leak `passwordHash`. Request bodies that Nuxt forms also use stay in `@nuxt-app/types`.
+
+## Session and rate limit
+
+`sessionMiddleware` / `requireAdmin` live in `src/middleware/`. `requireAdmin` uses `matchesRequiredRole` from `@nuxt-app/types`. Public paths (`/`, `/health`, `/docs`, `/openapi.json`, `OPTIONS`) skip Session via `skipPublic`.
+
+Rate limit is `hono-rate-limiter` `RedisStore` + node-redis over `REDIS_URL` (global skip of those public paths; tighter cap on `POST /auth/login` and `POST /auth/register`). Tests inject `MemoryStore` via `setRateLimitStoreFactory`.
+
+Logging is pino via `hono-pino` (`c.var.logger`, `LOG_LEVEL`).
+
+## Env
+
+`src/env.ts` loads root `.env` then `apps/api/.env`. `resolveDatabaseUrl()` is the pooled runtime URL. `resolveMigrationDatabaseUrl()` is the direct URL used only by `runMigrations()` / drizzle-kit. `DATABASE_URL_UNPOOLED` is required in production when `DATABASE_URL` is a pooled endpoint. Neon uses `sslmode=verify-full`. Upstash `REDIS_URL` must be `rediss://`; local Compose stays `redis://`.
+
+Rate-limit knobs: `RATE_LIMIT_MAX`, `RATE_LIMIT_WINDOW_MS`, `AUTH_RATE_LIMIT_MAX`. Rate limiting uses the socket address unless `TRUST_PROXY` is set (then the first `X-Forwarded-For` hop).
+
+## Imports and tests
+
+Same-app source: `@api/` (even inside a module). Tests live in `test/` and call `app.request()` — no HTTP server. Setup creates `nuxt_app_test` and runs migrations.
+
+SPAs talk to this API through `@nuxt-app/auth` and `@nuxt-app/types`.

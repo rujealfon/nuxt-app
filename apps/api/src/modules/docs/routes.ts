@@ -25,7 +25,7 @@ export function configureOpenAPI(app: OpenAPIHono<AppEnv>) {
 
   app.doc31('/openapi.json', openApiConfig)
 
-  app.get('/', Scalar({
+  app.get('/docs', Scalar({
     url: '/openapi.json',
     pageTitle: 'nuxt-app API',
     theme: 'kepler',

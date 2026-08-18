@@ -4,6 +4,18 @@ import { z } from 'zod'
 
 loadEnv()
 
+export function isPlainRedisToUpstash(connectionString: string) {
+  let url: URL
+  try {
+    url = new URL(connectionString)
+  }
+  catch {
+    return false
+  }
+
+  return url.protocol === 'redis:' && url.hostname.endsWith('.upstash.io')
+}
+
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
@@ -12,10 +24,12 @@ const envSchema = z.object({
   API_URL: z.url().default('http://localhost:3001'),
   APP_URL: z.url().default('http://localhost:3000'),
   ADMIN_URL: z.url().default('http://localhost:3002'),
-  WEB_URL: z.url().optional(),
-  MARKETING_URL: z.url().optional(),
+  WEB_URL: z.url().default('http://localhost:3003'),
   COOKIE_DOMAIN: z.string().optional().transform(value => value || undefined),
-  REDIS_URL: z.url().default('redis://localhost:6380'),
+  REDIS_URL: z.url().default('redis://localhost:6380').refine(
+    value => !isPlainRedisToUpstash(value),
+    { error: 'Use rediss:// (TLS), not redis://, with Upstash — its endpoints enforce TLS.' },
+  ),
   RATE_LIMIT_MAX: z.coerce.number().int().positive().default(120),
   RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().default(60_000),
   AUTH_RATE_LIMIT_MAX: z.coerce.number().int().positive().default(10),
@@ -24,6 +38,9 @@ const envSchema = z.object({
       return false
     return ['1', 'true', 'yes'].includes(value.trim().toLowerCase())
   }),
+  DATABASE_URL: z.url(),
+  DATABASE_URL_TEST: z.url().optional(),
+  DATABASE_URL_UNPOOLED: z.url().optional(),
 })
 
 const parsed = envSchema.safeParse(process.env)
@@ -41,6 +58,6 @@ export const isDev = env.NODE_ENV === 'development'
 export const allowedOrigins = [
   env.APP_URL,
   env.ADMIN_URL,
-  env.WEB_URL ?? env.MARKETING_URL ?? 'http://localhost:3003',
+  env.WEB_URL,
   ...(isDev ? [env.API_URL] : []),
 ]

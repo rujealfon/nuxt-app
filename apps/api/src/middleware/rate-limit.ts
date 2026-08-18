@@ -1,12 +1,14 @@
 import type { Context } from 'hono'
-import type { Store } from 'hono-rate-limiter'
+import type { MemoryStore, Store } from 'hono-rate-limiter'
 import { env } from '@api/env.js'
 import { rateLimitRedis } from '@api/redis.js'
+import { skipPublic } from '@api/request-policy.js'
 import { getConnInfo } from '@hono/node-server/conninfo'
-import { MemoryStore, rateLimiter, RedisStore } from 'hono-rate-limiter'
+import { failedResponseBody } from '@nuxt-app/types'
+import { rateLimiter, RedisStore } from 'hono-rate-limiter'
 import * as HttpStatusPhrases from 'stoker/http-status-phrases'
 
-const tooMany = { message: HttpStatusPhrases.TOO_MANY_REQUESTS } as const
+const tooMany = failedResponseBody(HttpStatusPhrases.TOO_MANY_REQUESTS)
 
 function firstForwardedAddress(forwardedFor?: string | null): string | undefined {
   if (!forwardedFor)
@@ -48,22 +50,30 @@ function clientKey(c: Context): string {
   })
 }
 
-function skipPublic(c: Context) {
-  if (c.req.method === 'OPTIONS')
-    return true
-  const path = c.req.path
-  return path === '/' || path === '/health'
+let rateLimitStoreFactory: (prefix: string) => Store = prefix =>
+  new RedisStore({ client: rateLimitRedis, prefix })
+
+let authRateLimitMax = env.AUTH_RATE_LIMIT_MAX
+
+/** Tests inject MemoryStore. Production keeps the Redis factory. */
+export function setRateLimitStoreFactory(factory: (prefix: string) => Store) {
+  rateLimitStoreFactory = factory
 }
 
-function createRedisStore(prefix: string): Store {
-  let inner: RedisStore | undefined
+/** Tests lower the auth cap without re-mounting the app. */
+export function setAuthRateLimitMax(max: number) {
+  authRateLimitMax = max
+}
+
+function createStore(prefix: string): Store {
+  let inner: Store | undefined
   let initOptions: Parameters<RedisStore['init']>[0] | undefined
 
   function store() {
     if (!inner) {
-      inner = new RedisStore({ client: rateLimitRedis, prefix })
+      inner = rateLimitStoreFactory(prefix)
       if (initOptions)
-        inner.init(initOptions)
+        inner.init?.(initOptions)
     }
     return inner
   }
@@ -75,18 +85,12 @@ function createRedisStore(prefix: string): Store {
     increment: key => store().increment(key),
     decrement: key => store().decrement(key),
     resetKey: key => store().resetKey(key),
-    get: key => store().get(key),
+    get: key => store().get?.(key),
   }
 }
 
-function createStore(prefix: string) {
-  if (env.NODE_ENV === 'test')
-    return new MemoryStore()
-  return createRedisStore(prefix)
-}
-
 export function createRateLimit(options: {
-  limit: number
+  limit: number | ((c: Context) => number)
   windowMs?: number
   prefix?: string
   skip?: (c: Context) => boolean
@@ -109,6 +113,6 @@ export const rateLimit = createRateLimit({
 })
 
 export const authRateLimit = createRateLimit({
-  limit: env.AUTH_RATE_LIMIT_MAX,
+  limit: () => authRateLimitMax,
   prefix: 'rl:auth:',
 })

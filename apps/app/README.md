@@ -1,75 +1,38 @@
-# Nuxt Minimal Starter
+# App (`@nuxt-app/app`)
 
-Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
+Authenticated product SPA (Nuxt 4, `ssr: false`). Production host: `app.nuxt-app.com`. Local: http://localhost:3000.
 
-## Setup
-
-Make sure to install dependencies:
+Extends `@nuxt-app/layer-base` and `@nuxt-app/layer-auth`. Install and env live at the repo root.
 
 ```bash
-# npm
-npm install
-
-# pnpm
 pnpm install
-
-# yarn
-yarn install
-
-# bun
-bun install
+pnpm dev:app
 ```
 
-## Development Server
+Needs the API on http://localhost:3001 (`pnpm dev:api` or Compose).
 
-Start the development server on `http://localhost:3000`:
+## Routes
+
+| Path        | Access  |
+| ----------- | ------- |
+| `/`         | `auth`  |
+| `/login`    | `guest` |
+| `/register` | `guest` |
+
+Login and register use the shared forms from `layers/auth`. Session is the `nuxt_app_session` cookie set by the API. Preview `*.vercel.app` hosts call the API through this app’s same-origin `/__api` Nitro proxy so the cookie stays first-party.
+
+## Tests
 
 ```bash
-# npm
-npm run dev
-
-# pnpm
-pnpm dev
-
-# yarn
-yarn dev
-
-# bun
-bun run dev
+pnpm --filter @nuxt-app/app test
 ```
 
-## Production
+`@nuxt/test-utils` + Vitest (`environment: 'nuxt'`), files under `test/`.
 
-Build the application for production:
+## Env
 
-```bash
-# npm
-npm run build
+From the repo-root `.env`. `NUXT_PUBLIC_API_URL` is the API the client talks to in local/dev. `APP_URL` is this app’s public origin (CORS + cookie). Production custom domains share the session with admin via `COOKIE_DOMAIN=.nuxt-app.com`.
 
-# pnpm
-pnpm build
+## Deploy
 
-# yarn
-yarn build
-
-# bun
-bun run build
-```
-
-Locally preview production build:
-
-```bash
-# npm
-npm run preview
-
-# pnpm
-pnpm preview
-
-# yarn
-yarn preview
-
-# bun
-bun run preview
-```
-
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+Vercel project `nuxt-app-app` (`nuxt build`). Details: [VERCEL.md](../../VERCEL.md). Compose: [DOCKER.md](../../DOCKER.md).

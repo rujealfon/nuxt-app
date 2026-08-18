@@ -1,46 +1,16 @@
-export interface User {
-  id: string
-  email: string
-  name: string
-  role: 'user' | 'admin'
-  createdAt: string
-  updatedAt: string
-}
-
-export interface Session {
-  id: string
-  userId: string
-  expiresAt: string
-  createdAt: string
-}
-
-export interface AuthUser {
-  id: string
-  email: string
-  name: string
-  role: 'user' | 'admin'
-}
-
-export { loginSchema, registerSchema } from './auth'
-export type { LoginInput, RegisterInput } from './auth'
-
-export interface AuthResponse {
-  user: AuthUser
-  message?: string
-}
-
-export interface ApiError {
-  message: string
-}
-
-export interface ApiValidationError {
-  success: false
-  error: {
-    name: string
-    issues: Array<{
-      code: string
-      path: Array<string | number>
-      message?: string
-    }>
-  }
-}
+export {
+  AUTH_MOUNT,
+  authHttp,
+  authResponseSchema,
+  authUserSchema,
+  loginSchema,
+  matchesRequiredRole,
+  meResponseSchema,
+  messageResponseSchema,
+  parsePublicUrl,
+  registerSchema,
+  USER_ROLES,
+  userRoleSchema,
+} from './auth'
+export type { AuthResponse, AuthUser, LoginInput, RegisterInput, UserRole } from './auth'
+export { failedResponseBody, messageFromFailedBody } from './failed-body'

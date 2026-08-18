@@ -1,7 +1,10 @@
-import { createRateLimit, resolveClientKey } from '@api/middleware/rate-limit.js'
+import app from '@api/app.js'
+import { env } from '@api/env.js'
+import { createRateLimit, resolveClientKey, setAuthRateLimitMax } from '@api/middleware/rate-limit.js'
+import { skipPublic } from '@api/request-policy.js'
 import { Hono } from 'hono'
 import { MemoryStore } from 'hono-rate-limiter'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
 
 describe('rate limit', () => {
   it('returns 429 after the limit is exceeded', async () => {
@@ -28,11 +31,7 @@ describe('rate limit', () => {
         limit: 1,
         windowMs: 60_000,
         store: new MemoryStore(),
-        skip: (c) => {
-          if (c.req.method === 'OPTIONS')
-            return true
-          return c.req.path === '/health'
-        },
+        skip: skipPublic,
       }))
       .get('/health', c => c.json({ status: 'ok' }))
       .get('/limited', c => c.json({ ok: true }))
@@ -87,5 +86,29 @@ describe('resolveClientKey', () => {
 
   it('falls back to unknown when neither address is available', () => {
     expect(resolveClientKey({})).toBe('unknown')
+  })
+})
+
+describe('mounted auth rate limit', () => {
+  afterEach(() => {
+    setAuthRateLimitMax(env.AUTH_RATE_LIMIT_MAX)
+  })
+
+  it('returns 429 on /auth/login after the auth cap', async () => {
+    setAuthRateLimitMax(2)
+    const headers = {
+      'Content-Type': 'application/json',
+    }
+    const body = JSON.stringify({
+      email: `rl-${Date.now()}@example.com`,
+      password: 'password12',
+    })
+
+    expect((await app.request('/auth/login', { method: 'POST', headers, body })).status).toBe(401)
+    expect((await app.request('/auth/login', { method: 'POST', headers, body })).status).toBe(401)
+
+    const limited = await app.request('/auth/login', { method: 'POST', headers, body })
+    expect(limited.status).toBe(429)
+    expect(await limited.json()).toEqual({ message: 'Too Many Requests' })
   })
 })

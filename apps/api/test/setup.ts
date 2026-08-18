@@ -1,8 +1,11 @@
 import process from 'node:process'
 import { resolveDatabaseUrl } from '@api/db/url'
+import { setRateLimitStoreFactory } from '@api/middleware/rate-limit.js'
+import { MemoryStore } from 'hono-rate-limiter'
 import { afterAll, beforeAll } from 'vitest'
 
 process.env.NODE_ENV = 'test'
+setRateLimitStoreFactory(() => new MemoryStore())
 
 const url = resolveDatabaseUrl()
 

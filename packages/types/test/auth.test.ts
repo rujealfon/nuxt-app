@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { loginSchema, registerSchema } from '../src/auth'
+import {
+  authUserSchema,
+  loginSchema,
+  matchesRequiredRole,
+  parsePublicUrl,
+  registerSchema,
+  userRoleSchema,
+} from '../src/auth'
 
 describe('loginSchema', () => {
   it('accepts email and password', () => {
@@ -9,6 +16,18 @@ describe('loginSchema', () => {
     })).toEqual({
       email: 'ada@example.com',
       password: 'secret',
+    })
+  })
+
+  it('accepts an optional requireRole', () => {
+    expect(loginSchema.parse({
+      email: 'ada@example.com',
+      password: 'secret',
+      requireRole: 'admin',
+    })).toEqual({
+      email: 'ada@example.com',
+      password: 'secret',
+      requireRole: 'admin',
     })
   })
 
@@ -123,5 +142,60 @@ describe('registerSchema', () => {
     expect(result.success).toBe(false)
     if (!result.success)
       expect(result.error.issues[0]?.message).toBe('Invalid email')
+  })
+})
+
+describe('authUserSchema', () => {
+  const user = {
+    id: 'V1StGXR8_Z5jdHi6B-myT',
+    email: 'ada@example.com',
+    name: 'Ada',
+    role: 'user' as const,
+  }
+
+  it('accepts a public user', () => {
+    expect(authUserSchema.parse(user)).toEqual(user)
+  })
+
+  it('rejects a uuid pk as id', () => {
+    const result = authUserSchema.safeParse({
+      ...user,
+      id: '01936c5a-7c3a-7c3a-8c3a-7c3a7c3a7c3a',
+    })
+    expect(result.success).toBe(false)
+  })
+
+  it('rejects an unknown role', () => {
+    expect(userRoleSchema.safeParse('superuser').success).toBe(false)
+    expect(authUserSchema.safeParse({ ...user, role: 'nope' }).success).toBe(false)
+  })
+
+  it('rejects a malformed email', () => {
+    expect(authUserSchema.safeParse({ ...user, email: 'not-an-email' }).success).toBe(false)
+  })
+})
+
+describe('matchesRequiredRole', () => {
+  const user = { id: 'u1', email: 'a@b.c', name: 'Ada', role: 'user' as const }
+  const admin = { ...user, role: 'admin' as const }
+
+  it('allows any role when none is required', () => {
+    expect(matchesRequiredRole(user)).toBe(true)
+    expect(matchesRequiredRole(admin)).toBe(true)
+  })
+
+  it('requires an exact role match', () => {
+    expect(matchesRequiredRole(user, 'admin')).toBe(false)
+    expect(matchesRequiredRole(admin, 'admin')).toBe(true)
+  })
+})
+
+describe('parsePublicUrl', () => {
+  it('uses the fallback and strips a trailing slash', () => {
+    expect(parsePublicUrl(undefined, 'http://localhost:3001/')).toBe('http://localhost:3001')
+  })
+
+  it('rejects a malformed URL', () => {
+    expect(() => parsePublicUrl('not-a-url', 'http://localhost:3001')).toThrow()
   })
 })

@@ -20,4 +20,8 @@ describe('env', () => {
   it('uses the root .env APP_URL when present', () => {
     expect(env.APP_URL).toBe(process.env.APP_URL ?? 'http://localhost:3000')
   })
+
+  it('parses DATABASE_URL in the typed settings', () => {
+    expect(env.DATABASE_URL).toBeTruthy()
+  })
 })

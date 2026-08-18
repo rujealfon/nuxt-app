@@ -18,9 +18,8 @@ const emit = defineEmits<{
   success: [res: AuthResponse]
 }>()
 
-const { login, logout, error } = useAuth()
+const { login, error } = useAuth()
 const pending = ref(false)
-const roleError = ref('')
 
 const fields = [
   { name: 'email', type: 'email' as const, label: 'Email', placeholder: 'you@example.com', required: true },
@@ -29,14 +28,11 @@ const fields = [
 
 async function onSubmit(event: { data: LoginInput }) {
   pending.value = true
-  roleError.value = ''
   try {
-    const res = await login(event.data.email, event.data.password)
-    if (props.requireRole && res.user.role !== props.requireRole) {
-      roleError.value = `This account is not an ${props.requireRole}.`
-      await logout('')
-      return
-    }
+    const res = await login({
+      ...event.data,
+      ...(props.requireRole ? { requireRole: props.requireRole } : {}),
+    })
     emit('success', res)
   }
   catch {
@@ -58,8 +54,8 @@ async function onSubmit(event: { data: LoginInput }) {
     :submit="{ label: props.submitLabel, block: true, loading: pending }"
     @submit="onSubmit"
   >
-    <template v-if="error || roleError" #validation>
-      <UAlert color="error" :description="error || roleError" />
+    <template v-if="error" #validation>
+      <UAlert color="error" :description="error" />
     </template>
     <template v-if="props.registerTo" #footer>
       Don't have an account?

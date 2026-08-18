@@ -1,6 +1,8 @@
 import app from '@api/app.js'
-import { idParamsSchema } from '@api/lib/schemas.js'
+import { db, sessions, users } from '@api/db'
+import { createUser } from '@api/modules/auth/identity.js'
 import bcrypt from 'bcryptjs'
+import { eq } from 'drizzle-orm'
 import { describe, expect, it, vi } from 'vitest'
 
 async function json(path: string, init?: RequestInit) {
@@ -168,19 +170,12 @@ describe('api', () => {
     ]))
   })
 
-  it('validates nanoid path params', () => {
-    expect(idParamsSchema.parse({ id: 'V1StGXR8_Z5jdHi6B-myT' })).toEqual({
-      id: 'V1StGXR8_Z5jdHi6B-myT',
-    })
-    expect(idParamsSchema.safeParse({ id: 'not a nanoid' }).success).toBe(false)
-  })
-
   it('fills public_id from the SQL nanoid() default on raw insert', async () => {
     const { pool } = await import('@api/db')
     const email = `sql-id-${Date.now()}@example.com`
     const result = await pool.query<{ public_id: string }>(
-      `INSERT INTO users (email, name, password_hash, created_at, updated_at)
-       VALUES ($1, $2, $3, now(), now())
+      `INSERT INTO users (email, name, password_hash)
+       VALUES ($1, $2, $3)
        RETURNING public_id`,
       [email, 'SqlId', 'x'],
     )
@@ -226,5 +221,71 @@ describe('api', () => {
     expect(second.res.status).toBe(200)
     expect(first.body).toEqual(second.body)
     expect(first.body).toEqual({ message: 'Registered successfully' })
+  })
+
+  it('does not start a Session when requireRole does not match', async () => {
+    const email = `admin-deny-${Date.now()}@example.com`
+    const password = 'password12'
+    await createUser({ email, password, name: 'Regular' })
+
+    const { res, body } = await json('/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password, requireRole: 'admin' }),
+    })
+    expect(res.status).toBe(403)
+    expect(body).toEqual({ message: 'This account is not an admin.' })
+    expect(res.headers.getSetCookie?.().some(value => value.startsWith('nuxt_app_session='))
+      ?? res.headers.get('set-cookie')).toBeFalsy()
+
+    const user = await db.query.users.findFirst({ where: eq(users.email, email) })
+    const rows = await db.select({ id: sessions.id }).from(sessions).where(eq(sessions.userId, user!.id))
+    expect(rows).toHaveLength(0)
+  })
+
+  it('rejects a signed-in non-admin from admin routes', async () => {
+    const email = `admin-403-${Date.now()}@example.com`
+    const password = 'password12'
+    await createUser({ email, password, name: 'Regular' })
+
+    const loggedIn = await json('/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    })
+    const cookie = loggedIn.res.headers.getSetCookie?.().find(value => value.startsWith('nuxt_app_session='))
+      ?? loggedIn.res.headers.get('set-cookie')
+      ?? ''
+
+    const { res, body } = await json('/admin/dashboard', {
+      headers: { Cookie: cookie.split(';')[0]! },
+    })
+    expect(res.status).toBe(403)
+    expect(body).toEqual({ message: 'Forbidden' })
+  })
+
+  it('lets an admin into admin routes', async () => {
+    const email = `admin-200-${Date.now()}@example.com`
+    const password = 'password12'
+    await createUser({ email, password, name: 'Operator', role: 'admin' })
+
+    const loggedIn = await json('/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password, requireRole: 'admin' }),
+    })
+    expect(loggedIn.res.status).toBe(200)
+    const cookie = loggedIn.res.headers.getSetCookie?.().find(value => value.startsWith('nuxt_app_session='))
+      ?? loggedIn.res.headers.get('set-cookie')
+      ?? ''
+
+    const { res, body } = await json('/admin/dashboard', {
+      headers: { Cookie: cookie.split(';')[0]! },
+    })
+    expect(res.status).toBe(200)
+    expect(body).toMatchObject({
+      message: 'Welcome to admin dashboard',
+      user: { email, name: 'Operator', role: 'admin' },
+    })
   })
 })

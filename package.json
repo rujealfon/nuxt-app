@@ -19,6 +19,7 @@
     "type-check": "turbo run type-check",
     "clean": "turbo run clean && rm -rf node_modules",
     "db:generate": "pnpm --filter @nuxt-app/api db:generate",
+    "db:check": "pnpm --filter @nuxt-app/api db:check",
     "db:migrate": "pnpm --filter @nuxt-app/api db:migrate",
     "db:studio": "pnpm --filter @nuxt-app/api db:studio",
     "db:seed": "pnpm --filter @nuxt-app/api db:seed",

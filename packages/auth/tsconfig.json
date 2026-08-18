@@ -4,9 +4,6 @@
     "baseUrl": ".",
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "paths": {
-      "@api/*": ["../../apps/api/src/*"]
-    },
     "strict": true,
     "declaration": true,
     "outDir": "dist",

@@ -12,9 +12,7 @@ async function onSuccess() {
 </script>
 
 <template>
-  <div class="flex min-h-dvh items-center justify-center p-6">
-    <UPageCard class="w-full max-w-md">
-      <AuthLoginForm register-to="/register" @success="onSuccess" />
-    </UPageCard>
-  </div>
+  <AuthPageShell>
+    <AuthLoginForm register-to="/register" @success="onSuccess" />
+  </AuthPageShell>
 </template>

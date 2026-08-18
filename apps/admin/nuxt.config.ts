@@ -5,6 +5,13 @@ export default defineNuxtConfig({
   alias: {
     '@admin': fileURLToPath(new URL('./app', import.meta.url)),
   },
+  components: [
+    { path: '~/features', pathPrefix: false, pattern: '*/components/**/*.vue' },
+    '~/components',
+  ],
+  imports: {
+    dirs: ['features/*/composables'],
+  },
   ssr: false,
   colorMode: {
     preference: 'dark',

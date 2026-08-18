@@ -23,27 +23,48 @@ mockNuxtImport('useAuth', () => () => ({
 const UAuthFormStub = defineComponent({
   name: 'UAuthForm',
   props: {
+    schema: { type: Object, default: undefined },
     title: { type: String, default: '' },
     description: { type: String, default: '' },
     submit: { type: Object, default: undefined },
   },
   emits: ['submit'],
   setup(props, { emit, slots }) {
+    const schemaError = ref('')
+
+    function attempt(data: Record<string, string>) {
+      schemaError.value = ''
+      const schema = props.schema as { safeParse: (value: unknown) => { success: true, data: Record<string, string> } | { success: false, error: { issues: Array<{ message: string }> } } } | undefined
+      if (!schema) {
+        schemaError.value = 'Missing schema'
+        return
+      }
+      const parsed = schema.safeParse(data)
+      if (!parsed.success) {
+        schemaError.value = parsed.error.issues[0]?.message ?? 'Invalid'
+        return
+      }
+      emit('submit', { data: parsed.data })
+    }
+
     function onSubmit(event: Event) {
       event.preventDefault()
-      emit('submit', {
-        data: {
-          email: 'ada@example.com',
-          password: 'password12',
-          name: 'Ada',
-        },
+      attempt({
+        email: 'ada@example.com',
+        password: 'password12',
+        name: 'Ada',
       })
     }
 
     return () => h('form', { onSubmit }, [
       h('h1', props.title),
       h('p', props.description),
+      schemaError.value ? h('p', { class: 'schema-error' }, schemaError.value) : null,
       h('button', { type: 'submit' }, props.submit?.label ?? 'Submit'),
+      h('button', { 'type': 'button', 'data-case': 'empty', 'onClick': () => attempt({ email: '', password: '' }) }, 'empty'),
+      h('button', { 'type': 'button', 'data-case': 'bademail', 'onClick': () => attempt({ email: 'x', password: 'password12' }) }, 'bademail'),
+      h('button', { 'type': 'button', 'data-case': 'longpw', 'onClick': () => attempt({ email: 'ada@example.com', password: 'a'.repeat(73) }) }, 'longpw'),
+      h('button', { 'type': 'button', 'data-case': 'shortpw', 'onClick': () => attempt({ email: 'ada@example.com', password: 'short', name: 'Ada' }) }, 'shortpw'),
       slots.default?.(),
       slots.validation?.(),
       slots.footer?.(),
@@ -95,13 +116,44 @@ describe('authLoginForm', () => {
     await wrapper.get('form').trigger('submit')
     await flushPromises()
 
-    expect(login).toHaveBeenCalledWith('ada@example.com', 'password12')
+    expect(login).toHaveBeenCalledWith({
+      email: 'ada@example.com',
+      password: 'password12',
+    })
     expect(wrapper.emitted('success')?.[0]).toEqual([res])
   })
 
-  it('logs the user out when requireRole does not match', async () => {
-    login.mockResolvedValue({
-      user: { id: 'u1', email: 'ada@example.com', name: 'Ada', role: 'user' },
+  it('rejects an empty login through loginSchema', async () => {
+    const wrapper = await mountForm(AuthLoginForm)
+    await wrapper.get('[data-case="empty"]').trigger('click')
+    await flushPromises()
+
+    expect(login).not.toHaveBeenCalled()
+    expect(wrapper.text()).toContain('Email and password are required')
+  })
+
+  it('rejects a malformed email through loginSchema', async () => {
+    const wrapper = await mountForm(AuthLoginForm)
+    await wrapper.get('[data-case="bademail"]').trigger('click')
+    await flushPromises()
+
+    expect(login).not.toHaveBeenCalled()
+    expect(wrapper.text()).toContain('Invalid email')
+  })
+
+  it('rejects a 73-byte password through loginSchema', async () => {
+    const wrapper = await mountForm(AuthLoginForm)
+    await wrapper.get('[data-case="longpw"]').trigger('click')
+    await flushPromises()
+
+    expect(login).not.toHaveBeenCalled()
+    expect(wrapper.text()).toContain('Password must be at most 72 bytes')
+  })
+
+  it('sends requireRole and does not start a Session undo on denial', async () => {
+    login.mockImplementation(async () => {
+      error.value = 'This account is not an admin.'
+      throw new Error('This account is not an admin.')
     })
     const wrapper = await mountForm(AuthLoginForm, {
       requireRole: 'admin',
@@ -111,7 +163,12 @@ describe('authLoginForm', () => {
     await wrapper.get('form').trigger('submit')
     await flushPromises()
 
-    expect(logout).toHaveBeenCalledWith('')
+    expect(login).toHaveBeenCalledWith({
+      email: 'ada@example.com',
+      password: 'password12',
+      requireRole: 'admin',
+    })
+    expect(logout).not.toHaveBeenCalled()
     expect(wrapper.text()).toContain('This account is not an admin.')
     expect(wrapper.emitted('success')).toBeUndefined()
   })
@@ -142,7 +199,20 @@ describe('authRegisterForm', () => {
     await wrapper.get('form').trigger('submit')
     await flushPromises()
 
-    expect(register).toHaveBeenCalledWith('ada@example.com', 'password12', 'Ada')
+    expect(register).toHaveBeenCalledWith({
+      email: 'ada@example.com',
+      password: 'password12',
+      name: 'Ada',
+    })
     expect(wrapper.emitted('success')).toHaveLength(1)
+  })
+
+  it('rejects a short register password through registerSchema', async () => {
+    const wrapper = await mountForm(AuthRegisterForm)
+    await wrapper.get('[data-case="shortpw"]').trigger('click')
+    await flushPromises()
+
+    expect(register).not.toHaveBeenCalled()
+    expect(wrapper.text()).toContain('Password must be at least 8 characters')
   })
 })

@@ -1,75 +1,36 @@
-# Nuxt Minimal Starter
+# Web (`@nuxt-app/web`)
 
-Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
+Public marketing site. Nuxt 4 SSG (`nuxt generate`, `nitro.preset: 'static'`). Production host: `nuxt-app.com`. Local: http://localhost:3003.
 
-## Setup
-
-Make sure to install dependencies:
+Extends `@nuxt-app/layer-base` only — no auth layer, no session client. Install and env live at the repo root.
 
 ```bash
-# npm
-npm install
-
-# pnpm
 pnpm install
-
-# yarn
-yarn install
-
-# bun
-bun install
+pnpm dev:web
 ```
 
-## Development Server
+Login and register CTAs point at the product app. The destination is baked in at generate time from `NUXT_PUBLIC_APP_URL` (falls back to `APP_URL`).
 
-Start the development server on `http://localhost:3000`:
+## Routes
+
+| Path | Notes                         |
+| ---- | ----------------------------- |
+| `/`  | Prerendered marketing landing |
+
+Prefer prerender. Do not add a Node server unless a page needs per-request data.
+
+## Tests
 
 ```bash
-# npm
-npm run dev
-
-# pnpm
-pnpm dev
-
-# yarn
-yarn dev
-
-# bun
-bun run dev
+pnpm --filter @nuxt-app/web test
 ```
 
-## Production
+`@nuxt/test-utils` + Vitest (`environment: 'nuxt'`), files under `test/`.
 
-Build the application for production:
+## Env
 
-```bash
-# npm
-npm run build
+From the repo-root `.env`. `WEB_URL` is this site’s public origin. `NUXT_PUBLIC_APP_URL` / `APP_URL` are the product-app links in the generated HTML.
 
-# pnpm
-pnpm build
+## Deploy
 
-# yarn
-yarn build
-
-# bun
-bun run build
-```
-
-Locally preview production build:
-
-```bash
-# npm
-npm run preview
-
-# pnpm
-pnpm preview
-
-# yarn
-yarn preview
-
-# bun
-bun run preview
-```
-
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+Vercel project `nuxt-app-web` (`nuxt generate`, output `.output/public`). Details: [VERCEL.md](../../VERCEL.md). Compose image is nginx + prerendered files: [DOCKER.md](../../DOCKER.md).

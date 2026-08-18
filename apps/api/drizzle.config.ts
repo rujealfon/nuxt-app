@@ -1,16 +1,20 @@
 import { resolve } from 'node:path'
 import process from 'node:process'
-import { config } from 'dotenv'
+import { applyEnvFiles } from '@nuxt-app/layer-base/apply-env-files'
 import { defineConfig } from 'drizzle-kit'
 
-config({ path: resolve(process.cwd(), '../../.env') })
-config({ path: resolve(process.cwd(), '.env') })
+applyEnvFiles([
+  resolve(process.cwd(), '../../.env'),
+  resolve(process.cwd(), '.env'),
+])
 
 export default defineConfig({
   dialect: 'postgresql',
   schema: './src/db/schema/index.ts',
   out: './src/db/migrations',
   dbCredentials: {
-    url: process.env.DATABASE_URL ?? 'postgres://nuxt:nuxt@localhost:5433/nuxt_app',
+    url: process.env.DATABASE_URL_UNPOOLED
+      ?? process.env.DATABASE_URL
+      ?? 'postgres://nuxt:nuxt@localhost:5433/nuxt_app',
   },
 })

@@ -15,7 +15,7 @@
     },
     "lint": {},
     "test": {
-      "env": ["DATABASE_URL", "DATABASE_URL_TEST"]
+      "env": ["DATABASE_URL", "DATABASE_URL_TEST", "DATABASE_URL_UNPOOLED"]
     },
     "type-check": {
       "dependsOn": ["^build"]

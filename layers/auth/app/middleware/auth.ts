@@ -1,11 +1,7 @@
-export default defineNuxtRouteMiddleware(async (to) => {
-  const { user, ensureUser } = useAuth()
-  await ensureUser()
+import { applyRouteAccess } from '../utils/routeAccess'
 
-  if (!user.value) {
-    return navigateTo({
-      path: '/login',
-      query: { redirect: to.fullPath },
-    })
-  }
+export default defineNuxtRouteMiddleware(async (to) => {
+  const decision = await applyRouteAccess('auth', to)
+  if ('redirect' in decision)
+    return navigateTo(decision.redirect)
 })

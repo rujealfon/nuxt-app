@@ -8,6 +8,8 @@ import { adminRoutes } from '@api/modules/admin/routes.js'
 import { authRoutes } from '@api/modules/auth/routes.js'
 import { configureOpenAPI } from '@api/modules/docs/routes.js'
 import { healthRoutes } from '@api/modules/health/routes.js'
+import { resolveCorsOrigin } from '@api/request-policy.js'
+import { AUTH_MOUNT } from '@nuxt-app/types'
 import { bodyLimit } from 'hono/body-limit'
 import { cors } from 'hono/cors'
 import { csrf } from 'hono/csrf'
@@ -35,11 +37,7 @@ base.use('*', secureHeaders(isDev
 base.use(
   '*',
   cors({
-    origin: (origin) => {
-      if (!origin || allowedOrigins.includes(origin))
-        return origin || allowedOrigins[0]
-      return allowedOrigins[0]
-    },
+    origin: resolveCorsOrigin,
     credentials: true,
     allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowHeaders: ['Content-Type', 'Authorization'],
@@ -58,14 +56,9 @@ base.notFound(c => c.json({ message: HttpStatusPhrases.NOT_FOUND }, HttpStatusCo
 if (isDev)
   configureOpenAPI(base)
 
-function mountApi<T extends typeof base>(app: T) {
-  return app
-    .route('/', healthRoutes)
-    .route('/auth', authRoutes)
-    .route('/admin', adminRoutes)
-}
-
-const app = mountApi(base)
+const app = base
+  .route('/', healthRoutes)
+  .route(AUTH_MOUNT, authRoutes)
+  .route('/admin', adminRoutes)
 
 export default app
-export type AppType = ReturnType<typeof mountApi>

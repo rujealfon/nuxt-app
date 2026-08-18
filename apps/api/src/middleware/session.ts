@@ -1,11 +1,14 @@
 import { factory } from '@api/factory.js'
-import { SESSION_COOKIE } from '@api/modules/auth/cookies.js'
-import { getSessionUser } from '@api/modules/auth/service.js'
-import { getCookie } from 'hono/cookie'
+import { currentUser } from '@api/modules/auth/session.js'
+import { skipPublic } from '@api/request-policy.js'
 
 export const sessionMiddleware = factory.createMiddleware(async (c, next) => {
-  const sessionId = getCookie(c, SESSION_COOKIE)
-  const user = await getSessionUser(sessionId || '')
-  c.set('user', user)
+  if (skipPublic(c)) {
+    c.set('user', null)
+    await next()
+    return
+  }
+
+  c.set('user', await currentUser(c))
   await next()
 })

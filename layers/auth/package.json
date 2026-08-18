@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@nuxt-app/auth": "workspace:*",
+    "@nuxt-app/layer-base": "workspace:*",
     "@nuxt-app/types": "workspace:*",
     "@pinia/colada": "^1.4.2",
     "@pinia/colada-nuxt": "^1.0.2",

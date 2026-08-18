@@ -3,7 +3,7 @@ import IndexPage from '@admin/pages/index.vue'
 import LoginPage from '@admin/pages/login.vue'
 import { mockNuxtImport, mountSuspended } from '@nuxt/test-utils/runtime'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { computed, ref } from 'vue'
+import { ref } from 'vue'
 
 const { logout, login } = vi.hoisted(() => ({
   logout: vi.fn(),
@@ -23,9 +23,6 @@ mockNuxtImport('useAuth', () => () => ({
   logout,
   login,
   error,
-  ensureUser: vi.fn(),
-  isAuthenticated: computed(() => !!user.value),
-  isAdmin: computed(() => user.value?.role === 'admin'),
 }))
 
 describe('admin pages', () => {
