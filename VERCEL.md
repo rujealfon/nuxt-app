@@ -81,19 +81,20 @@ Set on each project (Production + Preview). Projects do not inherit each other�
 
 **`nuxt-app-api`**
 
-| Name                    | Production                                                                                                                                                                                                   |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `DATABASE_URL`          | Neon **pooled** URL (runtime), `sslmode=verify-full`                                                                                                                                                         |
-| `DATABASE_URL_UNPOOLED` | Neon **direct** URL (migrations), `sslmode=verify-full`. Required when `DATABASE_URL` is a pooled endpoint. Must be available at **build** time. Preview scope must be a different database than Production. |
-| `REDIS_URL`             | Upstash `rediss://…` (TLS). Do not use `redis://` — Upstash rejects it.                                                                                                                                      |
-| `NODE_ENV`              | `production` (Vercel usually sets this)                                                                                                                                                                      |
-| `API_URL`               | `https://api.nuxt-app.com` (or the API `*.vercel.app` URL until DNS is ready)                                                                                                                                |
-| `APP_URL`               | `https://app.nuxt-app.com`                                                                                                                                                                                   |
-| `ADMIN_URL`             | `https://admin.nuxt-app.com`                                                                                                                                                                                 |
-| `WEB_URL`               | `https://nuxt-app.com`                                                                                                                                                                                       |
-| `COOKIE_DOMAIN`         | `.nuxt-app.com` on custom domains; omit on `*.vercel.app` previews (app/admin use a same-origin `/__api` proxy so the cookie is first-party)                                                                 |
-| `TRUST_PROXY`           | `true` (Vercel overwrites `X-Forwarded-For`)                                                                                                                                                                 |
-| `LOG_LEVEL`             | `info`                                                                                                                                                                                                       |
+| Name                           | Production                                                                                                                                                                                                   |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `DATABASE_URL`                 | Neon **pooled** URL (runtime), `sslmode=verify-full`                                                                                                                                                         |
+| `DATABASE_URL_UNPOOLED`        | Neon **direct** URL (migrations), `sslmode=verify-full`. Required when `DATABASE_URL` is a pooled endpoint. Must be available at **build** time. Preview scope must be a different database than Production. |
+| `REDIS_URL`                    | Upstash `rediss://…` (TLS). Do not use `redis://` — Upstash rejects it.                                                                                                                                      |
+| `NODE_ENV`                     | `production` (Vercel usually sets this)                                                                                                                                                                      |
+| `API_URL`                      | `https://api.nuxt-app.com` (or the API `*.vercel.app` URL until DNS is ready)                                                                                                                                |
+| `APP_URL`                      | `https://app.nuxt-app.com`                                                                                                                                                                                   |
+| `ADMIN_URL`                    | `https://admin.nuxt-app.com`                                                                                                                                                                                 |
+| `WEB_URL`                      | `https://nuxt-app.com`                                                                                                                                                                                       |
+| `COOKIE_DOMAIN`                | `.nuxt-app.com` on custom domains; omit on `*.vercel.app` previews (app/admin use a same-origin `/__api` proxy so the cookie is first-party)                                                                 |
+| `TRUST_PROXY`                  | `true` (Vercel overwrites `X-Forwarded-For`)                                                                                                                                                                 |
+| `LOG_LEVEL`                    | `info`                                                                                                                                                                                                       |
+| `ENABLE_EXPERIMENTAL_COREPACK` | `1` (build + all environments). Vercel’s pnpm table stops at 10; this repo is `pnpm@11.22.0`. Without Corepack, a custom `pnpm install` uses **pnpm 6**.                                                     |
 
 `APP_URL` / `ADMIN_URL` / `WEB_URL` are the CORS + CSRF allowlist. Exact origin: `https`, no trailing slash.
 
@@ -183,7 +184,7 @@ Git pushes then deploy all four. Vercel skips a project when that package and it
 
 - Postgres must be 18. Neon 17 fails the first migration (`uuidv7()`).
 - API Vercel build is `pnpm db:migrate`, not `tsc`. `tsc` is not the platform entry. Preview must not share production `DATABASE_URL`.
-- Hono does not detect the repo-root pnpm lockfile. Without `installCommand`, Vercel runs `npm install` and fails on `workspace:*`. Install via `apps/api/scripts/vercel-install.sh` (finds `pnpm-workspace.yaml`, Corepack-pins `packageManager`). Vercel’s default pnpm ignores this lockfile (`Ignoring not compatible lockfile`) and then fails headless install. `tsc` is not the Vercel entry.
+- Hono does not detect the repo-root pnpm lockfile. A custom `pnpm install` uses Vercel’s oldest pnpm (6), which ignores this lockfile. `scripts/vercel-install.sh` installs from the workspace root with `npx pnpm@<packageManager>`. Also set `ENABLE_EXPERIMENTAL_COREPACK=1` on `nuxt-app-api` ([Vercel Corepack](https://vercel.com/docs/builds/configure-a-build#corepack); [pnpm 11](https://andrewusher.dev/blog/upgrading-pnpm-11-vercel)). `tsc` is not the Vercel entry.
 - Runtime `DATABASE_URL` is the Neon **pooler**. If the pool is exhausted, set `max: 1` on the `pg` Pool. Migrations use `DATABASE_URL_UNPOOLED` (required in production when `DATABASE_URL` is pooled). Neon URLs use `sslmode=verify-full` (`pg` already treats `require` as `verify-full` and warns).
 - Upstash `REDIS_URL` must be `rediss://` (TLS). `redis://` is only for local Compose.
 - SPA deep links work because Nitro/Vercel serves the fallback. web is fully static.

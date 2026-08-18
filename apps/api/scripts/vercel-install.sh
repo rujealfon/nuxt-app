@@ -42,28 +42,23 @@ root=$(find_workspace_root) || {
 
 echo "vercel-install: workspace root=$root"
 
-# Vercel’s bundled pnpm is older than this repo (pnpm 11 / lockfile 9) and
-# ignores the lockfile as incompatible, then --frozen-lockfile fails.
-if ! command -v corepack >/dev/null; then
-  echo "vercel-install: corepack is required to pin pnpm to packageManager." >&2
-  exit 1
-fi
+# A custom `pnpm install` on Vercel uses the oldest pnpm in the image (6.35.1
+# at /pnpm6). That ignores this lockfile. Corepack shims also lose to /pnpm6
+# (`corepack pnpm` reported 0.34.5). npx fetches packageManager exactly.
+# Official alternative: ENABLE_EXPERIMENTAL_COREPACK=1 and no custom install.
+# https://vercel.com/docs/package-managers
+# https://vercel.com/docs/builds/configure-a-build#corepack
 pm=$(node -p "require('$root/package.json').packageManager")
-echo "vercel-install: activating $pm (PATH pnpm=$(command -v pnpm || echo none) $(pnpm --version 2>/dev/null || echo none))"
-corepack enable
-corepack prepare "$pm" --activate
-hash -r
-# Vercel puts pnpm 6 on PATH ahead of Corepack shims. Invoke through corepack.
-pnpm_cmd=(corepack pnpm)
-echo "vercel-install: $($pnpm_cmd --version) via corepack pnpm"
-
-pnpm_ver=$($pnpm_cmd --version)
+echo "vercel-install: PATH pnpm=$(command -v pnpm || echo none) $(pnpm --version 2>/dev/null || echo none)"
+echo "vercel-install: npx $pm"
+pnpm_ver=$(npx --yes "$pm" --version)
+echo "vercel-install: $pnpm_ver via npx $pm"
 if [ "${pnpm_ver%%.*}" -lt 9 ]; then
   echo "vercel-install: expected $pm, got $pnpm_ver" >&2
   exit 1
 fi
 
-$pnpm_cmd --dir "$root" install --frozen-lockfile
+npx --yes "$pm" --dir "$root" install --frozen-lockfile
 
 if [ ! -d node_modules ] && [ -d "$root/apps/api/node_modules" ]; then
   echo "vercel-install: linking $root/apps/api/node_modules -> $(pwd)/node_modules"
