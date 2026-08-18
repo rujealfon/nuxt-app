@@ -183,7 +183,7 @@ Git pushes then deploy all four. Vercel skips a project when that package and it
 
 - Postgres must be 18. Neon 17 fails the first migration (`uuidv7()`).
 - API Vercel build is `pnpm db:migrate`, not `tsc`. `tsc` is not the platform entry. Preview must not share production `DATABASE_URL`.
-- Hono does not detect the repo-root pnpm lockfile. Without `installCommand`, Vercel runs `npm install` and fails on `workspace:*`. Install via `apps/api/scripts/vercel-install.sh` (finds `pnpm-workspace.yaml`). `tsc` is not the Vercel entry — a missing `node_modules` then fails with `tsc: command not found`.
+- Hono does not detect the repo-root pnpm lockfile. Without `installCommand`, Vercel runs `npm install` and fails on `workspace:*`. Install via `apps/api/scripts/vercel-install.sh` (finds `pnpm-workspace.yaml`, Corepack-pins `packageManager`). Vercel’s default pnpm ignores this lockfile (`Ignoring not compatible lockfile`) and then fails headless install. `tsc` is not the Vercel entry.
 - Runtime `DATABASE_URL` is the Neon **pooler**. If the pool is exhausted, set `max: 1` on the `pg` Pool. Migrations use `DATABASE_URL_UNPOOLED` (required in production when `DATABASE_URL` is pooled). Neon URLs use `sslmode=verify-full` (`pg` already treats `require` as `verify-full` and warns).
 - Upstash `REDIS_URL` must be `rediss://` (TLS). `redis://` is only for local Compose.
 - SPA deep links work because Nitro/Vercel serves the fallback. web is fully static.

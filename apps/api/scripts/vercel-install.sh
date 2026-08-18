@@ -41,6 +41,19 @@ root=$(find_workspace_root) || {
 }
 
 echo "vercel-install: workspace root=$root"
+
+# Vercel’s bundled pnpm is older than this repo (pnpm 11 / lockfile 9) and
+# ignores the lockfile as incompatible, then --frozen-lockfile fails.
+if ! command -v corepack >/dev/null; then
+  echo "vercel-install: corepack is required to pin pnpm to packageManager." >&2
+  exit 1
+fi
+pm=$(node -p "require('$root/package.json').packageManager")
+echo "vercel-install: activating $pm (bundled pnpm=$(pnpm --version 2>/dev/null || echo none))"
+corepack enable
+corepack prepare "$pm" --activate
+echo "vercel-install: pnpm $(pnpm --version)"
+
 pnpm --dir "$root" install --frozen-lockfile
 
 if [ ! -d node_modules ] && [ -d "$root/apps/api/node_modules" ]; then
