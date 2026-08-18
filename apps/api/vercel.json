@@ -1,5 +1,5 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "hono",
-  "buildCommand": "pnpm build:vercel && pnpm db:migrate"
+  "buildCommand": "pnpm run build && pnpm db:migrate"
 }
