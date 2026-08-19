@@ -40,7 +40,7 @@ Sessions are opaque IDs in an httpOnly cookie (`nuxt_app_session`), not JWTs. `r
 Imports:
 
 - Another package or layer: `@nuxt-app/types`, `@nuxt-app/auth`, `@nuxt-app/layer-base`, `@nuxt-app/layer-auth`. Do not add short aliases (`@types`, `@auth`) — `@types` collides with DefinitelyTyped, and `@auth` is both a package and a layer.
-- Same-app source: `@api/`, `@app/`, `@admin/`, `@web/` (that app's `src/` or `app/`).
+- Same-app source: `#api/` (API; Node `package.json` `imports` — Vercel Node cannot resolve TypeScript `@api/` paths), `@app/`, `@admin/`, `@web/` (that app's `src/` or `app/`).
 - Inside `app/features/<name>/`: relative paths that stay in that feature. Pages import `@app/features/<name>/...` (or `@admin/...`). A feature does not import another feature or `pages/`.
 - Inside `packages/*`: relative `./` to local files. Public surface stays `src/index.ts`.
 - Layers: `extends: '@nuxt-app/layer-*'`. Components and composables are auto-imported. A specific layer file is `#layers/base` or `#layers/auth`.

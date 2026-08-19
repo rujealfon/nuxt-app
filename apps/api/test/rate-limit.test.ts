@@ -1,10 +1,10 @@
-import app from '@api/app.js'
-import { env } from '@api/env.js'
-import { createRateLimit, resolveClientKey, setAuthRateLimitMax } from '@api/middleware/rate-limit.js'
-import { skipPublic } from '@api/request-policy.js'
 import { Hono } from 'hono'
 import { MemoryStore } from 'hono-rate-limiter'
 import { afterEach, describe, expect, it } from 'vitest'
+import app from '#api/app.js'
+import { env } from '#api/env.js'
+import { createRateLimit, resolveClientKey, setAuthRateLimitMax } from '#api/middleware/rate-limit.js'
+import { skipPublic } from '#api/request-policy.js'
 
 describe('rate limit', () => {
   it('returns 429 after the limit is exceeded', async () => {

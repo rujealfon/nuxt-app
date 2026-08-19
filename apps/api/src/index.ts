@@ -1,9 +1,9 @@
-import app from '@api/app.js'
-import { runMigrations } from '@api/db'
-import { env, isDev } from '@api/env.js'
-import { deleteExpiredSessions } from '@api/modules/auth/session.js'
-import { connectRedis } from '@api/redis.js'
 import { serve } from '@hono/node-server'
+import app from '#api/app.js'
+import { runMigrations } from '#api/db/index.js'
+import { env, isDev } from '#api/env.js'
+import { deleteExpiredSessions } from '#api/modules/auth/session.js'
+import { connectRedis } from '#api/redis.js'
 
 const port = env.API_PORT
 const hostname = env.API_HOST

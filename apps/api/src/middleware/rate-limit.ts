@@ -1,12 +1,12 @@
 import type { Context } from 'hono'
 import type { MemoryStore, Store } from 'hono-rate-limiter'
-import { env } from '@api/env.js'
-import { rateLimitRedis } from '@api/redis.js'
-import { skipPublic } from '@api/request-policy.js'
 import { getConnInfo } from '@hono/node-server/conninfo'
 import { failedResponseBody } from '@nuxt-app/types'
 import { rateLimiter, RedisStore } from 'hono-rate-limiter'
 import * as HttpStatusPhrases from 'stoker/http-status-phrases'
+import { env } from '#api/env.js'
+import { rateLimitRedis } from '#api/redis.js'
+import { skipPublic } from '#api/request-policy.js'
 
 const tooMany = failedResponseBody(HttpStatusPhrases.TOO_MANY_REQUESTS)
 

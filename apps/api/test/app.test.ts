@@ -1,9 +1,9 @@
-import app from '@api/app.js'
-import { db, sessions, users } from '@api/db'
-import { createUser } from '@api/modules/auth/identity.js'
 import bcrypt from 'bcryptjs'
 import { eq } from 'drizzle-orm'
 import { describe, expect, it, vi } from 'vitest'
+import app from '#api/app.js'
+import { db, sessions, users } from '#api/db/index.js'
+import { createUser } from '#api/modules/auth/identity.js'
 
 async function json(path: string, init?: RequestInit) {
   const res = await app.request(path, init)
@@ -171,7 +171,7 @@ describe('api', () => {
   })
 
   it('fills public_id from the SQL nanoid() default on raw insert', async () => {
-    const { pool } = await import('@api/db')
+    const { pool } = await import('#api/db/index.js')
     const email = `sql-id-${Date.now()}@example.com`
     const result = await pool.query<{ public_id: string }>(
       `INSERT INTO users (email, name, password_hash)

@@ -1,6 +1,6 @@
-import { attachSessionCookie, SESSION_COOKIE } from '@api/modules/auth/session.js'
 import { Hono } from 'hono'
 import { describe, expect, it } from 'vitest'
+import { attachSessionCookie, SESSION_COOKIE } from '#api/modules/auth/session.js'
 
 const sessionId = '01936c5a-7c3a-7c3a-8c3a-7c3a7c3a7c3a'
 

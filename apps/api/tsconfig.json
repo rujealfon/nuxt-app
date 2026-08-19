@@ -6,7 +6,7 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "paths": {
-      "@api/*": ["./src/*"]
+      "#api/*": ["./src/*"]
     },
     "types": ["node"],
     "strict": true,

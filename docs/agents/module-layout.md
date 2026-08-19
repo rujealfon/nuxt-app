@@ -28,7 +28,7 @@ apps/api/src/
         └── session.ts       # cookie + row + AuthUser mapping
 ```
 
-Imports use `@api/` even inside a module (same as the rest of the API). Tests stay in `apps/api/test/` and call `app.request()`.
+Imports use `#api/` even inside a module (same as the rest of the API). Tests stay in `apps/api/test/` and call `app.request()`.
 
 `health` and `docs` stay route-only. `admin` is a mount prefix. A new admin-only resource is its own module, mounted under `/admin` or its own prefix.
 

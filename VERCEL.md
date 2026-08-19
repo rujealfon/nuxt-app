@@ -184,6 +184,7 @@ Git pushes then deploy all four. Vercel skips a project when that package and it
 
 - Postgres must be 18. Neon 17 fails the first migration (`uuidv7()`).
 - API Vercel build is `pnpm db:migrate`, not `tsc`. `tsc` is not the platform entry. Preview must not share production `DATABASE_URL`.
+- The Hono builder transpiles `src/app.ts` file-by-file and does not rewrite TypeScript `paths`. Same-app imports are `#api/` (`apps/api/package.json` `imports`) so Node can resolve them at runtime. Do not reintroduce `@api/`.
 - Hono does not detect the repo-root pnpm lockfile. A custom `pnpm install` uses Vercel’s oldest pnpm (6), which ignores this lockfile. `scripts/vercel-install.sh` installs from the workspace root with `npx pnpm@<packageManager>`. Also set `ENABLE_EXPERIMENTAL_COREPACK=1` on `nuxt-app-api` ([Vercel Corepack](https://vercel.com/docs/builds/configure-a-build#corepack); [pnpm 11](https://andrewusher.dev/blog/upgrading-pnpm-11-vercel)). `tsc` is not the Vercel entry.
 - Runtime `DATABASE_URL` is the Neon **pooler**. If the pool is exhausted, set `max: 1` on the `pg` Pool. Migrations use `DATABASE_URL_UNPOOLED` (required in production when `DATABASE_URL` is pooled). Neon URLs use `sslmode=verify-full` (`pg` already treats `require` as `verify-full` and warns).
 - Upstash `REDIS_URL` must be `rediss://` (TLS). `redis://` is only for local Compose.

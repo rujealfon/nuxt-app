@@ -1,8 +1,8 @@
 import process from 'node:process'
-import * as schema from '@api/db/schema'
-import { resolveDatabaseUrl } from '@api/db/url'
 import { drizzle } from 'drizzle-orm/node-postgres'
 import { Pool } from 'pg'
+import * as schema from '#api/db/schema/index.js'
+import { resolveDatabaseUrl } from '#api/db/url.js'
 
 const vercelInstance = Boolean(process.env.VERCEL)
 

@@ -1,5 +1,5 @@
-import type { AppEnv } from '@api/types.js'
 import type { OpenAPIHono } from '@hono/zod-openapi'
+import type { AppEnv } from '#api/types.js'
 import { Scalar } from '@scalar/hono-api-reference'
 
 export const openApiConfig = {

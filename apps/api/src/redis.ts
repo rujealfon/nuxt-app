@@ -1,6 +1,6 @@
 import type { RedisClient } from 'hono-rate-limiter'
-import { env } from '@api/env.js'
 import { createClient } from 'redis'
+import { env } from '#api/env.js'
 
 export const redis = createClient({ url: env.REDIS_URL })
 

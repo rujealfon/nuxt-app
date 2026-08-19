@@ -2,10 +2,10 @@
 import { dirname, join } from 'node:path'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
-import { resolveMigrationDatabaseUrl } from '@api/db/url'
 import { drizzle } from 'drizzle-orm/node-postgres'
 import { migrate } from 'drizzle-orm/node-postgres/migrator'
 import { Pool } from 'pg'
+import { resolveMigrationDatabaseUrl } from '#api/db/url.js'
 
 const migrationsFolder = join(dirname(fileURLToPath(import.meta.url)), 'migrations')
 

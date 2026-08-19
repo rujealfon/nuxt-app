@@ -74,7 +74,24 @@ function featureIsolation(srcDir, alias) {
 }
 
 const overrides = [
-  appImports(['apps/api/**/*.ts'], '@api', ['apps/api/src/rpc.ts', 'apps/api/drizzle.config.ts']),
+  {
+    files: ['apps/api/**/*.ts'],
+    ignores: ['apps/api/src/rpc.ts', 'apps/api/drizzle.config.ts'],
+    rules: {
+      'no-restricted-imports': ['error', {
+        patterns: [
+          {
+            group: ['./*', '../*'],
+            message: 'Use #api/ instead of relative imports.',
+          },
+          {
+            group: ['@/*', '~/*', '@api', '@api/*'],
+            message: 'Use #api/ (Node package imports). TypeScript @api/ paths do not resolve on Vercel.',
+          },
+        ],
+      }],
+    },
+  },
   appImports(['apps/app/**/*.{ts,vue}'], '@app'),
   appImports(['apps/admin/**/*.{ts,vue}'], '@admin'),
   appImports(['apps/web/**/*.{ts,vue}'], '@web'),

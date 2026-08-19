@@ -1,12 +1,12 @@
+import { describe, expect, it } from 'vitest'
 import {
   isPooledConnectionString,
   replaceDatabaseName,
   resolveDatabaseUrl,
   resolveMigrationDatabaseUrl,
   TEST_DATABASE_NAME,
-} from '@api/db/url.js'
-import { env, isPlainRedisToUpstash } from '@api/env.js'
-import { describe, expect, it } from 'vitest'
+} from '#api/db/url.js'
+import { env, isPlainRedisToUpstash } from '#api/env.js'
 
 const neonPooled = 'postgresql://user:pass@ep-xxx-pooler.us-east-1.aws.neon.tech:5432/neondb?sslmode=verify-full'
 const neonDirect = 'postgresql://user:pass@ep-xxx.us-east-1.aws.neon.tech:5432/neondb?sslmode=verify-full'

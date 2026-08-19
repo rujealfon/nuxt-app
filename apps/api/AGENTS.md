@@ -52,6 +52,6 @@ Rate-limit knobs: `RATE_LIMIT_MAX`, `RATE_LIMIT_WINDOW_MS`, `AUTH_RATE_LIMIT_MAX
 
 ## Imports and tests
 
-Same-app source: `@api/` (even inside a module). Tests live in `test/` and call `app.request()` — no HTTP server. Setup creates `nuxt_app_test` and runs migrations. Unlike the Nuxt apps' colocated component tests, API tests stay in `test/`: most (`app.test.ts`, `sessions.test.ts`, `rate-limit.test.ts`, `request-policy.test.ts`) exercise the whole app across several modules, so there's no single source file to sit next to.
+Same-app source: `#api/` (even inside a module; Node `imports`, not a TypeScript-only `@api/` path). Tests live in `test/` and call `app.request()` — no HTTP server. Setup creates `nuxt_app_test` and runs migrations. Unlike the Nuxt apps' colocated component tests, API tests stay in `test/`: most (`app.test.ts`, `sessions.test.ts`, `rate-limit.test.ts`, `request-policy.test.ts`) exercise the whole app across several modules, so there's no single source file to sit next to.
 
 SPAs talk to this API through `@nuxt-app/auth` and `@nuxt-app/types`.

@@ -1,11 +1,11 @@
-import { createRouter } from '@api/factory.js'
-import { requireAdmin } from '@api/middleware/require-admin.js'
 import { createRoute, z } from '@hono/zod-openapi'
 import { authUserSchema } from '@nuxt-app/types'
 import * as HttpStatusCodes from 'stoker/http-status-codes'
 import * as HttpStatusPhrases from 'stoker/http-status-phrases'
 import { jsonContent } from 'stoker/openapi/helpers'
 import createMessageObjectSchema from 'stoker/openapi/schemas/create-message-object'
+import { createRouter } from '#api/factory.js'
+import { requireAdmin } from '#api/middleware/require-admin.js'
 
 const adminDashboardSchema = z.object({
   message: z.string(),
