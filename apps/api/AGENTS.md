@@ -16,7 +16,7 @@ Scalar is at http://localhost:3001/docs when `NODE_ENV=development`. Spec: `/ope
 
 ## Architecture
 
-`src/index.ts` is process boot (`runMigrations()` + `serve`). Vercel does not run `index.ts`. API builds run `pnpm db:migrate` then `scripts/bundle-vercel.sh` (workspace packages inlined into `dist/vercel/app.js`). The Hono builder serves that file — it does not bundle `src/app.ts` itself. Preview must use its own `DATABASE_URL` / `DATABASE_URL_UNPOOLED`.
+`src/index.ts` is process boot (`runMigrations()` + `serve`). Vercel does not run `index.ts`. API builds run `pnpm db:migrate` then `scripts/bundle-vercel.sh` (one ESM file at `dist/vercel/app.js`, npm and workspace packages inlined). The Hono builder serves that file — `/var/task` has no `node_modules`. Preview must use its own `DATABASE_URL` / `DATABASE_URL_UNPOOLED`.
 
 `app.ts` is the framework surface: global middleware and `.route()` mounts. `factory.ts` is `createFactory<AppEnv>` + `OpenAPIHono`. Cross-cutting middleware stays in `src/middleware/`. Origin policy lives in `src/request-policy.ts` (`resolveCorsOrigin`, `skipPublic`).
 
