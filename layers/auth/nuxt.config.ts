@@ -1,5 +1,4 @@
 import process from 'node:process'
-import { API_PROXY_PREFIX } from '@nuxt-app/auth'
 import { loadRootEnv } from '@nuxt-app/layer-base/load-root-env'
 import { resolveVercelPreviewUrl } from '@nuxt-app/layer-base/vercel-preview-url'
 import { parsePublicUrl } from '@nuxt-app/types'
@@ -16,11 +15,10 @@ export default defineNuxtConfig({
   $meta: { name: 'auth' },
   modules: ['@pinia/nuxt', '@pinia/colada-nuxt'],
   runtimeConfig: {
+    // API project's Protection Bypass secret (not this app's). Preview only.
+    apiProtectionBypass: process.env.NUXT_API_PROTECTION_BYPASS || '',
     public: {
       apiUrl,
     },
-  },
-  routeRules: {
-    [`${API_PROXY_PREFIX}/**`]: { proxy: `${apiUrl}/**` },
   },
 })

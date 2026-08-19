@@ -133,4 +133,12 @@ describe('useAuth', () => {
     expect(wrapper.vm.user).toBeNull()
     expect(me).toHaveBeenCalled()
   })
+
+  it('treats a failed me refetch as signed out', async () => {
+    vi.mocked(me).mockRejectedValue(new Error('network down'))
+    const wrapper = await mountAuth()
+
+    await expect(wrapper.vm.fetchUser()).resolves.toBeNull()
+    expect(wrapper.vm.user).toBeNull()
+  })
 })

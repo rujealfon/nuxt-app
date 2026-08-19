@@ -1,7 +1,10 @@
 node_modules
 dist
 .output
+.data
 .nuxt
+.nitro
+.cache
 .turbo
 .env
 .env.*
@@ -10,5 +13,8 @@ dist
 *.db-journal
 .DS_Store
 *.log
+logs
 .vercel
 .playwright-mcp
+.fleet
+.idea

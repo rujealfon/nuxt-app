@@ -26,7 +26,7 @@ Guards are adapters over `resolveRouteAccess` in `layers/auth`. `/` uses `admin`
 
 Guards use `applyRouteAccess` → `fetchUser()` so a revoked Session cannot pass on a stale cache.
 
-`useAuth` constructs `createAuthClient(apiUrl, pageHref)`. The client picks the first-party `/__api` base on preview `*.vercel.app` hosts. The Nitro `/__api` proxy rule is built from `API_PROXY_PREFIX`. Failed bodies map through `messageFromFailedBody` / `failedResponseBody`.
+`useAuth` constructs `createAuthClient(apiUrl, pageHref)`. The client picks the first-party `/__api` base on preview `*.vercel.app` hosts. `layers/auth` serves that prefix (`server/routes/__api/[...path].ts`) and adds `x-vercel-protection-bypass` when `NUXT_API_PROTECTION_BYPASS` is set (the API project’s Protection Bypass secret). Failed bodies map through `messageFromFailedBody` / `failedResponseBody`.
 
 ## Imports
 

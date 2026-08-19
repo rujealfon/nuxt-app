@@ -100,11 +100,12 @@ Set on each project. Projects do not inherit each other’s vars. Database, Redi
 
 **`nuxt-app-app` and `nuxt-app-admin`**
 
-| Name                  | Value                      |
-| --------------------- | -------------------------- |
-| `NUXT_PUBLIC_API_URL` | `https://api.nuxt-app.com` |
+| Name                         | Value                                                                                          |
+| ---------------------------- | ---------------------------------------------------------------------------------------------- |
+| `NUXT_PUBLIC_API_URL`        | `https://api.nuxt-app.com` (Production only)                                                   |
+| `NUXT_API_PROTECTION_BYPASS` | Preview: the **API** project’s Protection Bypass secret (see [Preview](#preview)). Not public. |
 
-Baked in at **build** time (`layers/auth` `runtimeConfig.public.apiUrl`). Change it, then redeploy those two projects.
+`NUXT_PUBLIC_API_URL` is baked in at **build** time (`layers/auth` `runtimeConfig.public.apiUrl`). Change it, then redeploy those two projects.
 
 **`nuxt-app-web`**
 
@@ -123,6 +124,8 @@ Preview deployments auto-wire to each other when Preview-scoped `APP_URL` / `ADM
 - `apps/api/src/env.ts` → `APP_URL` / `ADMIN_URL` / `WEB_URL` each fall back to the matching `resolveVercelPreviewUrl(...)`.
 
 This assumes all four projects are named `nuxt-app-web` / `nuxt-app-app` / `nuxt-app-admin` / `nuxt-app-api` and deploy from the same branch under the same scope — true for this repo. Rename a project and update the string literal passed to `resolveVercelPreviewUrl` at each call site.
+
+Standard Deployment Protection on the API blocks the app/admin `/__api` Nitro proxy (that hop is server-to-server and has no SSO cookie). Keep protection on if you want; enable **Protection Bypass for Automation** on `nuxt-app-api`, copy the secret, and set it as `NUXT_API_PROTECTION_BYPASS` on **`nuxt-app-app` and `nuxt-app-admin` only** (Preview). The proxy sends `x-vercel-protection-bypass` and does not follow SSO redirects. Do not put this var on the API project and do not use the app’s own `VERCEL_AUTOMATION_BYPASS_SECRET` — it must be the **API** project’s bypass secret. Redeploy app and admin after setting it.
 
 ### Until custom domains are attached
 
