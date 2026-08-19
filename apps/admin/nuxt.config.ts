@@ -16,4 +16,9 @@ export default defineNuxtConfig({
   colorMode: {
     preference: 'dark',
   },
+  typescript: {
+    tsConfig: {
+      exclude: ['../**/*.test.ts', '../../../layers/*/app/**/*.test.ts'],
+    },
+  },
 })

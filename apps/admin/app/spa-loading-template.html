@@ -4,19 +4,19 @@
 
 <style>
   .spa-loading {
-    display: flex;
     align-items: center;
+    background: #0f172a;
+    display: flex;
     justify-content: center;
     min-height: 100dvh;
-    background: #0f172a;
   }
   .spa-loading__spinner {
-    width: 2rem;
-    height: 2rem;
-    border: 3px solid #334155;
-    border-top-color: #f8fafc;
-    border-radius: 9999px;
     animation: spa-spin 0.7s linear infinite;
+    border: 3px solid #334155;
+    border-radius: 9999px;
+    border-top-color: #f8fafc;
+    height: 2rem;
+    width: 2rem;
   }
   @keyframes spa-spin {
     to {

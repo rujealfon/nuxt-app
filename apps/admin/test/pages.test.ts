@@ -47,7 +47,9 @@ describe('admin pages', () => {
 
   it('logs out from the admin home', async () => {
     const wrapper = await mountSuspended(IndexPage)
-    await wrapper.get('button').trigger('click')
+    const logoutButton = wrapper.findAll('button').find(button => button.text() === 'Logout')
+    expect(logoutButton).toBeDefined()
+    await logoutButton!.trigger('click')
     expect(logout).toHaveBeenCalled()
   })
 

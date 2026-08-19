@@ -83,7 +83,19 @@ const overrides = [
 ]
 
 export default antfu({
-  vue: true,
+  vue: {
+    a11y: true,
+  },
   typescript: true,
-  formatters: true,
+  formatters: {
+    css: true,
+    graphql: true,
+    html: true,
+    markdown: true,
+    prettierOptions: {
+      plugins: ['prettier-plugin-css-order'],
+      cssDeclarationSorterKeepOverrides: false,
+      cssDeclarationSorterOrder: 'alphabetical',
+    },
+  },
 }, ...overrides)

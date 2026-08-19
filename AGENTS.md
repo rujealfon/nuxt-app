@@ -30,7 +30,7 @@ pnpm + Turborepo monorepo, three layers: `apps/*` (deployables), `layers/*` (Nux
 - **apps/app** — Nuxt 4 SPA (`ssr: false`) for the authenticated product. Extends `layer-auth` + `layer-base`. See `apps/app/AGENTS.md`.
 - **apps/admin** — Nuxt 4 SPA (`ssr: false`) for admins. Extends `layer-auth` + `layer-base`. See `apps/admin/AGENTS.md`.
 - **apps/web** — Nuxt 4 SSG marketing site (`nuxt generate`, `nitro.preset: 'static'`). Extends `layer-base` only. See `apps/web/AGENTS.md`.
-- **layers/base** (`@nuxt-app/layer-base`) — Tailwind v4 + `@nuxt/ui` + shared Nitro config. Every Nuxt app depends on this. `app.vue` wraps pages in `UApp`.
+- **layers/base** (`@nuxt-app/layer-base`) — Tailwind v4 + `@nuxt/ui` + shared theme (`app/app.config.ts`, `app/assets/css/main.css`) + Nitro. Every Nuxt app depends on this. `app.vue` wraps pages in `UApp`. Change colors and fonts here.
 - **layers/auth** (`@nuxt-app/layer-auth`) — Pinia Colada + `useAuth` (query key `['auth', 'me']`), `AuthLoginForm`/`AuthRegisterForm`, and `auth`/`guest`/`guest-admin`/`admin` route middleware. `guest-admin` redirects only administrators so a shared-cookie regular user can reach admin login.
 - **packages/types** — shared Zod request schemas (`loginSchema`, `registerSchema`) plus inferred/plain types (`LoginInput`, `AuthUser`, …). API and Nuxt forms use the same schemas. Request bodies that are not table-shaped stay here. The public user shape (`authUserSchema`) lives here too.
 - **packages/auth** — `createAuthClient(apiUrl, pageHref?)` fetch client for `/auth/*`, consumed by `layer-auth`'s `useAuth`. Chooses the first-party `/__api` base on preview `*.vercel.app` hosts. Does not import API route types.
@@ -49,7 +49,7 @@ When changing a shared package's public surface (`packages/*/src/index.ts` expor
 
 Env vars are shared across all apps from repo-root `.env` (see `.env.example`). Nuxt layers/apps call `loadRootEnv()` before reading `NUXT_PUBLIC_*` (Turbo runs those tasks from each workspace directory). `DATABASE_URL`, `REDIS_URL`, `COOKIE_DOMAIN`, and per-app `*_URL` vars are used for CORS allowlisting and cross-subdomain cookies. Documented `*.vercel.app` previews are distinct sites; app/admin call the API via a same-origin `/__api` Nitro proxy so the session cookie is first-party (`SameSite=Lax`). Production custom domains set `COOKIE_DOMAIN=.nuxt-app.com`. API database and rate-limit env: `apps/api/AGENTS.md`.
 
-Lint: `@antfu/eslint-config` (Vue + TypeScript + formatters) at repo root — no per-package eslint config.
+Lint: `@antfu/eslint-config` (Vue + TypeScript + Vue a11y + formatters; CSS/SCSS properties alphabetical) at repo root — no per-package eslint config.
 
 ## Agent skills
 

@@ -1,3 +1,5 @@
+import type { AppEnv } from '@api/types.js'
+import type { Hono } from 'hono'
 import { allowedOrigins, isDev } from '@api/env.js'
 import { createRouter } from '@api/factory.js'
 import { onError } from '@api/middleware/error.js'
@@ -56,7 +58,9 @@ base.notFound(c => c.json({ message: HttpStatusPhrases.NOT_FOUND }, HttpStatusCo
 if (isDev)
   configureOpenAPI(base)
 
-const app = base
+// Vercel's zero-config Hono detection requires a literal `import ... from 'hono'`
+// in this file — see https://vercel.com/docs/frameworks/backend/hono
+const app: Hono<AppEnv> = base
   .route('/', healthRoutes)
   .route(AUTH_MOUNT, authRoutes)
   .route('/admin', adminRoutes)

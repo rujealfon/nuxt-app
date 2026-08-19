@@ -2,12 +2,10 @@ import { mockNuxtImport, mountSuspended } from '@nuxt/test-utils/runtime'
 import { flushPromises } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { defineComponent, h, ref } from 'vue'
-import AuthLoginForm from '../app/components/AuthLoginForm.vue'
-import AuthRegisterForm from '../app/components/AuthRegisterForm.vue'
+import AuthLoginForm from './AuthLoginForm.vue'
 
-const { login, register, logout } = vi.hoisted(() => ({
+const { login, logout } = vi.hoisted(() => ({
   login: vi.fn(),
-  register: vi.fn(),
   logout: vi.fn(),
 }))
 
@@ -15,7 +13,6 @@ const error = ref<string | null>(null)
 
 mockNuxtImport('useAuth', () => () => ({
   login,
-  register,
   logout,
   error,
 }))
@@ -64,7 +61,6 @@ const UAuthFormStub = defineComponent({
       h('button', { 'type': 'button', 'data-case': 'empty', 'onClick': () => attempt({ email: '', password: '' }) }, 'empty'),
       h('button', { 'type': 'button', 'data-case': 'bademail', 'onClick': () => attempt({ email: 'x', password: 'password12' }) }, 'bademail'),
       h('button', { 'type': 'button', 'data-case': 'longpw', 'onClick': () => attempt({ email: 'ada@example.com', password: 'a'.repeat(73) }) }, 'longpw'),
-      h('button', { 'type': 'button', 'data-case': 'shortpw', 'onClick': () => attempt({ email: 'ada@example.com', password: 'short', name: 'Ada' }) }, 'shortpw'),
       slots.default?.(),
       slots.validation?.(),
       slots.footer?.(),
@@ -86,8 +82,8 @@ const stubs = {
   }),
 }
 
-function mountForm(component: typeof AuthLoginForm, props?: Record<string, unknown>) {
-  return mountSuspended(component, {
+function mountForm(props?: Record<string, unknown>) {
+  return mountSuspended(AuthLoginForm, {
     props,
     global: { stubs },
   })
@@ -101,7 +97,7 @@ describe('authLoginForm', () => {
   })
 
   it('renders the default title and a register link', async () => {
-    const wrapper = await mountForm(AuthLoginForm, { registerTo: '/register' })
+    const wrapper = await mountForm({ registerTo: '/register' })
     expect(wrapper.text()).toContain('Welcome back!')
     expect(wrapper.get('a[href="/register"]').text()).toContain('Sign up')
   })
@@ -111,7 +107,7 @@ describe('authLoginForm', () => {
       user: { id: 'u1', email: 'ada@example.com', name: 'Ada', role: 'user' },
     }
     login.mockResolvedValue(res)
-    const wrapper = await mountForm(AuthLoginForm)
+    const wrapper = await mountForm()
 
     await wrapper.get('form').trigger('submit')
     await flushPromises()
@@ -124,7 +120,7 @@ describe('authLoginForm', () => {
   })
 
   it('rejects an empty login through loginSchema', async () => {
-    const wrapper = await mountForm(AuthLoginForm)
+    const wrapper = await mountForm()
     await wrapper.get('[data-case="empty"]').trigger('click')
     await flushPromises()
 
@@ -133,7 +129,7 @@ describe('authLoginForm', () => {
   })
 
   it('rejects a malformed email through loginSchema', async () => {
-    const wrapper = await mountForm(AuthLoginForm)
+    const wrapper = await mountForm()
     await wrapper.get('[data-case="bademail"]').trigger('click')
     await flushPromises()
 
@@ -142,7 +138,7 @@ describe('authLoginForm', () => {
   })
 
   it('rejects a 73-byte password through loginSchema', async () => {
-    const wrapper = await mountForm(AuthLoginForm)
+    const wrapper = await mountForm()
     await wrapper.get('[data-case="longpw"]').trigger('click')
     await flushPromises()
 
@@ -155,7 +151,7 @@ describe('authLoginForm', () => {
       error.value = 'This account is not an admin.'
       throw new Error('This account is not an admin.')
     })
-    const wrapper = await mountForm(AuthLoginForm, {
+    const wrapper = await mountForm({
       requireRole: 'admin',
       title: 'Admin login',
     })
@@ -175,44 +171,7 @@ describe('authLoginForm', () => {
 
   it('shows the auth error from useAuth', async () => {
     error.value = 'Invalid credentials'
-    const wrapper = await mountForm(AuthLoginForm)
+    const wrapper = await mountForm()
     expect(wrapper.text()).toContain('Invalid credentials')
-  })
-})
-
-describe('authRegisterForm', () => {
-  beforeEach(() => {
-    register.mockReset()
-    error.value = null
-  })
-
-  it('renders the default title and a login link', async () => {
-    const wrapper = await mountForm(AuthRegisterForm)
-    expect(wrapper.text()).toContain('Create account')
-    expect(wrapper.get('a[href="/login"]').text()).toContain('Sign in')
-  })
-
-  it('emits success after a valid register', async () => {
-    register.mockResolvedValue({ message: 'Registered successfully' })
-    const wrapper = await mountForm(AuthRegisterForm)
-
-    await wrapper.get('form').trigger('submit')
-    await flushPromises()
-
-    expect(register).toHaveBeenCalledWith({
-      email: 'ada@example.com',
-      password: 'password12',
-      name: 'Ada',
-    })
-    expect(wrapper.emitted('success')).toHaveLength(1)
-  })
-
-  it('rejects a short register password through registerSchema', async () => {
-    const wrapper = await mountForm(AuthRegisterForm)
-    await wrapper.get('[data-case="shortpw"]').trigger('click')
-    await flushPromises()
-
-    expect(register).not.toHaveBeenCalled()
-    expect(wrapper.text()).toContain('Password must be at least 8 characters')
   })
 })
