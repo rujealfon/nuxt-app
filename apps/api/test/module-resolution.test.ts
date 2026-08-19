@@ -31,7 +31,7 @@ it('workspace packages resolve from apps/api node_modules', () => {
 })
 
 it('vercel bundle boots in an empty /var/task without node_modules', () => {
-  execFileSync('bash', ['scripts/bundle-vercel.sh'], {
+  execFileSync(process.execPath, ['scripts/bundle-vercel.mjs'], {
     cwd: apiRoot,
     stdio: 'pipe',
   })
