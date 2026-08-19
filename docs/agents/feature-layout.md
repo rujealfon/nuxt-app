@@ -9,7 +9,7 @@ Done when a page under `app/pages/` is a thin adapter, domain files live under `
 1. Create `app/features/<name>/`. Name the folder for the domain (`home`, not `pages` or `ui`).
 2. Put private UI in `components/`, UI-facing behavior in `composables/`, Pinia Colada reads in `queries.ts`, writes in `mutations.ts`, client-only Pinia in `stores/` — only the files that feature needs.
 3. Keep the route file in `app/pages/`. It sets `definePageMeta` (layout, middleware) and imports the feature.
-4. Prefix feature component files with the feature name (`HomeWelcomeCard.vue`) so auto-import names stay unique.
+4. Prefix feature component files with the feature name (`HomeWelcomeCard.vue`) so auto-import names stay unique. Its test lives next to it (`HomeWelcomeCard.test.ts`) — Vitest picks up colocated `*.test.ts` files.
 
 ```
 app/
@@ -19,7 +19,7 @@ app/
 ├── components/                 # Cross-feature UI (no feature imports)
 ├── features/
 │   └── home/
-│       ├── components/         # HomeWelcomeCard.vue
+│       ├── components/         # HomeWelcomeCard.vue, HomeWelcomeCard.test.ts
 │       ├── composables/        # optional
 │       ├── queries.ts          # optional — useQuery + keys
 │       ├── mutations.ts        # optional — useMutation + invalidate

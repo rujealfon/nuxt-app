@@ -10,13 +10,20 @@ export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
   modules: ['@nuxt/ui'],
+  colorMode: {
+    classSuffix: '',
+    fallback: 'light',
+    preference: 'system',
+  },
   icon: {
     clientBundle: {
       icons: [
-        'lucide:lock',
-        'lucide:user-plus',
         'lucide:eye',
         'lucide:eye-off',
+        'lucide:lock',
+        'lucide:moon',
+        'lucide:sun',
+        'lucide:user-plus',
       ],
     },
     serverBundle: {

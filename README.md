@@ -11,12 +11,12 @@ pnpm + Turborepo. Four deployables, shared Nuxt layers, and shared TS packages.
 
 ## Layers and packages
 
-| Path             | Package                | Used by         | Provides                                         |
-| ---------------- | ---------------------- | --------------- | ------------------------------------------------ |
-| `layers/base`    | `@nuxt-app/layer-base` | app, admin, web | Tailwind, `@nuxt/ui`, Nitro/devtools             |
-| `layers/auth`    | `@nuxt-app/layer-auth` | app, admin      | `useAuth`, `auth` / `guest` / `admin` middleware |
-| `packages/auth`  | `@nuxt-app/auth`       | layer-auth      | Fetch client for `/auth/*`                       |
-| `packages/types` | `@nuxt-app/types`      | API + Nuxt      | Shared Zod bodies and `AuthUser`                 |
+| Path             | Package                | Used by         | Provides                                                        |
+| ---------------- | ---------------------- | --------------- | --------------------------------------------------------------- |
+| `layers/base`    | `@nuxt-app/layer-base` | app, admin, web | Tailwind, `@nuxt/ui`, shared Harbor Glass theme, Nitro/devtools |
+| `layers/auth`    | `@nuxt-app/layer-auth` | app, admin      | `useAuth`, `auth` / `guest` / `admin` middleware                |
+| `packages/auth`  | `@nuxt-app/auth`       | layer-auth      | Fetch client for `/auth/*`                                      |
+| `packages/types` | `@nuxt-app/types`      | API + Nuxt      | Shared Zod bodies and `AuthUser`                                |
 
 ## Stack
 
@@ -88,7 +88,7 @@ Env is shared from the repo-root `.env` (see `.env.example`). Seed and schema co
 
 ## Lint
 
-[@antfu/eslint-config](https://github.com/antfu/eslint-config) at the repo root (Vue + TypeScript + CSS formatters). No per-package ESLint config.
+[@antfu/eslint-config](https://github.com/antfu/eslint-config) at the repo root (Vue + TypeScript + Vue a11y + CSS formatters). CSS and SCSS declarations sort alphabetically. No per-package ESLint config.
 
 ```bash
 pnpm lint

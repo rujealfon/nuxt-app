@@ -6,7 +6,7 @@ Admin SPA (`ssr: false`). Extends `layer-auth` + `layer-base`. Color mode defaul
 
 ```bash
 pnpm dev:admin                         # http://localhost:3002
-pnpm --filter @nuxt-app/admin test     # @nuxt/test-utils + Vitest, files under test/
+pnpm --filter @nuxt-app/admin test     # @nuxt/test-utils + Vitest; component tests colocated as *.test.ts, route/page tests under test/
 pnpm --filter @nuxt-app/admin type-check
 ```
 
@@ -18,7 +18,7 @@ Domain UI lives in `app/features/<name>/`. `app/pages/` stays the route adapter 
 
 Auth stays in `layers/auth`. Do not add another Colada plugin or per-feature defaults. Session / `AuthUser` stays in `useAuth` (key `['auth', 'me']`). Features do not re-query `/auth/me`.
 
-`nuxt.config.ts` registers `~/features/*/components/**` and `features/*/composables`. Prefix feature components with the feature name (`HomeWelcomeCard.vue`).
+`nuxt.config.ts` registers `~/features/*/components/**` and `features/*/composables`. Prefix feature components with the feature name (`HomeWelcomeCard.vue`). Its test lives next to it (`HomeWelcomeCard.test.ts`); Vitest picks up colocated `*.test.ts` files automatically.
 
 ## Route access
 

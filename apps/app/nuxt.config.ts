@@ -13,4 +13,9 @@ export default defineNuxtConfig({
     dirs: ['features/*/composables'],
   },
   ssr: false,
+  typescript: {
+    tsConfig: {
+      exclude: ['../**/*.test.ts', '../../../layers/*/app/**/*.test.ts'],
+    },
+  },
 })

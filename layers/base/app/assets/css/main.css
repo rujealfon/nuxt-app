@@ -2,5 +2,49 @@
 @import '@nuxt/ui';
 
 @theme {
-  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --font-sans: 'Instrument Sans', system-ui, sans-serif;
+}
+
+@theme static {
+  --color-ember-50: #fdf7f0;
+  --color-ember-100: #f9ead6;
+  --color-ember-200: #f1d0a8;
+  --color-ember-300: #e7ad6c;
+  --color-ember-400: #de8c3d;
+  --color-ember-500: #d07122;
+  --color-ember-600: #b55718;
+  --color-ember-700: #964217;
+  --color-ember-800: #7a3619;
+  --color-ember-900: #652e18;
+  --color-ember-950: #38150b;
+  --color-harbor-50: #f0fafa;
+  --color-harbor-100: #d5f3f5;
+  --color-harbor-200: #aae6eb;
+  --color-harbor-300: #70d2dc;
+  --color-harbor-400: #38b6c6;
+  --color-harbor-500: #1d99ab;
+  --color-harbor-600: #167b8d;
+  --color-harbor-700: #166474;
+  --color-harbor-800: #175260;
+  --color-harbor-900: #184551;
+  --color-harbor-950: #092c36;
+}
+
+:root {
+  --ui-bg: var(--ui-color-neutral-50);
+  --ui-primary: var(--ui-color-primary-600);
+  --ui-radius: 0.5rem;
+}
+
+.dark {
+  --ui-bg: var(--ui-color-neutral-950);
+  --ui-primary: var(--ui-color-primary-400);
+}
+
+@layer base {
+  button:not(:disabled),
+  [role='button']:not(:disabled) {
+    cursor: pointer;
+  }
 }

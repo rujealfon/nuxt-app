@@ -11,12 +11,15 @@ const { logout } = useAuth()
 <template>
   <div class="mx-auto max-w-3xl px-6 py-12">
     <header class="mb-10 flex items-center justify-between">
-      <h1 class="text-2xl font-bold">
+      <h1 class="text-2xl font-bold text-highlighted">
         Admin Panel
       </h1>
-      <UButton color="error" @click="logout()">
-        Logout
-      </UButton>
+      <div class="flex items-center gap-2">
+        <UColorModeButton />
+        <UButton color="neutral" variant="outline" @click="logout()">
+          Logout
+        </UButton>
+      </div>
     </header>
 
     <HomeWelcomeCard />
