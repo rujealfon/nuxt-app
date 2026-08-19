@@ -116,6 +116,36 @@ Baked into the static site at **generate** time (`runtimeConfig.public.appUrl`).
 
 Preview: either Preview-scoped URL vars, or preview frontends call the production API until you add per-preview CORS origins.
 
+### Until custom domains are attached
+
+Production still on the four `*.vercel.app` URLs (no DNS yet). Use each project's own `*.vercel.app` URL in place of the custom domain, and leave `COOKIE_DOMAIN` unset:
+
+**`nuxt-app-api`**
+
+| Name            | Value                          |
+| --------------- | ------------------------------ |
+| `API_URL`       | the API's `*.vercel.app` URL   |
+| `APP_URL`       | the app's `*.vercel.app` URL   |
+| `ADMIN_URL`     | the admin's `*.vercel.app` URL |
+| `WEB_URL`       | the web's `*.vercel.app` URL   |
+| `COOKIE_DOMAIN` | unset                          |
+
+**`nuxt-app-app` / `nuxt-app-admin`**
+
+| Name                  | Value                        |
+| --------------------- | ---------------------------- |
+| `NUXT_PUBLIC_API_URL` | the API's `*.vercel.app` URL |
+
+**`nuxt-app-web`**
+
+| Name                  | Value                        |
+| --------------------- | ---------------------------- |
+| `NUXT_PUBLIC_APP_URL` | the app's `*.vercel.app` URL |
+
+`API_URL` / `APP_URL` / `ADMIN_URL` / `WEB_URL` double as the CORS + CSRF allowlist, so each must be the exact origin (`https://…`, no trailing slash) — not the `/__api` proxy path. Each `*.vercel.app` hostname is its own site with no shared parent domain, so app/admin reach the API through their same-origin `/__api` Nitro proxy and the session cookie stays first-party (`SameSite=Lax`) without `COOKIE_DOMAIN`.
+
+Once custom domains are attached, switch all of the above to the custom-domain URLs and set `COOKIE_DOMAIN=.nuxt-app.com` so app and admin share the session cookie.
+
 ## Custom domains
 
 Settings → Domains on each project:
