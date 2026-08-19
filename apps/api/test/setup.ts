@@ -1,8 +1,8 @@
 import process from 'node:process'
-import { resolveDatabaseUrl } from '@api/db/url'
-import { setRateLimitStoreFactory } from '@api/middleware/rate-limit.js'
 import { MemoryStore } from 'hono-rate-limiter'
 import { afterAll, beforeAll } from 'vitest'
+import { resolveDatabaseUrl } from '#api/db/url.js'
+import { setRateLimitStoreFactory } from '#api/middleware/rate-limit.js'
 
 process.env.NODE_ENV = 'test'
 setRateLimitStoreFactory(() => new MemoryStore())
@@ -10,7 +10,7 @@ setRateLimitStoreFactory(() => new MemoryStore())
 const url = resolveDatabaseUrl()
 
 beforeAll(async () => {
-  const { ensureDatabase, runMigrations } = await import('@api/db')
+  const { ensureDatabase, runMigrations } = await import('#api/db/index.js')
   try {
     await ensureDatabase(url)
     await runMigrations()
@@ -25,6 +25,6 @@ beforeAll(async () => {
 })
 
 afterAll(async () => {
-  const { pool } = await import('@api/db')
+  const { pool } = await import('#api/db/index.js')
   await pool.end()
 })

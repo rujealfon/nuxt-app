@@ -1,7 +1,7 @@
-import { allowedOrigins } from '@api/env.js'
-import { resolveCorsOrigin, skipPublic } from '@api/request-policy.js'
 import { Hono } from 'hono'
 import { describe, expect, it } from 'vitest'
+import { allowedOrigins } from '#api/env.js'
+import { resolveCorsOrigin, skipPublic } from '#api/request-policy.js'
 
 describe('resolveCorsOrigin', () => {
   it('echoes an allowed origin', () => {

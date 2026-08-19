@@ -2,5 +2,6 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "hono",
   "installCommand": "bash scripts/vercel-install.sh",
-  "buildCommand": "pnpm db:migrate"
+  "buildCommand": "bash scripts/vercel-build.sh",
+  "outputDirectory": "dist/vercel"
 }

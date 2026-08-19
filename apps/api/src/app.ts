@@ -1,16 +1,5 @@
-import type { AppEnv } from '@api/types.js'
 import type { Hono } from 'hono'
-import { allowedOrigins, isDev } from '@api/env.js'
-import { createRouter } from '@api/factory.js'
-import { onError } from '@api/middleware/error.js'
-import { pinoLogger } from '@api/middleware/pino-logger.js'
-import { rateLimit } from '@api/middleware/rate-limit.js'
-import { sessionMiddleware } from '@api/middleware/session.js'
-import { adminRoutes } from '@api/modules/admin/routes.js'
-import { authRoutes } from '@api/modules/auth/routes.js'
-import { configureOpenAPI } from '@api/modules/docs/routes.js'
-import { healthRoutes } from '@api/modules/health/routes.js'
-import { resolveCorsOrigin } from '@api/request-policy.js'
+import type { AppEnv } from '#api/types.js'
 import { AUTH_MOUNT } from '@nuxt-app/types'
 import { bodyLimit } from 'hono/body-limit'
 import { cors } from 'hono/cors'
@@ -19,6 +8,17 @@ import { requestId } from 'hono/request-id'
 import { secureHeaders } from 'hono/secure-headers'
 import * as HttpStatusCodes from 'stoker/http-status-codes'
 import * as HttpStatusPhrases from 'stoker/http-status-phrases'
+import { allowedOrigins, isDev } from '#api/env.js'
+import { createRouter } from '#api/factory.js'
+import { onError } from '#api/middleware/error.js'
+import { pinoLogger } from '#api/middleware/pino-logger.js'
+import { rateLimit } from '#api/middleware/rate-limit.js'
+import { sessionMiddleware } from '#api/middleware/session.js'
+import { adminRoutes } from '#api/modules/admin/routes.js'
+import { authRoutes } from '#api/modules/auth/routes.js'
+import { configureOpenAPI } from '#api/modules/docs/routes.js'
+import { healthRoutes } from '#api/modules/health/routes.js'
+import { resolveCorsOrigin } from '#api/request-policy.js'
 
 const base = createRouter()
 
@@ -58,8 +58,6 @@ base.notFound(c => c.json({ message: HttpStatusPhrases.NOT_FOUND }, HttpStatusCo
 if (isDev)
   configureOpenAPI(base)
 
-// Vercel's zero-config Hono detection requires a literal `import ... from 'hono'`
-// in this file — see https://vercel.com/docs/frameworks/backend/hono
 const app: Hono<AppEnv> = base
   .route('/', healthRoutes)
   .route(AUTH_MOUNT, authRoutes)

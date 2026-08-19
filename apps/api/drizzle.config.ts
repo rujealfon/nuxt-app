@@ -1,12 +1,8 @@
-import { resolve } from 'node:path'
 import process from 'node:process'
-import { applyEnvFiles } from '@nuxt-app/layer-base/apply-env-files'
 import { defineConfig } from 'drizzle-kit'
+import { loadEnv } from './src/load-env.ts'
 
-applyEnvFiles([
-  resolve(process.cwd(), '../../.env'),
-  resolve(process.cwd(), '.env'),
-])
+loadEnv()
 
 export default defineConfig({
   dialect: 'postgresql',

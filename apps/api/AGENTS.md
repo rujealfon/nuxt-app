@@ -16,7 +16,7 @@ Scalar is at http://localhost:3001/docs when `NODE_ENV=development`. Spec: `/ope
 
 ## Architecture
 
-`src/index.ts` is process boot (`runMigrations()` + `serve`). Vercel serves `src/app.ts` (`export default app`) and does not run `index.ts`. API builds run `pnpm db:migrate` (production and preview). Preview must use its own `DATABASE_URL` / `DATABASE_URL_UNPOOLED`.
+`src/index.ts` is process boot (`runMigrations()` + `serve`). Vercel does not run `index.ts`. API builds run `scripts/vercel-build.sh` (`pnpm db:migrate` then `scripts/bundle-vercel.mjs` → `dist/vercel/app.js`). The Hono builder serves that file — `/var/task` has no `node_modules`. Preview must use its own `DATABASE_URL` / `DATABASE_URL_UNPOOLED`.
 
 `app.ts` is the framework surface: global middleware and `.route()` mounts. `factory.ts` is `createFactory<AppEnv>` + `OpenAPIHono`. Cross-cutting middleware stays in `src/middleware/`. Origin policy lives in `src/request-policy.ts` (`resolveCorsOrigin`, `skipPublic`).
 
@@ -52,6 +52,6 @@ Rate-limit knobs: `RATE_LIMIT_MAX`, `RATE_LIMIT_WINDOW_MS`, `AUTH_RATE_LIMIT_MAX
 
 ## Imports and tests
 
-Same-app source: `@api/` (even inside a module). Tests live in `test/` and call `app.request()` — no HTTP server. Setup creates `nuxt_app_test` and runs migrations. Unlike the Nuxt apps' colocated component tests, API tests stay in `test/`: most (`app.test.ts`, `sessions.test.ts`, `rate-limit.test.ts`, `request-policy.test.ts`) exercise the whole app across several modules, so there's no single source file to sit next to.
+Same-app source: `#api/` (even inside a module; Node `imports`, not a TypeScript-only `@api/` path). Tests live in `test/` and call `app.request()` — no HTTP server. Setup creates `nuxt_app_test` and runs migrations. Unlike the Nuxt apps' colocated component tests, API tests stay in `test/`: most (`app.test.ts`, `sessions.test.ts`, `rate-limit.test.ts`, `request-policy.test.ts`) exercise the whole app across several modules, so there's no single source file to sit next to.
 
 SPAs talk to this API through `@nuxt-app/auth` and `@nuxt-app/types`.

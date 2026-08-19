@@ -1,9 +1,9 @@
-import app from '@api/app.js'
-import { db, users } from '@api/db'
-import { createUser } from '@api/modules/auth/identity.js'
-import { resolveAdminSeedEmail, resolveAdminSeedPassword, seed } from '@api/seed'
 import { eq } from 'drizzle-orm'
 import { describe, expect, it } from 'vitest'
+import app from '#api/app.js'
+import { db, users } from '#api/db/index.js'
+import { createUser } from '#api/modules/auth/identity.js'
+import { resolveAdminSeedEmail, resolveAdminSeedPassword, seed } from '#api/seed.js'
 
 async function login(email: string, password: string) {
   return app.request('/auth/login', {

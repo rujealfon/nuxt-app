@@ -1,9 +1,9 @@
 import type { AuthUser } from '@nuxt-app/types'
-import { db, sessions, users } from '@api/db'
-import { issueSession, toAuthUser } from '@api/modules/auth/session.js'
 import { matchesRequiredRole } from '@nuxt-app/types'
 import bcrypt from 'bcryptjs'
 import { eq } from 'drizzle-orm'
+import { db, sessions, users } from '#api/db/index.js'
+import { issueSession, toAuthUser } from '#api/modules/auth/session.js'
 
 const SALT_ROUNDS = 12
 

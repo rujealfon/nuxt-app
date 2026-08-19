@@ -1,7 +1,3 @@
-import { createRouter } from '@api/factory.js'
-import { authRateLimit } from '@api/middleware/rate-limit.js'
-import { createUser, signIn } from '@api/modules/auth/identity.js'
-import { attachSessionCookie, endSession } from '@api/modules/auth/session.js'
 import { createRoute } from '@hono/zod-openapi'
 import { authHttp, authResponseSchema, loginSchema, meResponseSchema, registerSchema } from '@nuxt-app/types'
 import { HTTPException } from 'hono/http-exception'
@@ -10,6 +6,10 @@ import * as HttpStatusPhrases from 'stoker/http-status-phrases'
 import { jsonContent, jsonContentRequired } from 'stoker/openapi/helpers'
 import createErrorSchema from 'stoker/openapi/schemas/create-error-schema'
 import createMessageObjectSchema from 'stoker/openapi/schemas/create-message-object'
+import { createRouter } from '#api/factory.js'
+import { authRateLimit } from '#api/middleware/rate-limit.js'
+import { createUser, signIn } from '#api/modules/auth/identity.js'
+import { attachSessionCookie, endSession } from '#api/modules/auth/session.js'
 
 const tags = ['Auth']
 

@@ -1,4 +1,4 @@
-import { env } from '@api/env.js'
+import { env } from '#api/env.js'
 
 export const TEST_DATABASE_NAME = 'nuxt_app_test'
 

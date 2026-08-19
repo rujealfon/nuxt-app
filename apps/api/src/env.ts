@@ -1,6 +1,6 @@
 import process from 'node:process'
-import { loadEnv } from '@api/load-env.js'
 import { z } from 'zod'
+import { loadEnv } from '#api/load-env.js'
 
 loadEnv()
 

@@ -1,7 +1,7 @@
-import { factory } from '@api/factory.js'
 import { failedResponseBody, matchesRequiredRole } from '@nuxt-app/types'
 import * as HttpStatusCodes from 'stoker/http-status-codes'
 import * as HttpStatusPhrases from 'stoker/http-status-phrases'
+import { factory } from '#api/factory.js'
 
 export const requireAdmin = factory.createMiddleware(async (c, next) => {
   const user = c.get('user')

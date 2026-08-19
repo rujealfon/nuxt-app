@@ -1,7 +1,7 @@
 import process from 'node:process'
-import { env } from '@api/env.js'
-import { loadEnv } from '@api/load-env.js'
 import { describe, expect, it } from 'vitest'
+import { env } from '#api/env.js'
+import { loadEnv } from '#api/load-env.js'
 
 describe('loadEnv', () => {
   it('does not override an already-set process env value', () => {

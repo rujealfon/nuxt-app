@@ -1,4 +1,4 @@
-import type { AppEnv } from '@api/types.js'
+import type { AppEnv } from '#api/types.js'
 import { OpenAPIHono } from '@hono/zod-openapi'
 import { createFactory } from 'hono/factory'
 import defaultHook from 'stoker/openapi/default-hook'

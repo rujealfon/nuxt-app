@@ -4,9 +4,9 @@
  * Run: ADMIN_PASSWORD=... pnpm --filter @nuxt-app/api db:seed
  */
 import process from 'node:process'
-import { pool } from '@api/db'
-import { ensureAdmin } from '@api/modules/auth/identity.js'
 import { registerSchema } from '@nuxt-app/types'
+import { pool } from '#api/db/index.js'
+import { ensureAdmin } from '#api/modules/auth/identity.js'
 
 export function resolveAdminSeedPassword(env: NodeJS.Dict<string> = process.env): string {
   const password = env.ADMIN_PASSWORD

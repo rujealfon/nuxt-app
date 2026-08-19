@@ -1,13 +1,13 @@
-import type { AppEnv } from '@api/types.js'
 import type { AuthUser } from '@nuxt-app/types'
 import type { Context } from 'hono'
 import type { CookieOptions } from 'hono/utils/cookie'
-import { db, sessions, users } from '@api/db'
-import { env } from '@api/env.js'
+import type { AppEnv } from '#api/types.js'
 import { authUserSchema } from '@nuxt-app/types'
 import { and, eq, gt, lte } from 'drizzle-orm'
 import { deleteCookie, getCookie, setCookie } from 'hono/cookie'
 import { z } from 'zod'
+import { db, sessions, users } from '#api/db/index.js'
+import { env } from '#api/env.js'
 
 export const SESSION_COOKIE = 'nuxt_app_session'
 export const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 7
