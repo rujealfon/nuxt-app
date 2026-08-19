@@ -23,21 +23,21 @@ Custom domains (attach when DNS is ready):
 
 - Projects exist: `nuxt-app-web`, `nuxt-app-app`, `nuxt-app-admin`, `nuxt-app-api`.
 - Nitro: `layers/base` uses `vercel` when `VERCEL` is set, `node-server` otherwise. `apps/web` still overrides to `static`.
-- Redis: `connectRedis()` is lazy and coalesced. Rate limiting works when Vercel serves `src/app.ts` and never runs `src/index.ts`.
-- Vercel entry for the API is `src/app.ts` (`export default app`). Do not use `apps/api` `build` (`tsc`) as the Vercel build command. The API `buildCommand` is `pnpm db:migrate` (not `tsc` — Vercel bundles `src/app.ts`).
+- Redis: `connectRedis()` is lazy and coalesced. Rate limiting works when Vercel serves the bundled app and never runs `src/index.ts`.
+- Vercel entry for the API is the esbuild bundle at `dist/vercel/app.js` (`export default app`). Do not use `apps/api` `build` (`tsc`) as the Vercel build command. The API `buildCommand` is `scripts/vercel-build.sh` (`pnpm db:migrate` then the bundle). The Hono builder does not inline workspace packages.
 
 Migrations do **not** run on API boot on Vercel. Production and preview API builds run `pnpm db:migrate`. Preview must use a different database than production. See [Migrate](#migrate).
 
 ## Project settings
 
-Each app owns its settings in `apps/<name>/vercel.json` (picked up because Root Directory is that folder). Leave dashboard **Override** toggles (Build / Output / Install / Development) off so the files win. Leave **Include files outside the Root Directory** on (pnpm workspaces need `layers/*` and `packages/*`). Node **24.x**. Nuxt presets detect `pnpm-lock.yaml` at the repo root. The Hono preset does not — `apps/api/package.json` sets `packageManager` and `installCommand` runs `scripts/vercel-install.sh` so pnpm uses the repo-root lockfile. Do not drop `installCommand` when editing `buildCommand`. Do not add `tsc` to the API Vercel build. App/admin/web `buildCommand` runs `nuxt prepare` in the shared layers so Vite can resolve `layers/*/.nuxt/tsconfig.json` (that folder is gitignored and is not created by the app’s own prepare). CI/`turbo run build` does the same via `^nuxt:prepare` instead of a per-app `prebuild`, so parallel app builds do not race on `layers/*/.nuxt`.
+Each app owns its settings in `apps/<name>/vercel.json` (picked up because Root Directory is that folder). Leave dashboard **Override** toggles (Build / Output / Install / Development) off so the files win. Leave **Include files outside the Root Directory** on (pnpm workspaces need `layers/*` and `packages/*`). Node **24.x**. Nuxt presets detect `pnpm-lock.yaml` at the repo root. The Hono preset does not — `apps/api/package.json` sets `packageManager` and `installCommand` runs `scripts/vercel-install.sh` so pnpm uses the repo-root lockfile. Do not drop `installCommand` when editing `buildCommand`. Do not add `tsc` to the API Vercel build. Do not clear API `outputDirectory` (`dist/vercel`). App/admin/web `buildCommand` runs `nuxt prepare` in the shared layers so Vite can resolve `layers/*/.nuxt/tsconfig.json` (that folder is gitignored and is not created by the app’s own prepare). CI/`turbo run build` does the same via `^nuxt:prepare` instead of a per-app `prebuild`, so parallel app builds do not race on `layers/*/.nuxt`.
 
 | App   | File                     | Framework | Build                                                 | Output                                      |
 | ----- | ------------------------ | --------- | ----------------------------------------------------- | ------------------------------------------- |
 | web   | `apps/web/vercel.json`   | `nuxtjs`  | layer `nuxt:prepare` + `pnpm build` (`nuxt generate`) | `.output/public`                            |
 | app   | `apps/app/vercel.json`   | `nuxtjs`  | layer `nuxt:prepare` + `pnpm build` (`nuxt build`)    | default (Nitro `vercel` → `.vercel/output`) |
 | admin | `apps/admin/vercel.json` | `nuxtjs`  | layer `nuxt:prepare` + `pnpm build` (`nuxt build`)    | default                                     |
-| api   | `apps/api/vercel.json`   | `hono`    | `pnpm db:migrate` (not `tsc`)                         | default — Vercel bundles `src/app.ts`       |
+| api   | `apps/api/vercel.json`   | `hono`    | `scripts/vercel-build.sh` (migrate + esbuild)         | `dist/vercel` — bundled `app.js`            |
 
 Do **not** set `ignoreCommand` / Ignored Build Step to `npx turbo-ignore` (`turbo-ignore` is deprecated). Vercel [skips unaffected projects](https://vercel.com/docs/monorepos#skipping-unaffected-projects) when the commit does not change that package or its workspace deps. That path does not take a concurrent build slot. Leave **Skip deployment** enabled under Root Directory (the default). Leave Ignored Build Step empty.
 
@@ -183,8 +183,8 @@ Git pushes then deploy all four. Vercel skips a project when that package and it
 ## Gotchas
 
 - Postgres must be 18. Neon 17 fails the first migration (`uuidv7()`).
-- API Vercel build is `pnpm db:migrate`, not `tsc`. `tsc` is not the platform entry. Preview must not share production `DATABASE_URL`.
-- The Hono builder transpiles `src/app.ts` file-by-file and does not rewrite TypeScript `paths`. Same-app imports are `#api/` (`apps/api/package.json` `imports`) so Node can resolve them at runtime. Do not reintroduce `@api/`.
+- API Vercel build is `scripts/vercel-build.sh` (migrate + esbuild), not `tsc`. The Hono builder would otherwise transpile `src/app.ts` and leave `@nuxt-app/types` as a package import that is missing from `/var/task`. Preview must not share production `DATABASE_URL`.
+- Same-app imports stay `#api/` (`apps/api/package.json` `imports`) for local `tsx` / tests. Do not reintroduce TypeScript-only `@api/` paths.
 - Hono does not detect the repo-root pnpm lockfile. A custom `pnpm install` uses Vercel’s oldest pnpm (6), which ignores this lockfile. `scripts/vercel-install.sh` installs from the workspace root with `npx pnpm@<packageManager>`. Also set `ENABLE_EXPERIMENTAL_COREPACK=1` on `nuxt-app-api` ([Vercel Corepack](https://vercel.com/docs/builds/configure-a-build#corepack); [pnpm 11](https://andrewusher.dev/blog/upgrading-pnpm-11-vercel)). `tsc` is not the Vercel entry.
 - Runtime `DATABASE_URL` is the Neon **pooler**. If the pool is exhausted, set `max: 1` on the `pg` Pool. Migrations use `DATABASE_URL_UNPOOLED` (required in production when `DATABASE_URL` is pooled). Neon URLs use `sslmode=verify-full` (`pg` already treats `require` as `verify-full` and warns).
 - Upstash `REDIS_URL` must be `rediss://` (TLS). `redis://` is only for local Compose.
