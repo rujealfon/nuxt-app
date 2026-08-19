@@ -3,8 +3,10 @@ import { fileURLToPath } from 'node:url'
 import { build } from 'esbuild'
 
 const apiRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
-const repoRoot = resolve(apiRoot, '../..')
 
+// Do not alias workspace packages to `../../packages/...`. On Vercel the API
+// root is /vercel/path1, so `../..` is `/` and those files are not there.
+// The checkout is /vercel/path0; install already linked node_modules here.
 // Hono's detector only looks for a literal `import "hono"` / `from "hono"`.
 // Keep it in a comment so Node does not try to resolve the package at runtime.
 // createRequire lets bundled CJS (dotenv) call require("fs").
@@ -21,10 +23,6 @@ await build({
   bundle: true,
   platform: 'node',
   format: 'esm',
-  alias: {
-    '@nuxt-app/types': resolve(repoRoot, 'packages/types/src/index.ts'),
-    '@nuxt-app/layer-base/apply-env-files': resolve(repoRoot, 'layers/base/apply-env-files.ts'),
-  },
   banner: { js: banner },
   logLevel: 'info',
 })

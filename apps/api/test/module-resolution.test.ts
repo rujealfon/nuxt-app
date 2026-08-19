@@ -26,6 +26,10 @@ it('plain Node cannot resolve TypeScript-only @api/ paths', () => {
   expect(() => resolveFromApi('@api/env.js')).toThrow(/Cannot find package '@api\/env\.js'/)
 })
 
+it('workspace packages resolve from apps/api node_modules', () => {
+  expect(resolveFromApi('@nuxt-app/types')).toMatch(/packages\/types\/src\/index\.ts$/)
+})
+
 it('vercel bundle boots in an empty /var/task without node_modules', () => {
   execFileSync('bash', ['scripts/bundle-vercel.sh'], {
     cwd: apiRoot,
