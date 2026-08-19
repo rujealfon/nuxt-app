@@ -9,7 +9,14 @@ export default defineNuxtConfig({
   $meta: { name: 'base' },
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
-  modules: ['@nuxt/ui'],
+  modules: ['@nuxt/ui', '@nuxt/fonts'],
+  fonts: {
+    provider: 'local',
+    families: [
+      { name: 'Space Grotesk', weights: ['400', '500', '600', '700'] },
+      { name: 'Space Mono', weights: ['400', '700'] },
+    ],
+  },
   colorMode: {
     classSuffix: '',
     fallback: 'light',

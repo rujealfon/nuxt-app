@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 FROM node:24-alpine AS base
 RUN corepack enable && corepack prepare pnpm@11.22.0 --activate
 WORKDIR /repo
@@ -7,7 +8,8 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
 COPY apps ./apps
 COPY packages ./packages
 COPY layers ./layers
-RUN pnpm install --frozen-lockfile
+RUN --mount=type=cache,target=/root/.local/share/pnpm/store,sharing=locked \
+    pnpm install --frozen-lockfile
 
 FROM build AS development
 WORKDIR /repo
