@@ -1,6 +1,7 @@
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
 import { loadRootEnv } from '@nuxt-app/layer-base/load-root-env'
+import { resolveVercelPreviewUrl } from '@nuxt-app/layer-base/vercel-preview-url'
 import { parsePublicUrl } from '@nuxt-app/types'
 
 loadRootEnv()
@@ -12,7 +13,10 @@ export default defineNuxtConfig({
   },
   runtimeConfig: {
     public: {
-      appUrl: parsePublicUrl(process.env.NUXT_PUBLIC_APP_URL || process.env.APP_URL, 'http://localhost:3000'),
+      appUrl: parsePublicUrl(
+        process.env.NUXT_PUBLIC_APP_URL || process.env.APP_URL || resolveVercelPreviewUrl('nuxt-app-app'),
+        'http://localhost:3000',
+      ),
     },
   },
   nitro: {
