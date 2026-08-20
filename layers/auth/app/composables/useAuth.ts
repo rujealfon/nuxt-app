@@ -54,7 +54,8 @@ export function useAuth() {
       await me.refetch()
       return me.data.value ?? null
     }
-    catch {
+    catch (e) {
+      error.value = e instanceof Error ? e.message : 'Request failed'
       setUser(null)
       return null
     }

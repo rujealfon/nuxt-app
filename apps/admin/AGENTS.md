@@ -7,6 +7,7 @@ Admin SPA (`ssr: false`). Extends `layer-auth` + `layer-base`. Color mode defaul
 ```bash
 pnpm dev:admin                         # http://localhost:3002
 pnpm --filter @nuxt-app/admin test     # @nuxt/test-utils + Vitest; component tests colocated as *.test.ts, route/page tests under test/
+pnpm --filter @nuxt-app/admin test -- -t "shows the admin home for an administrator"   # single test by name
 pnpm --filter @nuxt-app/admin type-check
 ```
 
