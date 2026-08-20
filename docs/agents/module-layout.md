@@ -9,7 +9,7 @@ Done when `src/app.ts` mounts a chained router from `src/modules/<name>/routes.t
 1. Create `src/modules/<name>/`. Name the folder for the resource (`auth`, not `controllers` or `api`).
 2. Add `routes.ts`: `createRoute` + `createRouter().openapi()` chained, handlers inline. Call domain functions; keep user PKs out of the handler.
 3. Add domain files only when the work is not mapping HTTP → status (`identity.ts` / `session.ts` in auth; one `service.ts` is enough for a smaller module).
-4. Mount in `src/app.ts` with `.route('/<prefix>', nameRoutes)` on the existing chain. Add a tag in `src/modules/docs/routes.ts` when the OpenAPI tag is new.
+4. Mount in `src/app.ts` on the `v1` router with `.route('/<prefix>', nameRoutes)`. Add a tag in `src/modules/docs/routes.ts` when the OpenAPI tag is new.
 
 ```
 apps/api/src/
@@ -30,7 +30,7 @@ apps/api/src/
 
 Imports use `#api/` even inside a module (same as the rest of the API). Tests stay in `apps/api/test/` and call `app.request()`.
 
-`health` and `docs` stay route-only. `admin` is a mount prefix. A new admin-only resource is its own module, mounted under `/admin` or its own prefix.
+`health` and `docs` stay route-only and unversioned (mounted at root, not under `v1`). `admin` is a mount prefix. A new admin-only resource is its own module, mounted under `/admin` or its own prefix — inside the `v1` router.
 
 ## When a module should be a package instead
 

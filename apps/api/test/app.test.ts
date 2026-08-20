@@ -36,7 +36,7 @@ describe('api', () => {
   })
 
   it('rejects empty register payload', async () => {
-    const { res, body } = await json('/auth/register', {
+    const { res, body } = await json('/v1/auth/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: '' }),
@@ -48,7 +48,7 @@ describe('api', () => {
   })
 
   it('rejects short register password', async () => {
-    const { res, body } = await json('/auth/register', {
+    const { res, body } = await json('/v1/auth/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: 'ada@example.com', password: 'short', name: 'A' }),
@@ -59,7 +59,7 @@ describe('api', () => {
   })
 
   it('rejects a register password longer than 72 bytes', async () => {
-    const { res, body } = await json('/auth/register', {
+    const { res, body } = await json('/v1/auth/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: 'ada@example.com', password: 'a'.repeat(73), name: 'Ada' }),
@@ -70,7 +70,7 @@ describe('api', () => {
   })
 
   it('rejects a malformed register email', async () => {
-    const { res, body } = await json('/auth/register', {
+    const { res, body } = await json('/v1/auth/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: 'x', password: 'password12', name: 'Ada' }),
@@ -81,7 +81,7 @@ describe('api', () => {
   })
 
   it('rejects empty login payload', async () => {
-    const { res, body } = await json('/auth/login', {
+    const { res, body } = await json('/v1/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({}),
@@ -94,7 +94,7 @@ describe('api', () => {
   it('compares a password hash even when the email is unknown', async () => {
     const compare = vi.spyOn(bcrypt, 'compare')
     try {
-      const { res, body } = await json('/auth/login', {
+      const { res, body } = await json('/v1/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -112,7 +112,7 @@ describe('api', () => {
   })
 
   it('rejects a login password longer than 72 bytes', async () => {
-    const { res, body } = await json('/auth/login', {
+    const { res, body } = await json('/v1/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -126,18 +126,18 @@ describe('api', () => {
   })
 
   it('returns null user when unauthenticated', async () => {
-    const { res, body } = await json('/auth/me')
+    const { res, body } = await json('/v1/auth/me')
     expect(res.status).toBe(200)
     expect(body).toEqual({ user: null })
   })
 
   it('treats a malformed session cookie as no session', async () => {
     const cookie = 'nuxt_app_session=not-a-uuid'
-    const me = await json('/auth/me', { headers: { Cookie: cookie } })
+    const me = await json('/v1/auth/me', { headers: { Cookie: cookie } })
     expect(me.res.status).toBe(200)
     expect(me.body).toEqual({ user: null })
 
-    const logout = await json('/auth/logout', {
+    const logout = await json('/v1/auth/logout', {
       method: 'POST',
       headers: {
         Cookie: cookie,
@@ -149,7 +149,7 @@ describe('api', () => {
   })
 
   it('rejects unauthenticated admin routes', async () => {
-    const { res, body } = await json('/admin/dashboard')
+    const { res, body } = await json('/v1/admin/dashboard')
     expect(res.status).toBe(401)
     expect(body).toEqual({ message: 'Unauthorized' })
   })
@@ -162,11 +162,11 @@ describe('api', () => {
     const paths = Object.keys(document.paths ?? {})
     expect(paths).toEqual(expect.arrayContaining([
       '/health',
-      '/auth/register',
-      '/auth/login',
-      '/auth/logout',
-      '/auth/me',
-      '/admin/dashboard',
+      '/v1/auth/register',
+      '/v1/auth/login',
+      '/v1/auth/logout',
+      '/v1/auth/me',
+      '/v1/admin/dashboard',
     ]))
   })
 
@@ -185,7 +185,7 @@ describe('api', () => {
   it('returns public_id as user.id and never the uuid pk', async () => {
     const email = `pub-${Date.now()}@example.com`
     const password = 'password12'
-    const registered = await json('/auth/register', {
+    const registered = await json('/v1/auth/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password, name: 'Pub' }),
@@ -193,7 +193,7 @@ describe('api', () => {
     expect(registered.res.status).toBe(200)
     expect(registered.body).toEqual({ message: 'Registered successfully' })
 
-    const { res, body } = await json('/auth/login', {
+    const { res, body } = await json('/v1/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
@@ -207,12 +207,12 @@ describe('api', () => {
   it('does not reveal whether an email is already registered', async () => {
     const email = `dup-${Date.now()}@example.com`
     const payload = JSON.stringify({ email, password: 'password12', name: 'Dup' })
-    const first = await json('/auth/register', {
+    const first = await json('/v1/auth/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: payload,
     })
-    const second = await json('/auth/register', {
+    const second = await json('/v1/auth/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: payload,
@@ -228,7 +228,7 @@ describe('api', () => {
     const password = 'password12'
     await createUser({ email, password, name: 'Regular' })
 
-    const { res, body } = await json('/auth/login', {
+    const { res, body } = await json('/v1/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password, requireRole: 'admin' }),
@@ -248,7 +248,7 @@ describe('api', () => {
     const password = 'password12'
     await createUser({ email, password, name: 'Regular' })
 
-    const loggedIn = await json('/auth/login', {
+    const loggedIn = await json('/v1/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
@@ -257,7 +257,7 @@ describe('api', () => {
       ?? loggedIn.res.headers.get('set-cookie')
       ?? ''
 
-    const { res, body } = await json('/admin/dashboard', {
+    const { res, body } = await json('/v1/admin/dashboard', {
       headers: { Cookie: cookie.split(';')[0]! },
     })
     expect(res.status).toBe(403)
@@ -269,7 +269,7 @@ describe('api', () => {
     const password = 'password12'
     await createUser({ email, password, name: 'Operator', role: 'admin' })
 
-    const loggedIn = await json('/auth/login', {
+    const loggedIn = await json('/v1/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password, requireRole: 'admin' }),
@@ -279,7 +279,7 @@ describe('api', () => {
       ?? loggedIn.res.headers.get('set-cookie')
       ?? ''
 
-    const { res, body } = await json('/admin/dashboard', {
+    const { res, body } = await json('/v1/admin/dashboard', {
       headers: { Cookie: cookie.split(';')[0]! },
     })
     expect(res.status).toBe(200)

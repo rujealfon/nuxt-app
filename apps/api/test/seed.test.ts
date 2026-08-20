@@ -6,7 +6,7 @@ import { createUser } from '#api/modules/auth/identity.js'
 import { resolveAdminSeedEmail, resolveAdminSeedPassword, seed } from '#api/seed.js'
 
 async function login(email: string, password: string) {
-  return app.request('/auth/login', {
+  return app.request('/v1/auth/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password }),
@@ -105,7 +105,7 @@ describe('seed', () => {
     const loggedIn = await login(email, 'attacker-pass')
     const cookie = sessionCookie(loggedIn)
     expect(cookie).toBeTruthy()
-    expect((await (await app.request('/auth/me', { headers: { Cookie: cookie! } })).json())).toMatchObject({
+    expect((await (await app.request('/v1/auth/me', { headers: { Cookie: cookie! } })).json())).toMatchObject({
       user: { email, role: 'user' },
     })
 
@@ -119,7 +119,7 @@ describe('seed', () => {
     const promoted = await loginJson(email, 'operator-pass-99')
     expect(promoted.status).toBe(200)
     expect(promoted.body.user).toMatchObject({ email, role: 'admin' })
-    expect(await (await app.request('/auth/me', { headers: { Cookie: cookie! } })).json()).toEqual({
+    expect(await (await app.request('/v1/auth/me', { headers: { Cookie: cookie! } })).json()).toEqual({
       user: null,
     })
   })

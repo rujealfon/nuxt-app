@@ -58,9 +58,12 @@ base.notFound(c => c.json({ message: HttpStatusPhrases.NOT_FOUND }, HttpStatusCo
 if (isDev)
   configureOpenAPI(base)
 
-const app: Hono<AppEnv> = base
-  .route('/', healthRoutes)
+const v1 = createRouter()
   .route(AUTH_MOUNT, authRoutes)
   .route('/admin', adminRoutes)
+
+const app: Hono<AppEnv> = base
+  .route('/', healthRoutes)
+  .route('/v1', v1)
 
 export default app

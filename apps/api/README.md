@@ -15,15 +15,15 @@ OpenAPI spec: http://localhost:3001/openapi.json
 
 ## Endpoints
 
-| Method | Path               | Description    |
-| ------ | ------------------ | -------------- |
-| GET    | `/`                | Service status |
-| GET    | `/health`          | Health check   |
-| POST   | `/auth/register`   | Create account |
-| POST   | `/auth/login`      | Login          |
-| POST   | `/auth/logout`     | Logout         |
-| GET    | `/auth/me`         | Current user   |
-| GET    | `/admin/dashboard` | Admin only     |
+| Method | Path                  | Description    |
+| ------ | --------------------- | -------------- |
+| GET    | `/`                   | Service status |
+| GET    | `/health`             | Health check   |
+| POST   | `/v1/auth/register`   | Create account |
+| POST   | `/v1/auth/login`      | Login          |
+| POST   | `/v1/auth/logout`     | Logout         |
+| GET    | `/v1/auth/me`         | Current user   |
+| GET    | `/v1/admin/dashboard` | Admin only     |
 
 Sessions are an httpOnly cookie (`nuxt_app_session`), stored in Postgres, 7-day expiry. Production custom domains set `COOKIE_DOMAIN=.nuxt-app.com`. Local: `localhost`. Preview `*.vercel.app` hosts leave `COOKIE_DOMAIN` unset; app and admin call this API through a same-origin `/__api` proxy.
 

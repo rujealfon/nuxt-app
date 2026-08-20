@@ -42,7 +42,7 @@ The public user is `authUserSchema` in `@nuxt-app/types` (`id` is `public_id`). 
 
 `sessionMiddleware` / `requireAdmin` live in `src/middleware/`. `requireAdmin` uses `matchesRequiredRole` from `@nuxt-app/types`. Public paths (`/`, `/health`, `/docs`, `/openapi.json`, `OPTIONS`) skip Session via `skipPublic`.
 
-Rate limit is `hono-rate-limiter` `RedisStore` + node-redis over `REDIS_URL` (global skip of those public paths; tighter cap on `POST /auth/login` and `POST /auth/register`). Tests inject `MemoryStore` via `setRateLimitStoreFactory`.
+Rate limit is `hono-rate-limiter` `RedisStore` + node-redis over `REDIS_URL` (global skip of those public paths; tighter cap on `POST /v1/auth/login` and `POST /v1/auth/register`). Tests inject `MemoryStore` via `setRateLimitStoreFactory`.
 
 Logging is pino via `hono-pino` (`c.var.logger`, `LOG_LEVEL`).
 
