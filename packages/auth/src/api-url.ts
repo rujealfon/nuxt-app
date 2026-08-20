@@ -1,7 +1,8 @@
 /** Same-origin prefix Nitro proxies to `NUXT_PUBLIC_API_URL`. */
 export const API_PROXY_PREFIX = '/__api'
 
-function isVercelAppHost(hostname: string) {
+/** `*.vercel.app` (including the bare apex) is a public-suffix host — a distinct site per deployment. */
+export function isVercelPreviewHost(hostname: string): boolean {
   return hostname === 'vercel.app' || hostname.endsWith('.vercel.app')
 }
 
@@ -18,7 +19,7 @@ export function resolveAuthApiBase(apiUrl: string, pageHref?: string): string {
     const page = new URL(pageHref)
     if (api.origin === page.origin)
       return apiUrl
-    if (isVercelAppHost(api.hostname) || isVercelAppHost(page.hostname))
+    if (isVercelPreviewHost(api.hostname) || isVercelPreviewHost(page.hostname))
       return API_PROXY_PREFIX
   }
   catch {

@@ -1,5 +1,5 @@
 import process from 'node:process'
-import { API_PROXY_PREFIX } from '@nuxt-app/auth'
+import { API_PROXY_PREFIX, isVercelPreviewHost } from '@nuxt-app/auth'
 import { resolveVercelPreviewUrl } from '@nuxt-app/env'
 import { parsePublicUrl } from '@nuxt-app/types'
 
@@ -25,7 +25,7 @@ export function vercelProtectionBypassHeaders(
 ): Record<string, string> {
   if (!secret)
     return {}
-  if (targetHostname !== 'vercel.app' && !targetHostname.endsWith('.vercel.app'))
+  if (!isVercelPreviewHost(targetHostname))
     return {}
   return { 'x-vercel-protection-bypass': secret }
 }
