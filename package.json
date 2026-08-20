@@ -46,7 +46,7 @@
     "lint-staged": "^17.3.0",
     "prettier-plugin-css-order": "^2.2.0",
     "turbo": "^2.10.10",
-    "typescript": "^5.9.3"
+    "typescript": "^6.0.3"
   },
   "lint-staged": {
     "*": "eslint --fix --no-warn-ignored"
