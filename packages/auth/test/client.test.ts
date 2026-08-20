@@ -40,7 +40,7 @@ describe('createAuthClient', () => {
     expect(result.user).toEqual(user)
     expect(fetchMock).toHaveBeenCalledTimes(1)
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit]
-    expect(String(url)).toContain('http://localhost:3001/auth/login')
+    expect(String(url)).toContain('http://localhost:3001/v1/auth/login')
     expect(init.credentials).toBe('include')
     expect(init.redirect).toBe('manual')
     expect(init.method?.toUpperCase()).toBe('POST')
@@ -57,7 +57,7 @@ describe('createAuthClient', () => {
     await client.me()
 
     const [url] = fetchMock.mock.calls[0] as [string]
-    expect(String(url)).toContain('https://constructed.example/auth/me')
+    expect(String(url)).toContain('https://constructed.example/v1/auth/me')
   })
 
   it('throws the first validation issue from a failed login', async () => {
@@ -111,7 +111,7 @@ describe('createAuthClient', () => {
     await client.me()
 
     const [url] = fetchMock.mock.calls[0] as [string]
-    expect(String(url)).toContain(`${API_PROXY_PREFIX}/auth/me`)
+    expect(String(url)).toContain(`${API_PROXY_PREFIX}/v1/auth/me`)
   })
 
   it('keeps sibling custom domains so COOKIE_DOMAIN can share the Session', async () => {
@@ -124,7 +124,7 @@ describe('createAuthClient', () => {
     await client.me()
 
     const [url] = fetchMock.mock.calls[0] as [string]
-    expect(String(url)).toContain('https://api.nuxt-app.com/auth/me')
+    expect(String(url)).toContain('https://api.nuxt-app.com/v1/auth/me')
   })
 
   it('uses the proxy when a vercel.app page calls a custom API host', async () => {
@@ -137,7 +137,7 @@ describe('createAuthClient', () => {
     await client.me()
 
     const [url] = fetchMock.mock.calls[0] as [string]
-    expect(String(url)).toContain(`${API_PROXY_PREFIX}/auth/me`)
+    expect(String(url)).toContain(`${API_PROXY_PREFIX}/v1/auth/me`)
   })
 
   it('keeps a same-origin API URL', async () => {
@@ -150,7 +150,7 @@ describe('createAuthClient', () => {
     await client.me()
 
     const [url] = fetchMock.mock.calls[0] as [string]
-    expect(String(url)).toContain('https://app-preview.vercel.app/auth/me')
+    expect(String(url)).toContain('https://app-preview.vercel.app/v1/auth/me')
   })
 
   it('keeps local host ports', async () => {
@@ -163,7 +163,7 @@ describe('createAuthClient', () => {
     await client.me()
 
     const [url] = fetchMock.mock.calls[0] as [string]
-    expect(String(url)).toContain('http://localhost:3001/auth/me')
+    expect(String(url)).toContain('http://localhost:3001/v1/auth/me')
   })
 
   it('returns the current user from me', async () => {
