@@ -6,7 +6,7 @@ import { createUser } from '#api/modules/auth/identity.js'
 import { deleteExpiredSessions } from '#api/modules/auth/session.js'
 
 async function login(email: string, password: string) {
-  return app.request('/auth/login', {
+  return app.request('/v1/auth/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password }),
@@ -37,13 +37,13 @@ describe('sessions', () => {
     expect(setCookie).not.toMatch(/Secure/i)
     const cookie = sessionCookie(loggedIn)
 
-    const me = await app.request('/auth/me', { headers: { Cookie: cookie! } })
+    const me = await app.request('/v1/auth/me', { headers: { Cookie: cookie! } })
     expect(me.status).toBe(200)
     expect(await me.json()).toMatchObject({
       user: { email, name: 'Sess', role: 'user' },
     })
 
-    const logout = await app.request('/auth/logout', {
+    const logout = await app.request('/v1/auth/logout', {
       method: 'POST',
       headers: {
         Cookie: cookie!,
@@ -52,7 +52,7 @@ describe('sessions', () => {
     })
     expect(logout.status).toBe(200)
 
-    const after = await app.request('/auth/me', { headers: { Cookie: cookie! } })
+    const after = await app.request('/v1/auth/me', { headers: { Cookie: cookie! } })
     expect(await after.json()).toEqual({ user: null })
   })
 

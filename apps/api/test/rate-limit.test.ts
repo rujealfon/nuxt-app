@@ -94,7 +94,7 @@ describe('mounted auth rate limit', () => {
     setAuthRateLimitMax(env.AUTH_RATE_LIMIT_MAX)
   })
 
-  it('returns 429 on /auth/login after the auth cap', async () => {
+  it('returns 429 on /v1/auth/login after the auth cap', async () => {
     setAuthRateLimitMax(2)
     const headers = {
       'Content-Type': 'application/json',
@@ -104,10 +104,10 @@ describe('mounted auth rate limit', () => {
       password: 'password12',
     })
 
-    expect((await app.request('/auth/login', { method: 'POST', headers, body })).status).toBe(401)
-    expect((await app.request('/auth/login', { method: 'POST', headers, body })).status).toBe(401)
+    expect((await app.request('/v1/auth/login', { method: 'POST', headers, body })).status).toBe(401)
+    expect((await app.request('/v1/auth/login', { method: 'POST', headers, body })).status).toBe(401)
 
-    const limited = await app.request('/auth/login', { method: 'POST', headers, body })
+    const limited = await app.request('/v1/auth/login', { method: 'POST', headers, body })
     expect(limited.status).toBe(429)
     expect(await limited.json()).toEqual({ message: 'Too Many Requests' })
   })

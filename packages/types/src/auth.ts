@@ -64,10 +64,10 @@ export type AuthResponse = z.infer<typeof authResponseSchema>
 export const AUTH_MOUNT = '/auth'
 
 export const authHttp = {
-  register: { route: '/register', path: 'auth/register' },
-  login: { route: '/login', path: 'auth/login' },
-  logout: { route: '/logout', path: 'auth/logout' },
-  me: { route: '/me', path: 'auth/me' },
+  register: { route: '/register', path: 'v1/auth/register' },
+  login: { route: '/login', path: 'v1/auth/login' },
+  logout: { route: '/logout', path: 'v1/auth/logout' },
+  me: { route: '/me', path: 'v1/auth/me' },
 } as const
 
 export function matchesRequiredRole(
