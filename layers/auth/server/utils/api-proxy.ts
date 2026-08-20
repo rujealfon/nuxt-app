@@ -1,6 +1,6 @@
 import process from 'node:process'
 import { API_PROXY_PREFIX } from '@nuxt-app/auth'
-import { resolveVercelPreviewUrl } from '@nuxt-app/layer-base/vercel-preview-url'
+import { resolveVercelPreviewUrl } from '@nuxt-app/env'
 import { parsePublicUrl } from '@nuxt-app/types'
 
 /** Prefer an explicit env, then this request's sibling preview API, then the baked runtimeConfig. */

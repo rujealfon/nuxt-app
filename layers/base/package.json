@@ -4,9 +4,7 @@
   "private": true,
   "exports": {
     ".": "./nuxt.config.ts",
-    "./load-root-env": "./load-root-env.ts",
-    "./apply-env-files": "./apply-env-files.ts",
-    "./vercel-preview-url": "./vercel-preview-url.ts"
+    "./load-root-env": "./load-root-env.ts"
   },
   "main": "./nuxt.config.ts",
   "scripts": {
@@ -17,10 +15,10 @@
   },
   "dependencies": {
     "@iconify-json/lucide": "^1.2.123",
+    "@nuxt-app/env": "workspace:*",
     "@nuxt/fonts": "^0.14.0",
     "@nuxt/ui": "^4.10.0",
     "@tailwindcss/vite": "^4.3.3",
-    "dotenv": "^17.4.2",
     "nuxt": "^4.5.2",
     "tailwindcss": "^4.3.3"
   },

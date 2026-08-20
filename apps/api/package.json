@@ -23,10 +23,10 @@
   "dependencies": {
     "@hono/node-server": "^2.1.1",
     "@hono/zod-openapi": "^1.6.0",
+    "@nuxt-app/env": "workspace:*",
     "@nuxt-app/types": "workspace:*",
     "@scalar/hono-api-reference": "^0.9.48",
     "bcryptjs": "^3.0.3",
-    "dotenv": "^17.4.2",
     "drizzle-orm": "^0.45.2",
     "hono": "^4.13.2",
     "hono-pino": "^0.10.3",

@@ -1,6 +1,6 @@
 import process from 'node:process'
 import { afterEach, describe, expect, it } from 'vitest'
-import { resolveVercelPreviewUrl } from '../vercel-preview-url'
+import { resolveVercelPreviewUrl } from '../src/vercel-preview-url'
 
 const keys = ['VERCEL_ENV', 'VERCEL_BRANCH_URL'] as const
 const saved: Partial<Record<typeof keys[number], string | undefined>> = {}

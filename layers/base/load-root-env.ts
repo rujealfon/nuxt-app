@@ -1,9 +1,7 @@
 import { dirname, resolve } from 'node:path'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
-import { applyEnvFiles } from './apply-env-files'
-
-export { applyEnvFiles }
+import { applyEnvFiles } from '@nuxt-app/env'
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..')
 

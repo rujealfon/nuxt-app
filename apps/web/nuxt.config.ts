@@ -1,7 +1,7 @@
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
+import { resolveVercelPreviewUrl } from '@nuxt-app/env'
 import { loadRootEnv } from '@nuxt-app/layer-base/load-root-env'
-import { resolveVercelPreviewUrl } from '@nuxt-app/layer-base/vercel-preview-url'
 import { parsePublicUrl } from '@nuxt-app/types'
 
 loadRootEnv()
