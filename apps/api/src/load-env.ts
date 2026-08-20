@@ -1,19 +1,10 @@
-import { existsSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { config } from 'dotenv'
+import { applyEnvFiles } from '@nuxt-app/env'
 
 const srcDir = dirname(fileURLToPath(import.meta.url))
 const apiRoot = resolve(srcDir, '..')
 const repoRoot = resolve(apiRoot, '../..')
-
-/** Existing process.env wins. First file wins. Missing files are ignored. */
-function applyEnvFiles(files: string[]) {
-  for (const file of files) {
-    if (existsSync(file))
-      config({ path: file })
-  }
-}
 
 /** Root `.env`, then `apps/api/.env`. Existing process.env wins. */
 export function loadEnv() {

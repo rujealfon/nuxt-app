@@ -1,4 +1,5 @@
 import process from 'node:process'
+import { isVercelPreviewHost } from '@nuxt-app/auth'
 import { createError, defineEventHandler, getRequestURL, proxyRequest } from 'h3'
 import { apiProxyTarget, resolveApiProxyOrigin, vercelProtectionBypassHeaders } from '../../utils/api-proxy'
 
@@ -11,7 +12,7 @@ export default defineEventHandler(async (event) => {
   const secret = String(config.apiProtectionBypass || process.env.NUXT_API_PROTECTION_BYPASS || '')
   const headers = vercelProtectionBypassHeaders(secret, hostname)
 
-  if ((hostname === 'vercel.app' || hostname.endsWith('.vercel.app')) && !headers['x-vercel-protection-bypass']) {
+  if (isVercelPreviewHost(hostname) && !headers['x-vercel-protection-bypass']) {
     throw createError({
       statusCode: 503,
       message: `Set NUXT_API_PROTECTION_BYPASS on this project (API Protection Bypass secret), then redeploy. Proxy target: ${origin}`,
