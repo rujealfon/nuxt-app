@@ -7,6 +7,7 @@ Admin SPA (`ssr: false`). Extends `layer-auth` + `layer-base`. Color mode defaul
 ```bash
 pnpm dev:admin                         # http://localhost:3002
 pnpm --filter @nuxt-app/admin test     # @nuxt/test-utils + Vitest; component tests colocated as *.test.ts, route/page tests under test/
+pnpm --filter @nuxt-app/admin test -- -t "shows the admin home for an administrator"   # single test by name
 pnpm --filter @nuxt-app/admin type-check
 ```
 
@@ -26,7 +27,7 @@ Guards are adapters over `resolveRouteAccess` in `layers/auth`. `/` uses `admin`
 
 Guards use `applyRouteAccess` → `fetchUser()` so a revoked Session cannot pass on a stale cache.
 
-`useAuth` constructs `createAuthClient(apiUrl, pageHref)`. The client picks the first-party `/__api` base on preview `*.vercel.app` hosts. The Nitro `/__api` proxy rule is built from `API_PROXY_PREFIX`. Failed bodies map through `messageFromFailedBody` / `failedResponseBody`.
+`useAuth` constructs `createAuthClient(apiUrl, pageHref)`. The client picks the first-party `/__api` base on preview `*.vercel.app` hosts. `layers/auth` serves that prefix (`server/routes/__api/[...path].ts`) and adds `x-vercel-protection-bypass` when `NUXT_API_PROTECTION_BYPASS` is set (the API project’s Protection Bypass secret). Failed bodies map through `messageFromFailedBody` / `failedResponseBody`.
 
 ## Imports
 

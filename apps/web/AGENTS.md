@@ -7,6 +7,7 @@ Marketing site. Nuxt 4 SSG (`nuxt generate`, `nitro.preset: 'static'`). Extends 
 ```bash
 pnpm dev:web                         # http://localhost:3003
 pnpm --filter @nuxt-app/web test     # @nuxt/test-utils + Vitest, files under test/
+pnpm --filter @nuxt-app/web test -- -t "links login and register to the product app origin"   # single test by name
 pnpm --filter @nuxt-app/web type-check
 pnpm --filter @nuxt-app/web build    # nuxt generate
 ```

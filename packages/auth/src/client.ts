@@ -25,10 +25,17 @@ async function readJson(res: Response): Promise<unknown> {
   }
 }
 
+function isProtectionRedirect(res: Response) {
+  return res.type === 'opaqueredirect' || res.status === 301 || res.status === 302 || res.status === 307 || res.status === 308
+}
+
 async function unwrap<T>(
   res: Response,
   schema: { safeParse: (data: unknown) => { success: true, data: T } | { success: false } },
 ): Promise<T> {
+  if (isProtectionRedirect(res))
+    throw new Error('Preview is locked. Open this URL in the address bar and sign in to Vercel, then retry.')
+
   const data = await readJson(res)
   if (!res.ok)
     throw new Error(messageFromFailedBody(data))
@@ -53,6 +60,7 @@ async function request<T>(
   const res = await fetch(joinUrl(baseUrl, path), {
     ...init,
     credentials: 'include',
+    redirect: 'manual',
     headers,
   })
   return unwrap(res, schema)
@@ -79,8 +87,14 @@ export function createAuthClient(apiUrl: string, pageHref?: string) {
       return request(baseUrl, authHttp.logout.path, messageResponseSchema, { method: 'POST' })
     },
 
-    me(): Promise<{ user: AuthUser | null }> {
-      return request(baseUrl, authHttp.me.path, meResponseSchema)
+    async me(): Promise<{ user: AuthUser | null }> {
+      const res = await fetch(joinUrl(baseUrl, authHttp.me.path), {
+        credentials: 'include',
+        redirect: 'manual',
+      })
+      if (isProtectionRedirect(res))
+        return { user: null }
+      return unwrap(res, meResponseSchema)
     },
   }
 }

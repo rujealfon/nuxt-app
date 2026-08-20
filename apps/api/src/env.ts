@@ -16,6 +16,25 @@ export function isPlainRedisToUpstash(connectionString: string) {
   return url.protocol === 'redis:' && url.hostname.endsWith('.upstash.io')
 }
 
+/**
+ * Vercel gives each project a stable per-branch preview domain
+ * (`<project>-git-<branch-slug>-<scope>.vercel.app`), but there is no
+ * built-in var for a *sibling* project's preview URL. All four projects
+ * in this repo deploy from the same branch and scope, so swap the
+ * project-name prefix on our own `VERCEL_BRANCH_URL` to get the sibling's.
+ */
+function resolveVercelPreviewUrl(targetProjectName: string): string | undefined {
+  if (process.env.VERCEL_ENV !== 'preview')
+    return undefined
+
+  const branchUrl = process.env.VERCEL_BRANCH_URL
+  const gitIndex = branchUrl?.indexOf('-git-')
+  if (!branchUrl || gitIndex === undefined || gitIndex < 0)
+    return undefined
+
+  return `https://${targetProjectName}${branchUrl.slice(gitIndex)}`
+}
+
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
@@ -43,7 +62,12 @@ const envSchema = z.object({
   DATABASE_URL_UNPOOLED: z.url().optional(),
 })
 
-const parsed = envSchema.safeParse(process.env)
+const parsed = envSchema.safeParse({
+  ...process.env,
+  APP_URL: process.env.APP_URL || resolveVercelPreviewUrl('nuxt-app-app'),
+  ADMIN_URL: process.env.ADMIN_URL || resolveVercelPreviewUrl('nuxt-app-admin'),
+  WEB_URL: process.env.WEB_URL || resolveVercelPreviewUrl('nuxt-app-web'),
+})
 
 if (!parsed.success) {
   console.error('❌ Invalid env:')

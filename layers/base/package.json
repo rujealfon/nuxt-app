@@ -5,7 +5,8 @@
   "exports": {
     ".": "./nuxt.config.ts",
     "./load-root-env": "./load-root-env.ts",
-    "./apply-env-files": "./apply-env-files.ts"
+    "./apply-env-files": "./apply-env-files.ts",
+    "./vercel-preview-url": "./vercel-preview-url.ts"
   },
   "main": "./nuxt.config.ts",
   "scripts": {

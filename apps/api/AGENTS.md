@@ -7,6 +7,8 @@ Hono server. Repo-root `AGENTS.md` covers monorepo commands, shared imports, and
 ```bash
 pnpm dev:api                         # tsx watch, http://localhost:3001
 pnpm --filter @nuxt-app/api test     # vitest, app.request(), db nuxt_app_test
+pnpm --filter @nuxt-app/api test -- sessions.test.ts   # single file
+pnpm --filter @nuxt-app/api test -- -t "sweeps expired sessions when logging in"   # single test by name
 pnpm db:generate                     # after editing src/db/schema/
 pnpm db:migrate                      # also runs on boot in src/index.ts and on Vercel API builds (production and preview)
 pnpm db:seed                         # ADMIN_PASSWORD required

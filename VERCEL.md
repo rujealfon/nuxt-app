@@ -77,7 +77,7 @@ On the **API** project (Vercel Marketplace):
 
 ## Env vars
 
-Set on each project (Production + Preview). Projects do not inherit each other’s vars.
+Set on each project. Projects do not inherit each other’s vars. Database, Redis, `TRUST_PROXY`, `LOG_LEVEL`, and `ENABLE_EXPERIMENTAL_COREPACK` belong on Production **and** Preview. The `*_URL` / `NUXT_PUBLIC_*` rows below are **Production only** — leave them unset on Preview so `resolveVercelPreviewUrl()` can derive the sibling branch domains (see [Preview](#preview)). A var scoped to All Environments counts as set on Preview and disables that fallback.
 
 **`nuxt-app-api`**
 
@@ -100,11 +100,12 @@ Set on each project (Production + Preview). Projects do not inherit each other�
 
 **`nuxt-app-app` and `nuxt-app-admin`**
 
-| Name                  | Value                      |
-| --------------------- | -------------------------- |
-| `NUXT_PUBLIC_API_URL` | `https://api.nuxt-app.com` |
+| Name                         | Value                                                                                          |
+| ---------------------------- | ---------------------------------------------------------------------------------------------- |
+| `NUXT_PUBLIC_API_URL`        | `https://api.nuxt-app.com` (Production only)                                                   |
+| `NUXT_API_PROTECTION_BYPASS` | Preview: the **API** project’s Protection Bypass secret (see [Preview](#preview)). Not public. |
 
-Baked in at **build** time (`layers/auth` `runtimeConfig.public.apiUrl`). Change it, then redeploy those two projects.
+`NUXT_PUBLIC_API_URL` is baked in at **build** time (`layers/auth` `runtimeConfig.public.apiUrl`). Change it, then redeploy those two projects.
 
 **`nuxt-app-web`**
 
@@ -114,7 +115,17 @@ Baked in at **build** time (`layers/auth` `runtimeConfig.public.apiUrl`). Change
 
 Baked into the static site at **generate** time (`runtimeConfig.public.appUrl`). Change it, then redeploy web. Falls back to `APP_URL` if unset.
 
-Preview: either Preview-scoped URL vars, or preview frontends call the production API until you add per-preview CORS origins.
+### Preview
+
+Preview deployments auto-wire to each other when Preview-scoped `APP_URL` / `ADMIN_URL` / `WEB_URL` / `NUXT_PUBLIC_API_URL` / `NUXT_PUBLIC_APP_URL` are **unset**. Each PR gets a unique per-deployment domain, but Vercel also gives every project a **stable per-branch domain** (`<project>-git-<branch-slug>-<scope>.vercel.app`) that's the same across every push to that branch. `resolveVercelPreviewUrl()` (`layers/base/vercel-preview-url.ts`, duplicated inline in `apps/api/src/env.ts` since the API doesn't depend on Nuxt layers) reads its own `VERCEL_BRANCH_URL` (hostname only, no `https://`) and swaps in a sibling project's name to derive that sibling's branch domain — no need to reproduce Vercel's branch-slug algorithm. It only activates when `VERCEL_ENV === 'preview'`, and an explicit env var always wins over the derived one. If those URL vars are already set for All Environments, split them to Production or the preview app will keep talking to the production API.
+
+- `layers/auth/nuxt.config.ts` → `apiUrl` falls back to `resolveVercelPreviewUrl('nuxt-app-api')`.
+- `apps/web/nuxt.config.ts` → `appUrl` falls back to `resolveVercelPreviewUrl('nuxt-app-app')` (after `NUXT_PUBLIC_APP_URL`, then `APP_URL`).
+- `apps/api/src/env.ts` → `APP_URL` / `ADMIN_URL` / `WEB_URL` each fall back to the matching `resolveVercelPreviewUrl(...)`.
+
+This assumes all four projects are named `nuxt-app-web` / `nuxt-app-app` / `nuxt-app-admin` / `nuxt-app-api` and deploy from the same branch under the same scope — true for this repo. Rename a project and update the string literal passed to `resolveVercelPreviewUrl` at each call site.
+
+Standard Deployment Protection on the API blocks the app/admin `/__api` Nitro proxy (that hop is server-to-server and has no SSO cookie). Keep protection on if you want; enable **Protection Bypass for Automation** on `nuxt-app-api`, copy the secret, and set it as `NUXT_API_PROTECTION_BYPASS` on **`nuxt-app-app` and `nuxt-app-admin` only** (Preview). The proxy sends `x-vercel-protection-bypass` and does not follow SSO redirects. Do not put this var on the API project and do not use the app’s own `VERCEL_AUTOMATION_BYPASS_SECRET` — it must be the **API** project’s bypass secret. Redeploy app and admin after setting it.
 
 ### Until custom domains are attached
 
@@ -219,4 +230,4 @@ Git pushes then deploy all four. Vercel skips a project when that package and it
 - Runtime `DATABASE_URL` is the Neon **pooler**. If the pool is exhausted, set `max: 1` on the `pg` Pool. Migrations use `DATABASE_URL_UNPOOLED` (required in production when `DATABASE_URL` is pooled). Neon URLs use `sslmode=verify-full` (`pg` already treats `require` as `verify-full` and warns).
 - Upstash `REDIS_URL` must be `rediss://` (TLS). `redis://` is only for local Compose.
 - SPA deep links work because Nitro/Vercel serves the fallback. web is fully static.
-- Four projects = four preview URLs per PR. Nothing wires “this preview app talks to that preview API” unless you set Preview env vars.
+- Four projects = four preview URLs per PR. Sibling branch URLs are derived from `VERCEL_BRANCH_URL` when Preview `*_URL` / `NUXT_PUBLIC_*` vars are unset (see [Preview](#preview)). If those vars are set on Preview, they win and this preview talks to whatever origin they name.

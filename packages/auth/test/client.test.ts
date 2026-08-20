@@ -42,6 +42,7 @@ describe('createAuthClient', () => {
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit]
     expect(String(url)).toContain('http://localhost:3001/auth/login')
     expect(init.credentials).toBe('include')
+    expect(init.redirect).toBe('manual')
     expect(init.method?.toUpperCase()).toBe('POST')
     expect(JSON.parse(String(init.body))).toEqual({
       email: 'ada@example.com',
@@ -177,6 +178,24 @@ describe('createAuthClient', () => {
     fetchMock.mockResolvedValue(jsonResponse(200, { user: null }))
 
     await expect(authClient.me()).resolves.toEqual({ user: null })
+  })
+
+  it('does not follow a Vercel SSO redirect on me', async () => {
+    fetchMock.mockResolvedValue(new Response(null, {
+      status: 302,
+      headers: { Location: 'https://vercel.com/sso-api?url=https://app.example/__api/auth/me' },
+    }))
+
+    await expect(authClient.me()).resolves.toEqual({ user: null })
+    expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({ redirect: 'manual' })
+  })
+
+  it('tells the user to sign in to Vercel when login hits SSO', async () => {
+    fetchMock.mockResolvedValue(new Response(null, { status: 307 }))
+
+    await expect(authClient.login({ email: 'ada@example.com', password: 'password12' }))
+      .rejects
+      .toThrow(/sign in to Vercel/)
   })
 
   it('throws when me returns a server error', async () => {

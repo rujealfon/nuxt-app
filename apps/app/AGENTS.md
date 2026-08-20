@@ -7,6 +7,8 @@ Authenticated product SPA (`ssr: false`). Extends `layer-auth` + `layer-base`. R
 ```bash
 pnpm dev:app                         # http://localhost:3000
 pnpm --filter @nuxt-app/app test     # @nuxt/test-utils + Vitest; component tests colocated as *.test.ts, route/page tests under test/
+pnpm --filter @nuxt-app/app test -- HomeWelcomeCard.test.ts   # single file
+pnpm --filter @nuxt-app/app test -- -t "shows the signed-in user"   # single test by name
 pnpm --filter @nuxt-app/app type-check
 ```
 
@@ -24,7 +26,7 @@ Auth stays in `layers/auth`. Do not add another Colada plugin or per-feature def
 
 Guards are adapters over `resolveRouteAccess` in `layers/auth`. `/` uses `auth`; `/login` and `/register` use `guest`. Guards use `applyRouteAccess` → `fetchUser()` so a revoked Session cannot pass on a stale cache.
 
-`useAuth` constructs `createAuthClient(apiUrl, pageHref)`. The client picks the first-party `/__api` base on preview `*.vercel.app` hosts. The Nitro `/__api` proxy rule is built from `API_PROXY_PREFIX`. Failed bodies map through `messageFromFailedBody` / `failedResponseBody`.
+`useAuth` constructs `createAuthClient(apiUrl, pageHref)`. The client picks the first-party `/__api` base on preview `*.vercel.app` hosts. `layers/auth` serves that prefix (`server/routes/__api/[...path].ts`) and adds `x-vercel-protection-bypass` when `NUXT_API_PROTECTION_BYPASS` is set (the API project’s Protection Bypass secret). Failed bodies map through `messageFromFailedBody` / `failedResponseBody`.
 
 ## Imports
 

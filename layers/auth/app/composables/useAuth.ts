@@ -50,8 +50,15 @@ export function useAuth() {
 
   async function fetchUser() {
     error.value = null
-    await me.refetch()
-    return me.data.value ?? null
+    try {
+      await me.refetch()
+      return me.data.value ?? null
+    }
+    catch (e) {
+      error.value = e instanceof Error ? e.message : 'Request failed'
+      setUser(null)
+      return null
+    }
   }
 
   async function login(input: LoginInput) {
