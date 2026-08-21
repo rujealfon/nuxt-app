@@ -2,16 +2,16 @@ services:
   postgres:
     image: postgres:18-alpine
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-nuxt}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-nuxt}
-      POSTGRES_DB: ${POSTGRES_DB:-nuxt_app}
+      POSTGRES_USER: ${POSTGRES_USER:-nuxt_app_postgres_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-nuxt_app_postgres_password}
+      POSTGRES_DB: ${POSTGRES_DB:-nuxt_app_db}
     ports:
       - '5433:5432'
     volumes:
       - postgres_data:/var/lib/postgresql
       - ./docker/postgres-init:/docker-entrypoint-initdb.d
     healthcheck:
-      test: [CMD-SHELL, 'pg_isready -U ${POSTGRES_USER:-nuxt} -d ${POSTGRES_DB:-nuxt_app}']
+      test: [CMD-SHELL, 'pg_isready -U ${POSTGRES_USER:-nuxt_app_postgres_user} -d ${POSTGRES_DB:-nuxt_app_db}']
       interval: 5s
       timeout: 5s
       retries: 10
@@ -36,7 +36,7 @@ services:
       NODE_ENV: development
       API_PORT: 3001
       API_HOST: 0.0.0.0
-      DATABASE_URL: postgres://${POSTGRES_USER:-nuxt}:${POSTGRES_PASSWORD:-nuxt}@postgres:5432/${POSTGRES_DB:-nuxt_app}
+      DATABASE_URL: postgres://${POSTGRES_USER:-nuxt_app_postgres_user}:${POSTGRES_PASSWORD:-nuxt_app_postgres_password}@postgres:5432/${POSTGRES_DB:-nuxt_app_db}
       COOKIE_DOMAIN: ${COOKIE_DOMAIN:-localhost}
       APP_URL: ${APP_URL:-http://localhost:3000}
       ADMIN_URL: ${ADMIN_URL:-http://localhost:3002}
@@ -72,7 +72,7 @@ services:
       - path: .env
         required: false
     environment:
-      DATABASE_URL: postgres://${POSTGRES_USER:-nuxt}:${POSTGRES_PASSWORD:-nuxt}@postgres:5432/${POSTGRES_DB:-nuxt_app}
+      DATABASE_URL: postgres://${POSTGRES_USER:-nuxt_app_postgres_user}:${POSTGRES_PASSWORD:-nuxt_app_postgres_password}@postgres:5432/${POSTGRES_DB:-nuxt_app_db}
     ports:
       - '127.0.0.1:4983:4983'
     volumes:

@@ -50,7 +50,7 @@ ADMIN_PASSWORD='your-strong-password' pnpm docker:db:seed
 
 Inside Compose, the API uses `postgres:5432` and `redis://redis:6379`. The host maps Postgres to **5433** and Redis to **6380**.
 
-`docker/postgres-init/` runs on a **new** volume only. It creates `nuxt_app_test` for API tests.
+`docker/postgres-init/` runs on a **new** volume only. It creates `nuxt_app_db_test` for API tests.
 
 ## Host apps + Compose Postgres and Redis only
 

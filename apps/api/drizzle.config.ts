@@ -11,6 +11,6 @@ export default defineConfig({
   dbCredentials: {
     url: process.env.DATABASE_URL_UNPOOLED
       ?? process.env.DATABASE_URL
-      ?? 'postgres://nuxt:nuxt@localhost:5433/nuxt_app',
+      ?? 'postgres://nuxt_app_postgres_user:nuxt_app_postgres_password@localhost:5433/nuxt_app_db',
   },
 })

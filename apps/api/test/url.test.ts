@@ -10,7 +10,7 @@ import { env, envSchema, isPlainRedisToUpstash } from '#api/env.js'
 
 const neonPooled = 'postgresql://user:pass@ep-xxx-pooler.us-east-1.aws.neon.tech:5432/neondb?sslmode=verify-full'
 const neonDirect = 'postgresql://user:pass@ep-xxx.us-east-1.aws.neon.tech:5432/neondb?sslmode=verify-full'
-const local = 'postgres://nuxt:nuxt@localhost:5433/nuxt_app'
+const local = 'postgres://nuxt_app_postgres_user:nuxt_app_postgres_password@localhost:5433/nuxt_app_db'
 
 describe('isPooledConnectionString', () => {
   it('detects a Neon pooler hostname', () => {
@@ -22,7 +22,7 @@ describe('isPooledConnectionString', () => {
   })
 
   it('detects PgBouncer port 6432', () => {
-    expect(isPooledConnectionString('postgres://nuxt:nuxt@localhost:6432/nuxt_app')).toBe(true)
+    expect(isPooledConnectionString('postgres://nuxt_app_postgres_user:nuxt_app_postgres_password@localhost:6432/nuxt_app_db')).toBe(true)
   })
 
   it('does not treat a Neon direct host as pooled', () => {
@@ -49,9 +49,9 @@ describe('resolveMigrationDatabaseUrl', () => {
     expect(resolveMigrationDatabaseUrl({
       nodeEnv: 'test',
       databaseUrl: local,
-      databaseUrlTest: 'postgres://nuxt:nuxt@localhost:5433/nuxt_app_test',
+      databaseUrlTest: 'postgres://nuxt_app_postgres_user:nuxt_app_postgres_password@localhost:5433/nuxt_app_db_test',
       databaseUrlUnpooled: neonDirect,
-    })).toBe('postgres://nuxt:nuxt@localhost:5433/nuxt_app_test')
+    })).toBe('postgres://nuxt_app_postgres_user:nuxt_app_postgres_password@localhost:5433/nuxt_app_db_test')
   })
 
   it('prefers DATABASE_URL_UNPOOLED outside test', () => {
