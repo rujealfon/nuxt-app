@@ -4,7 +4,6 @@ updates:
     directory: /
     schedule:
       interval: daily
-    open-pull-requests-limit: 0
     groups:
       github-actions:
         patterns:
@@ -14,6 +13,7 @@ updates:
     directory: /
     schedule:
       interval: daily
+    open-pull-requests-limit: 0
     groups:
       js-dependencies:
         patterns:
