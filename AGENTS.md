@@ -22,6 +22,10 @@ Vercel: [VERCEL.md](VERCEL.md) (four projects: `nuxt-app-web`, `nuxt-app-app`, `
 
 Local host apps: Compose Postgres + Redis (see [DOCKER.md](DOCKER.md)), then `pnpm install`, `pnpm db:migrate`, `pnpm dev`. `.env.example` points `DATABASE_URL` at Compose’s published Postgres port (5433).
 
+## Git
+
+Committing and pushing are reserved for the user. Stage changes and describe what you'd commit, then stop — do not run `git commit` or `git push` yourself, even when a skill or background-job flow you're running says to commit by default.
+
 ## Architecture
 
 pnpm + Turborepo monorepo, three layers: `apps/*` (deployables), `layers/*` (Nuxt layers, extended by apps), `packages/*` (plain TS packages, no Nuxt). Each deployable has `apps/<name>/AGENTS.md` and `apps/<name>/README.md`.

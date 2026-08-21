@@ -6,7 +6,7 @@ import {
   resolveMigrationDatabaseUrl,
   TEST_DATABASE_NAME,
 } from '#api/db/url.js'
-import { env, isPlainRedisToUpstash } from '#api/env.js'
+import { env, envSchema, isPlainRedisToUpstash } from '#api/env.js'
 
 const neonPooled = 'postgresql://user:pass@ep-xxx-pooler.us-east-1.aws.neon.tech:5432/neondb?sslmode=verify-full'
 const neonDirect = 'postgresql://user:pass@ep-xxx.us-east-1.aws.neon.tech:5432/neondb?sslmode=verify-full'
@@ -96,5 +96,37 @@ describe('isPlainRedisToUpstash', () => {
   it('does not treat local Compose Redis as Upstash', () => {
     expect(isPlainRedisToUpstash('redis://localhost:6380')).toBe(false)
     expect(isPlainRedisToUpstash('redis://redis:6379')).toBe(false)
+  })
+})
+
+describe('envSchema', () => {
+  it('requires every service URL in production', () => {
+    const result = envSchema.safeParse({
+      NODE_ENV: 'production',
+      DATABASE_URL: 'postgres://user:pass@localhost:5432/database',
+    })
+
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      expect(result.error.issues.map(issue => issue.path[0])).toEqual([
+        'APP_URL',
+        'ADMIN_URL',
+        'WEB_URL',
+        'REDIS_URL',
+      ])
+    }
+  })
+
+  it('keeps local service defaults outside production', () => {
+    const result = envSchema.parse({
+      NODE_ENV: 'development',
+      DATABASE_URL: 'postgres://user:pass@localhost:5432/database',
+    })
+
+    expect(result.API_URL).toBe('http://localhost:3001')
+    expect(result.APP_URL).toBe('http://localhost:3000')
+    expect(result.ADMIN_URL).toBe('http://localhost:3002')
+    expect(result.WEB_URL).toBe('http://localhost:3003')
+    expect(result.REDIS_URL).toBe('redis://localhost:6380')
   })
 })
