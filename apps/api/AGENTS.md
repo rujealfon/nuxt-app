@@ -6,7 +6,7 @@ Hono server. Repo-root `AGENTS.md` covers monorepo commands, shared imports, and
 
 ```bash
 pnpm dev:api                         # tsx watch, http://localhost:3001
-pnpm --filter @nuxt-app/api test     # vitest, app.request(), db nuxt_app_test
+pnpm --filter @nuxt-app/api test     # vitest, app.request(), db nuxt_app_db_test
 pnpm --filter @nuxt-app/api test -- sessions.test.ts   # single file
 pnpm --filter @nuxt-app/api test -- -t "sweeps expired sessions when logging in"   # single test by name
 pnpm db:generate                     # after editing src/db/schema/
@@ -56,6 +56,6 @@ Rate-limit knobs: `RATE_LIMIT_MAX`, `RATE_LIMIT_WINDOW_MS`, `AUTH_RATE_LIMIT_MAX
 
 ## Imports and tests
 
-Same-app source: `#api/` (even inside a module; Node `imports`, not a TypeScript-only `@api/` path). Tests live in `test/` and call `app.request()` — no HTTP server. Setup creates `nuxt_app_test` and runs migrations. Unlike the Nuxt apps' colocated component tests, API tests stay in `test/`: most (`app.test.ts`, `sessions.test.ts`, `rate-limit.test.ts`, `request-policy.test.ts`) exercise the whole app across several modules, so there's no single source file to sit next to.
+Same-app source: `#api/` (even inside a module; Node `imports`, not a TypeScript-only `@api/` path). Tests live in `test/` and call `app.request()` — no HTTP server. Setup creates `nuxt_app_db_test` and runs migrations. Unlike the Nuxt apps' colocated component tests, API tests stay in `test/`: most (`app.test.ts`, `sessions.test.ts`, `rate-limit.test.ts`, `request-policy.test.ts`) exercise the whole app across several modules, so there's no single source file to sit next to.
 
 SPAs talk to this API through `@nuxt-app/auth` and `@nuxt-app/types`.

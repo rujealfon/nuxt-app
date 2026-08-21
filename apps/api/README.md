@@ -57,7 +57,7 @@ UPDATE users SET role = 'admin' WHERE email = 'you@example.com';
 pnpm --filter @nuxt-app/api test
 ```
 
-Tests live in `test/` and call the mounted Hono app via `app.request()` (no HTTP server). They use database `nuxt_app_test` on the same Postgres as `DATABASE_URL` (override with `DATABASE_URL_TEST`). Rate limiting uses an in-memory store (no Redis).
+Tests live in `test/` and call the mounted Hono app via `app.request()` (no HTTP server). They use database `nuxt_app_db_test` on the same Postgres as `DATABASE_URL` (override with `DATABASE_URL_TEST`). Rate limiting uses an in-memory store (no Redis).
 
 ## Env
 
@@ -67,7 +67,7 @@ Loaded from the repo-root `.env`, then `apps/api/.env`. See `.env.example`.
 | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
 | `DATABASE_URL`                                                  | Pooled runtime Postgres                                                                           |
 | `DATABASE_URL_UNPOOLED`                                         | Direct URL for migrations (required in production when `DATABASE_URL` is PgBouncer / Neon pooler) |
-| `DATABASE_URL_TEST`                                             | Test database (defaults to `nuxt_app_test` on the same host)                                      |
+| `DATABASE_URL_TEST`                                             | Test database (defaults to `nuxt_app_db_test` on the same host)                                   |
 | `REDIS_URL`                                                     | `redis://` locally, `rediss://` on Upstash                                                        |
 | `COOKIE_DOMAIN`                                                 | Shared parent for app + admin cookies                                                             |
 | `RATE_LIMIT_MAX`, `RATE_LIMIT_WINDOW_MS`, `AUTH_RATE_LIMIT_MAX` | Rate-limit knobs                                                                                  |

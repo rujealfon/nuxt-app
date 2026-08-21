@@ -13,8 +13,8 @@ permissions:
   contents: read
 
 env:
-  DATABASE_URL: postgres://nuxt:nuxt@localhost:5432/nuxt_app
-  DATABASE_URL_TEST: postgres://nuxt:nuxt@localhost:5432/nuxt_app_test
+  DATABASE_URL: postgres://nuxt_app_postgres_user:nuxt_app_postgres_password@localhost:5432/nuxt_app_db
+  DATABASE_URL_TEST: postgres://nuxt_app_postgres_user:nuxt_app_postgres_password@localhost:5432/nuxt_app_db_test
 
 jobs:
   ci:
@@ -24,13 +24,13 @@ jobs:
       postgres:
         image: postgres:18-alpine
         env:
-          POSTGRES_USER: nuxt
-          POSTGRES_PASSWORD: nuxt
-          POSTGRES_DB: nuxt_app
+          POSTGRES_USER: nuxt_app_postgres_user
+          POSTGRES_PASSWORD: nuxt_app_postgres_password
+          POSTGRES_DB: nuxt_app_db
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U nuxt -d nuxt_app"
+          --health-cmd "pg_isready -U nuxt_app_postgres_user -d nuxt_app_db"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
