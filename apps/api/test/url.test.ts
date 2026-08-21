@@ -109,7 +109,6 @@ describe('envSchema', () => {
     expect(result.success).toBe(false)
     if (!result.success) {
       expect(result.error.issues.map(issue => issue.path[0])).toEqual([
-        'API_URL',
         'APP_URL',
         'ADMIN_URL',
         'WEB_URL',

@@ -17,7 +17,7 @@ export function isPlainRedisToUpstash(connectionString: string) {
   return url.protocol === 'redis:' && url.hostname.endsWith('.upstash.io')
 }
 
-const productionRequired = ['API_URL', 'APP_URL', 'ADMIN_URL', 'WEB_URL', 'REDIS_URL'] as const
+const productionRequired = ['APP_URL', 'ADMIN_URL', 'WEB_URL', 'REDIS_URL'] as const
 
 export const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),

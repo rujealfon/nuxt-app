@@ -1,30 +1,25 @@
 # syntax=docker/dockerfile:1
 FROM node:24-alpine AS base
 RUN corepack enable && corepack prepare pnpm@11.22.0 --activate
+RUN npm install --global turbo@2.10.10
 WORKDIR /repo
 
-FROM base AS build
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
-COPY apps ./apps
-COPY packages ./packages
-COPY layers ./layers
+# `turbo prune` computes the workspace-dependency subgraph for this app from
+# turbo.json + the lockfile, so new packages/layers don't need a Dockerfile edit.
+FROM base AS pruner
+COPY . .
+RUN turbo prune @nuxt-app/api --docker
+
+FROM base AS development
+COPY --from=pruner /repo/out/json/ .
+COPY --from=pruner /repo/out/pnpm-lock.yaml ./pnpm-lock.yaml
 RUN --mount=type=cache,target=/root/.local/share/pnpm/store,sharing=locked \
     pnpm install --frozen-lockfile
-
-FROM build AS development
-WORKDIR /repo
+COPY --from=pruner /repo/out/full/ .
 
 FROM base AS runner
 ENV NODE_ENV=production
-COPY --from=build /repo/package.json /repo/pnpm-lock.yaml /repo/pnpm-workspace.yaml ./
-COPY --from=build /repo/node_modules ./node_modules
-COPY --from=build /repo/packages ./packages
-COPY --from=build /repo/layers ./layers
-COPY --from=build /repo/apps/api/package.json ./apps/api/package.json
-COPY --from=build /repo/apps/api/tsconfig.json ./apps/api/tsconfig.json
-COPY --from=build /repo/apps/api/drizzle.config.ts ./apps/api/drizzle.config.ts
-COPY --from=build /repo/apps/api/node_modules ./apps/api/node_modules
-COPY --from=build /repo/apps/api/src ./apps/api/src
+COPY --from=development /repo .
 WORKDIR /repo/apps/api
 EXPOSE 3001
 CMD ["pnpm", "exec", "tsx", "src/index.ts"]
