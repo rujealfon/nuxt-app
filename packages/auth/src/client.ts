@@ -1,4 +1,5 @@
 import type { AuthResponse, AuthUser, LoginInput, RegisterInput } from '@nuxt-app/types'
+import type { ZodType } from 'zod'
 import {
   authHttp,
   authResponseSchema,
@@ -31,7 +32,7 @@ function isProtectionRedirect(res: Response) {
 
 async function unwrap<T>(
   res: Response,
-  schema: { safeParse: (data: unknown) => { success: true, data: T } | { success: false } },
+  schema: ZodType<T>,
 ): Promise<T> {
   if (isProtectionRedirect(res))
     throw new Error('Preview is locked. Open this URL in the address bar and sign in to Vercel, then retry.')
@@ -50,7 +51,7 @@ async function unwrap<T>(
 async function request<T>(
   baseUrl: string,
   path: string,
-  schema: { safeParse: (data: unknown) => { success: true, data: T } | { success: false } },
+  schema: ZodType<T>,
   init: RequestInit = {},
 ): Promise<T> {
   const headers = new Headers(init.headers)
