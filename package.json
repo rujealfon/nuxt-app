@@ -1,15 +1,26 @@
 {
-  "name": "nuxt-app",
+  "name": "mysite",
   "type": "module",
   "private": true,
+  "packageManager": "pnpm@12.3.4",
   "scripts": {
-    "build": "nuxt build",
-    "dev": "nuxt dev",
-    "generate": "nuxt generate",
-    "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "dev:web": "pnpm --filter @mysite/web dev",
+    "dev:app": "pnpm --filter @mysite/app dev",
+    "dev:admin": "pnpm --filter @mysite/admin dev",
+    "dev:api": "pnpm --filter @mysite/api dev",
+    "dev": "pnpm -r --parallel --filter \"./apps/**\" dev",
+    "db:up": "docker compose up -d postgres redis",
+    "db:down": "docker compose down",
+    "db:logs": "docker compose logs -f postgres",
+    "db:studio": "docker compose up -d --build drizzle-studio",
+    "build": "pnpm -r --filter \"./apps/**\" build",
+    "lint": "eslint",
+    "lint:fix": "eslint --fix",
+    "postinstall": "pnpm -r --filter \"./apps/**\" exec nuxt prepare"
   },
-  "dependencies": {
+  "devDependencies": {
+    "@antfu/eslint-config": "^9.5.1",
+    "eslint": "^10.10.0",
     "nuxt": "^4.5.2",
     "vue": "^3.5.42",
     "vue-router": "^5.3.1"

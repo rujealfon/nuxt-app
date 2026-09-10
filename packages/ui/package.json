@@ -1,0 +1,17 @@
+{
+  "name": "@mysite/ui",
+  "type": "module",
+  "version": "0.0.0",
+  "private": true,
+  "exports": {
+    ".": "./nuxt.config.ts",
+    "./package.json": "./package.json"
+  },
+  "main": "./nuxt.config.ts",
+  "dependencies": {
+    "@pinia/colada": "^1.4.4",
+    "@pinia/colada-nuxt": "^1.1.0",
+    "@pinia/nuxt": "^1.0.2",
+    "@vueuse/nuxt": "^14.4.0"
+  }
+}
