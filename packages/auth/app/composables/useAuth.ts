@@ -1,40 +1,66 @@
 import type { SessionUser } from '@mysite/types'
 
+export interface LoginCredentials {
+  email: string
+  password: string
+}
+
+const SESSION_QUERY_KEY = ['auth', 'session'] as const
+
+export function useSessionQuery() {
+  const config = useRuntimeConfig()
+
+  return useQuery({
+    key: SESSION_QUERY_KEY,
+    query: async () => {
+      try {
+        return await $fetch<SessionUser>('/api/auth/session', {
+          baseURL: config.public.apiBase,
+          credentials: 'include',
+        })
+      }
+      catch (error) {
+        // A missing session is a valid "signed out" state, not an error.
+        if ((error as { statusCode?: number }).statusCode === 401) {
+          return null
+        }
+        throw error
+      }
+    },
+  })
+}
+
 export function useAuth() {
-  const user = useState<SessionUser | null>('auth.user', () => null)
-  const { apiBase } = useSite()
+  const config = useRuntimeConfig()
+  const queryCache = useQueryCache()
 
-  async function fetchSession(): Promise<SessionUser | null> {
-    try {
-      user.value = await $fetch<SessionUser>('/auth/session', {
-        baseURL: apiBase,
+  const session = useSessionQuery()
+  const user = computed(() => session.data.value ?? null)
+
+  const login = useMutation({
+    mutation: (credentials: LoginCredentials) =>
+      $fetch<SessionUser>('/api/auth/login', {
+        baseURL: config.public.apiBase,
+        method: 'POST',
         credentials: 'include',
-      })
-    }
-    catch {
-      user.value = null
-    }
-    return user.value
-  }
+        body: credentials,
+      }),
+    onSuccess(signedInUser) {
+      queryCache.setQueryData(SESSION_QUERY_KEY, signedInUser)
+    },
+  })
 
-  async function login(email: string, password: string): Promise<SessionUser> {
-    user.value = await $fetch<SessionUser>('/auth/login', {
-      baseURL: apiBase,
-      method: 'POST',
-      credentials: 'include',
-      body: { email, password },
-    })
-    return user.value
-  }
+  const logout = useMutation({
+    mutation: () =>
+      $fetch('/api/auth/logout', {
+        baseURL: config.public.apiBase,
+        method: 'POST',
+        credentials: 'include',
+      }),
+    onSuccess() {
+      queryCache.setQueryData(SESSION_QUERY_KEY, null)
+    },
+  })
 
-  async function logout(): Promise<void> {
-    await $fetch('/auth/logout', {
-      baseURL: apiBase,
-      method: 'POST',
-      credentials: 'include',
-    })
-    user.value = null
-  }
-
-  return { user, fetchSession, login, logout }
+  return { user, session, login, logout }
 }

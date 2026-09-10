@@ -1,7 +1,6 @@
 <script setup lang="ts">
-const { user, fetchSession, logout } = useAuth()
-
-await useAsyncData('session', () => fetchSession())
+const { user, logout } = useAuth()
+const { mutate: signOut, isLoading: isSigningOut } = logout
 
 useHead({ title: 'App · mysite' })
 </script>
@@ -15,7 +14,7 @@ useHead({ title: 'App · mysite' })
     <p v-else>
       You are not signed in.
     </p>
-    <AppButton v-if="user" variant="secondary" @click="logout">
+    <AppButton v-if="user" variant="secondary" :disabled="isSigningOut" @click="signOut()">
       Sign out
     </AppButton>
   </section>

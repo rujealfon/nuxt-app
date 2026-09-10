@@ -18,6 +18,10 @@ Shared packages:
 | `@mysite/types` | Shared TypeScript types |
 | `@mysite/config` | Ports, domain, cookie name, API base helper |
 
+`@mysite/ui` and `@mysite/auth` are [Nuxt layers](https://nuxt.com/docs/4.x/getting-started/layers)
+extended by package name: the frontends (`web`, `app`, `admin`) extend both, while `apps/api` extends
+only `@mysite/auth` (server-only, no client code).
+
 ## Setup
 
 ```bash

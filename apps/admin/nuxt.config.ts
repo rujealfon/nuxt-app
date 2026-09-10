@@ -3,7 +3,7 @@ import { apiBaseFor, appPorts } from '@mysite/config'
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
-  extends: ['../../packages/ui', '../../packages/auth'],
+  extends: ['@mysite/ui', '@mysite/auth'],
   app: {
     head: {
       meta: [{ name: 'robots', content: 'noindex, nofollow' }],
