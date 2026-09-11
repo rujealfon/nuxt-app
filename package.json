@@ -8,20 +8,24 @@
     "dev:app": "pnpm --filter @mysite/app dev",
     "dev:admin": "pnpm --filter @mysite/admin dev",
     "dev:api": "pnpm --filter @mysite/api dev",
-    "dev": "pnpm -r --parallel --filter \"./apps/**\" dev",
+    "dev": "turbo run dev",
+    "dev:stop": "node scripts/stop-dev.mjs",
     "db:up": "docker compose up -d postgres redis",
     "db:down": "docker compose down",
     "db:logs": "docker compose logs -f postgres",
     "db:studio": "docker compose up -d --build drizzle-studio && echo 'Drizzle Studio -> https://local.drizzle.studio?port=4984'",
-    "build": "pnpm -r --filter \"./apps/**\" build",
+    "build": "turbo run build",
     "lint": "eslint",
     "lint:fix": "eslint --fix",
-    "postinstall": "pnpm -r --filter \"./apps/**\" exec nuxt prepare"
+    "type-check": "turbo run type-check",
+    "clean": "turbo run clean",
+    "postinstall": "turbo run nuxt:prepare"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^9.5.1",
     "eslint": "^10.10.0",
     "nuxt": "^4.5.2",
+    "turbo": "^2.10.12",
     "vue": "^3.5.42",
     "vue-router": "^5.3.1"
   }

@@ -8,6 +8,9 @@
     "./package.json": "./package.json"
   },
   "main": "./nuxt.config.ts",
+  "scripts": {
+    "lint": "eslint ."
+  },
   "dependencies": {
     "@mysite/types": "workspace:*",
     "@pinia/colada": "^1.4.4",

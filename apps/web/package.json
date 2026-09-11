@@ -8,7 +8,10 @@
     "build": "nuxt build",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "nuxt:prepare": "nuxt prepare",
+    "type-check": "nuxt typecheck",
+    "lint": "eslint .",
+    "clean": "nuxt cleanup"
   },
   "dependencies": {
     "@mysite/config": "workspace:*",
@@ -17,5 +20,9 @@
     "nuxt": "^4.5.2",
     "vue": "^3.5.42",
     "vue-router": "^5.3.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "vue-tsc": "^3.3.11"
   }
 }

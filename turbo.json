@@ -1,0 +1,37 @@
+{
+  "$schema": "https://v2-10-12.turborepo.dev/schema.json",
+  "tasks": {
+    "nuxt:prepare": {
+      "dependsOn": ["^nuxt:prepare"],
+      "outputs": [".nuxt/**"]
+    },
+    "build": {
+      "dependsOn": ["^build", "^nuxt:prepare"],
+      "outputs": [".output/**", ".nuxt/**"],
+      "env": [
+        "DATABASE_URL",
+        "DATABASE_DRIVER",
+        "REDIS_URL",
+        "CORS_ORIGINS",
+        "NUXT_ADMIN_USER",
+        "NUXT_ADMIN_PASSWORD",
+        "NUXT_PUBLIC_API_BASE",
+        "NUXT_PUBLIC_WEB_URL",
+        "NUXT_PUBLIC_APP_URL",
+        "NUXT_PUBLIC_ADMIN_URL"
+      ]
+    },
+    "dev": {
+      "dependsOn": ["^build"],
+      "cache": false,
+      "persistent": true
+    },
+    "lint": {},
+    "type-check": {
+      "dependsOn": ["^build", "nuxt:prepare"]
+    },
+    "clean": {
+      "cache": false
+    }
+  }
+}

@@ -12,7 +12,10 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "db:seed": "tsx server/database/seed.ts",
-    "postinstall": "nuxt prepare"
+    "nuxt:prepare": "nuxt prepare",
+    "type-check": "nuxt typecheck",
+    "lint": "eslint .",
+    "clean": "nuxt cleanup"
   },
   "dependencies": {
     "@mysite/config": "workspace:*",
@@ -30,6 +33,8 @@
   "devDependencies": {
     "@types/pg": "^8.23.1",
     "drizzle-kit": "^0.31.10",
-    "tsx": "^4.23.13"
+    "tsx": "^4.23.13",
+    "typescript": "^5.9.3",
+    "vue-tsc": "^3.3.11"
   }
 }

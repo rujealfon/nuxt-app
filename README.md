@@ -55,13 +55,33 @@ pnpm dev:admin
 pnpm dev:api
 ```
 
-Run all apps in parallel:
+Run all apps in parallel with [Turborepo](https://turborepo.com) (`turbo.json`):
 
 ```bash
 pnpm dev
 ```
 
+`turbo run dev` supervises the four dev servers and stops them on Ctrl+C. If a
+dev server ever survives a forced stop (Nuxt can be reparented), reap whatever
+is still bound to the app ports:
+
+```bash
+pnpm dev:stop
+```
+
 Ports: web `3000`, app `3001`, admin `3002`, api `3003`.
+
+## Tasks
+
+Turborepo (`turbo.json`) runs each app's scripts. `pnpm install` runs the
+`nuxt:prepare` task via `postinstall`.
+
+```bash
+pnpm build       # turbo run build
+pnpm type-check  # turbo run type-check (vue-tsc per app)
+pnpm lint        # eslint across the repo
+pnpm clean       # turbo run clean (nuxt cleanup)
+```
 
 ## Database
 
