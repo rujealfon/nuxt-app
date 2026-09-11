@@ -5,7 +5,6 @@ interface SiteRuntimeConfig {
   webUrl: string
   appUrl: string
   adminUrl: string
-  apiBase: string
 }
 
 export function useSite() {
@@ -24,8 +23,6 @@ export function useSite() {
 
   return {
     currentApp: site.appName,
-    apiBase: site.apiBase,
-    urls,
     linkTo,
   }
 }

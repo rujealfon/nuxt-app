@@ -31,7 +31,6 @@ Rendering modes:
 | Admin | SPA (`ssr: false`), protected by HTTP Basic auth |
 | API | Server (Nitro routes) |
 
-
 ## Setup
 
 ```bash
@@ -154,7 +153,6 @@ NUXT_PUBLIC_API_BASE=https://api.mysite.com
 NUXT_PUBLIC_WEB_URL=https://web.mysite.com
 NUXT_PUBLIC_APP_URL=https://app.mysite.com
 NUXT_PUBLIC_ADMIN_URL=https://admin.mysite.com
-NUXT_PUBLIC_SITE_DOMAIN=mysite.com
 ```
 
 Admin additionally needs `NUXT_ADMIN_USER` / `NUXT_ADMIN_PASSWORD`.

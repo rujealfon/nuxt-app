@@ -11,8 +11,5 @@ export default defineNuxtConfig({
     databaseDriver: process.env.DATABASE_DRIVER || '',
     redisUrl: process.env.REDIS_URL || 'redis://localhost:6381',
     corsOrigins: process.env.CORS_ORIGINS || '',
-    public: {
-      appName: 'api',
-    },
   },
 })

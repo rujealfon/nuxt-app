@@ -8,7 +8,6 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       appName: 'app',
-      siteDomain: 'mysite.com',
       webUrl: `http://localhost:${appPorts.web}`,
       appUrl: `http://localhost:${appPorts.app}`,
       adminUrl: `http://localhost:${appPorts.admin}`,

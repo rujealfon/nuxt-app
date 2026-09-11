@@ -133,9 +133,6 @@ importers:
       '@mysite/config':
         specifier: workspace:*
         version: link:../../packages/config
-      '@mysite/types':
-        specifier: workspace:*
-        version: link:../../packages/types
       '@mysite/ui':
         specifier: workspace:*
         version: link:../../packages/ui
@@ -206,9 +203,6 @@ importers:
       '@mysite/config':
         specifier: workspace:*
         version: link:../../packages/config
-      '@mysite/types':
-        specifier: workspace:*
-        version: link:../../packages/types
       '@mysite/ui':
         specifier: workspace:*
         version: link:../../packages/ui
@@ -233,9 +227,6 @@ importers:
       '@mysite/config':
         specifier: workspace:*
         version: link:../../packages/config
-      '@mysite/types':
-        specifier: workspace:*
-        version: link:../../packages/types
       '@mysite/ui':
         specifier: workspace:*
         version: link:../../packages/ui

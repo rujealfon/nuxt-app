@@ -15,7 +15,6 @@ export default defineNuxtConfig({
     adminPassword: process.env.NUXT_ADMIN_PASSWORD || '',
     public: {
       appName: 'admin',
-      siteDomain: 'mysite.com',
       webUrl: `http://localhost:${appPorts.web}`,
       appUrl: `http://localhost:${appPorts.app}`,
       adminUrl: `http://localhost:${appPorts.admin}`,

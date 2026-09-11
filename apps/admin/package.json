@@ -13,7 +13,6 @@
   "dependencies": {
     "@mysite/client": "workspace:*",
     "@mysite/config": "workspace:*",
-    "@mysite/types": "workspace:*",
     "@mysite/ui": "workspace:*",
     "@nuxt/ui": "^4.11.1",
     "nuxt": "^4.5.2",
