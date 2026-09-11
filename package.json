@@ -12,7 +12,7 @@
     "db:up": "docker compose up -d postgres redis",
     "db:down": "docker compose down",
     "db:logs": "docker compose logs -f postgres",
-    "db:studio": "docker compose up -d --build drizzle-studio",
+    "db:studio": "docker compose up -d --build drizzle-studio && echo 'Drizzle Studio -> https://local.drizzle.studio?port=4984'",
     "build": "pnpm -r --filter \"./apps/**\" build",
     "lint": "eslint",
     "lint:fix": "eslint --fix",

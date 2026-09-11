@@ -84,7 +84,9 @@ Drizzle Studio runs in its own container (host port `4984`):
 pnpm db:studio   # build + start drizzle-studio
 ```
 
-Open https://local.drizzle.studio?host=localhost:4984 to browse the database.
+Open <https://local.drizzle.studio?port=4984> to browse the database. (The
+container logs a `?host=0.0.0.0` URL — ignore it; the browser must target the
+host-mapped port via `?port=4984`.)
 
 The API uses [Drizzle ORM](https://orm.drizzle.team). Schema lives in
 `apps/api/server/database/schema.ts`; server helpers are auto-imported via
