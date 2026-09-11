@@ -235,7 +235,10 @@ and server guards (`getCurrentUser`, `requireUser`) are in
 Rate limiting is enabled (60s window / 100 requests, with Better Auth's stricter
 built-in rules for sensitive paths such as `/sign-in/email`) and its counters are
 stored in Redis via the custom `consume` storage — no rate-limit table, and no
-sessions in Redis.
+sessions in Redis. The API's own routes get the same Redis-backed limiter
+(`apps/api/server/middleware/rate-limit.ts`): every `/api/*` path except
+`/api/auth/*` and `/api/health*` is limited per IP + route (health checks are
+exempt so monitoring isn't throttled).
 
 The `@mysite/client` layer wraps the Better Auth Vue client: `app` uses
 `useAuth()` for sign-in/out and session state; `admin` adds a global route
