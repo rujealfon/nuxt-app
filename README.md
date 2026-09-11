@@ -85,16 +85,19 @@ pnpm clean       # turbo run clean (nuxt cleanup)
 
 ## Database
 
-Postgres 18 runs in Docker (`docker-compose.yml`), exposed on host port `55432`
-to match `DATABASE_URL` in `apps/api/.env.example`.
+Postgres 18 and Redis 8 run in Docker (`docker-compose.yml`), exposed on host
+ports `55432` and `6381` to match `DATABASE_URL` / `REDIS_URL` in
+`apps/api/.env.example`. Redis is used only by the Better Auth rate limiter —
+sessions live in Postgres.
 
 ```bash
-pnpm db:up     # start postgres
+pnpm db:up     # start postgres + redis
 pnpm db:logs   # tail logs (postgres)
 pnpm db:down   # stop and remove containers
 ```
 
 - Postgres: `postgres://nuxt_app_user:nuxt_app_password@localhost:55432/nuxt_app_db`
+- Redis: `redis://localhost:6381`
 
 Drizzle Studio runs in its own container (host port `4984`):
 
@@ -123,7 +126,7 @@ pnpm --filter @mysite/api db:auth:generate  # regenerate the Better Auth Drizzle
 The seed signs up `dev@mysite.com` / `password123` (override with `SEED_EMAIL` /
 `SEED_PASSWORD`) through Better Auth and grants it the `admin` role.
 
-`GET /api/health/ready` pings Postgres.
+`GET /api/health/ready` pings Postgres and Redis.
 
 ### Local subdomains (optional)
 
@@ -187,6 +190,7 @@ DATABASE_URL=postgresql://...@ep-xxx-pooler.<region>.aws.neon.tech/neondb?sslmod
 DATABASE_DRIVER=neon
 BETTER_AUTH_URL=https://api.mysite.com
 BETTER_AUTH_SECRET=            # openssl rand -base64 32
+REDIS_URL=rediss://default:password@host:port
 CORS_ORIGINS=https://web.mysite.com,https://app.mysite.com,https://admin.mysite.com
 ```
 
@@ -198,10 +202,15 @@ CORS_ORIGINS=https://web.mysite.com,https://app.mysite.com,https://admin.mysite.
   driver does not support `db.transaction()`, and Better Auth creates the user +
   credential account in a transaction on sign-up; use a TCP/`pg` service (or the
   pooled websocket driver) if you rely on sign-up in production.
+- **Redis: rate limiting only.** `useRedis()` (ioredis) backs the Better Auth
+  rate limiter through a custom `consume` implementation in
+  `apps/api/server/utils/rate-limit.ts` (atomic `INCR` + `PEXPIRE` via Lua) —
+  sessions are **not** stored in Redis. Point `REDIS_URL` at any TCP Redis;
+  managed providers expose a TLS URL (`rediss://...`).
 
-Local dev is unchanged: `useDb()` uses `pg`, pointed at the Docker container
-from `docker-compose.yml`. The DB seam returns a stable `NodePgDatabase` type,
-so app code never branches on the driver.
+Local dev is unchanged: `useDb()` uses `pg` and `useRedis()` uses `ioredis`,
+both pointed at the Docker containers from `docker-compose.yml`. The DB seam
+returns a stable `NodePgDatabase` type, so app code never branches on the driver.
 
 ### Migrations
 
@@ -222,6 +231,11 @@ in Postgres (`session` table) and travel in Better Auth's HttpOnly cookie.
 Config is in `apps/api/server/database/auth.ts` (shared with the CLI and seed),
 and server guards (`getCurrentUser`, `requireUser`) are in
 `apps/api/server/utils/session.ts`.
+
+Rate limiting is enabled (60s window / 100 requests, with Better Auth's stricter
+built-in rules for sensitive paths such as `/sign-in/email`) and its counters are
+stored in Redis via the custom `consume` storage — no rate-limit table, and no
+sessions in Redis.
 
 The `@mysite/client` layer wraps the Better Auth Vue client: `app` uses
 `useAuth()` for sign-in/out and session state; `admin` adds a global route

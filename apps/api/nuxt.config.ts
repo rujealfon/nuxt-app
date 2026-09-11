@@ -11,6 +11,7 @@ export default defineNuxtConfig({
     databaseDriver: process.env.DATABASE_DRIVER || '',
     betterAuthSecret: process.env.BETTER_AUTH_SECRET || '',
     betterAuthUrl: process.env.BETTER_AUTH_URL || '',
+    redisUrl: process.env.REDIS_URL || '',
     corsOrigins: process.env.CORS_ORIGINS || '',
   },
 })

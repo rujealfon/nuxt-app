@@ -1,4 +1,5 @@
 import { createAuth } from '../database/auth'
+import { createRateLimitStorage } from './rate-limit'
 
 let instance: ReturnType<typeof createAuth> | undefined
 
@@ -12,6 +13,7 @@ function createInstance() {
       .split(',')
       .map(origin => origin.trim())
       .filter(Boolean),
+    rateLimitStorage: createRateLimitStorage(),
   })
 }
 

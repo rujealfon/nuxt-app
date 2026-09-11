@@ -3,10 +3,18 @@ import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import * as schema from './schema'
 
+export interface RateLimitStorage {
+  consume: (
+    key: string,
+    rule: { window: number, max: number },
+  ) => Promise<{ allowed: boolean, retryAfter: number | null }>
+}
+
 export interface AuthConfig {
   secret: string
   baseURL: string
   trustedOrigins?: string[]
+  rateLimitStorage?: RateLimitStorage
 }
 
 export function createAuth(
@@ -23,6 +31,12 @@ export function createAuth(
     }),
     emailAndPassword: {
       enabled: true,
+    },
+    rateLimit: {
+      enabled: true,
+      window: 60,
+      max: 100,
+      customStorage: config.rateLimitStorage,
     },
     trustedOrigins: config.trustedOrigins ?? [],
     user: {

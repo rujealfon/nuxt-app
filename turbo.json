@@ -13,6 +13,7 @@
         "DATABASE_DRIVER",
         "BETTER_AUTH_SECRET",
         "BETTER_AUTH_URL",
+        "REDIS_URL",
         "CORS_ORIGINS",
         "NUXT_PUBLIC_API_BASE",
         "NUXT_PUBLIC_WEB_URL",

@@ -10,7 +10,7 @@
     "dev:api": "pnpm --filter @mysite/api dev",
     "dev": "turbo run dev",
     "dev:stop": "node scripts/stop-dev.mjs",
-    "db:up": "docker compose up -d postgres",
+    "db:up": "docker compose up -d postgres redis",
     "db:down": "docker compose down",
     "db:logs": "docker compose logs -f postgres",
     "db:studio": "docker compose up -d --build drizzle-studio && echo 'Drizzle Studio -> https://local.drizzle.studio?port=4984'",
