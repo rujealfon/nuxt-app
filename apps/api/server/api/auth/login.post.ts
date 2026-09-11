@@ -1,11 +1,6 @@
+import { loginSchema } from '@mysite/types'
 import { eq } from 'drizzle-orm'
-import { z } from 'zod'
 import { users } from '../../database/schema'
-
-const loginSchema = z.object({
-  email: z.email(),
-  password: z.string().min(1),
-})
 
 export default defineEventHandler(async (event) => {
   const parsed = loginSchema.safeParse(await readBody(event))

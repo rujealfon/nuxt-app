@@ -9,7 +9,7 @@ export default defineNuxtConfig({
   runtimeConfig: {
     databaseUrl: process.env.DATABASE_URL || '',
     databaseDriver: process.env.DATABASE_DRIVER || '',
-    redisUrl: process.env.REDIS_URL || 'redis://localhost:6381',
+    redisUrl: process.env.REDIS_URL || '',
     corsOrigins: process.env.CORS_ORIGINS || '',
   },
 })

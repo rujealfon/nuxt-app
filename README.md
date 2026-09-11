@@ -15,7 +15,7 @@ Shared packages:
 | --- | --- |
 | `@mysite/ui` | Nuxt layer: [Nuxt UI](https://ui.nuxt.com/) components, theme, `useSite()`, [VueUse](https://vueuse.org/) |
 | `@mysite/client` | Nuxt layer: [Pinia](https://pinia.vuejs.org/) + [Pinia Colada](https://pinia-colada.esm.dev/), `useAuth()` |
-| `@mysite/types` | Shared TypeScript types |
+| `@mysite/types` | Shared Zod schemas + inferred types (session, login) |
 | `@mysite/config` | Ports, cookie name, API base helper |
 
 Layers are extended by package name: `web` extends `@mysite/ui`; `app`/`admin` extend

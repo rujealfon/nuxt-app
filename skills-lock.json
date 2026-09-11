@@ -30,6 +30,12 @@
       "sourceType": "github",
       "skillPath": "skills/vue/SKILL.md",
       "computedHash": "9c241141e07e836e4f0537c63e8f929fba3767c2997250be38e699f19b75e3f2"
+    },
+    "zod": {
+      "source": "rujealfon/skills",
+      "sourceType": "github",
+      "skillPath": "skills/zod/SKILL.md",
+      "computedHash": "011a0b2967fe2439c1f5ed63513ffd59e67b204a9d8a6afa1503dab3c7c3ab9b"
     }
   }
 }

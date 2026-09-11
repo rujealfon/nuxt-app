@@ -1,9 +1,5 @@
-import type { SessionUser } from '@mysite/types'
-
-export interface LoginCredentials {
-  email: string
-  password: string
-}
+import type { LoginCredentials } from '@mysite/types'
+import { sessionUserSchema } from '@mysite/types'
 
 const SESSION_QUERY_KEY = ['auth', 'session'] as const
 
@@ -14,11 +10,12 @@ export function useSessionQuery() {
     key: SESSION_QUERY_KEY,
     query: async ({ signal }) => {
       try {
-        return await $fetch<SessionUser>('/api/auth/session', {
+        const data = await $fetch<unknown>('/api/auth/session', {
           baseURL: config.public.apiBase,
           credentials: 'include',
           signal,
         })
+        return sessionUserSchema.parse(data)
       }
       catch (error) {
         // A missing session is a valid "signed out" state, not an error.
@@ -39,13 +36,15 @@ export function useAuth() {
   const user = computed(() => session.data.value ?? null)
 
   const login = useMutation({
-    mutation: (credentials: LoginCredentials) =>
-      $fetch<SessionUser>('/api/auth/login', {
+    mutation: async (credentials: LoginCredentials) => {
+      const data = await $fetch<unknown>('/api/auth/login', {
         baseURL: config.public.apiBase,
         method: 'POST',
         credentials: 'include',
         body: credentials,
-      }),
+      })
+      return sessionUserSchema.parse(data)
+    },
     onSuccess(signedInUser) {
       queryCache.setQueryData(SESSION_QUERY_KEY, signedInUser)
     },

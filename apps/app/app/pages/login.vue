@@ -1,6 +1,7 @@
 <script setup lang="ts">
+import type { LoginCredentials } from '@mysite/types'
 import type { AuthFormField, FormSubmitEvent } from '@nuxt/ui'
-import { z } from 'zod'
+import { loginSchema } from '@mysite/types'
 
 const { login } = useAuth()
 const { mutateAsync: signIn, isLoading: isSigningIn } = login
@@ -10,16 +11,9 @@ const fields: AuthFormField[] = [
   { name: 'password', type: 'password', label: 'Password', placeholder: '••••••••', required: true },
 ]
 
-const schema = z.object({
-  email: z.email('Invalid email'),
-  password: z.string().min(1, 'Password is required'),
-})
-
-type Schema = z.output<typeof schema>
-
 const errorMessage = ref('')
 
-async function onSubmit(event: FormSubmitEvent<Schema>) {
+async function onSubmit(event: FormSubmitEvent<LoginCredentials>) {
   errorMessage.value = ''
 
   try {
@@ -38,7 +32,7 @@ useHead({ title: 'Sign in · mysite' })
   <div class="flex min-h-dvh items-center justify-center px-6">
     <UPageCard class="w-full max-w-md">
       <UAuthForm
-        :schema="schema"
+        :schema="loginSchema"
         :fields="fields"
         title="Welcome back"
         description="Sign in to your account."
