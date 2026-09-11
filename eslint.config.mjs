@@ -15,4 +15,9 @@ export default antfu({
     // Don't let linting mutate package-manager policy settings.
     'pnpm/yaml-enforce-settings': 'off',
   },
+}, {
+  files: ['**/seed.ts'],
+  rules: {
+    'no-console': 'off',
+  },
 })

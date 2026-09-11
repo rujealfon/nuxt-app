@@ -13,14 +13,24 @@ Shared packages:
 
 | Package | Purpose |
 | --- | --- |
-| `@mysite/ui` | Nuxt layer: components + `useSite()` + [VueUse](https://vueuse.org/) + [Pinia](https://pinia.vuejs.org/) / [Pinia Colada](https://pinia-colada.esm.dev/) |
-| `@mysite/auth` | Nuxt layer: `useAuth()` + server session utils |
+| `@mysite/ui` | Nuxt layer: [Nuxt UI](https://ui.nuxt.com/) components, theme, `useSite()`, [VueUse](https://vueuse.org/) |
+| `@mysite/client` | Nuxt layer: [Pinia](https://pinia.vuejs.org/) + [Pinia Colada](https://pinia-colada.esm.dev/), `useAuth()` |
 | `@mysite/types` | Shared TypeScript types |
-| `@mysite/config` | Ports, domain, cookie name, API base helper |
+| `@mysite/config` | Ports, cookie name, API base helper |
 
-`@mysite/ui` and `@mysite/auth` are [Nuxt layers](https://nuxt.com/docs/4.x/getting-started/layers)
-extended by package name: the frontends (`web`, `app`, `admin`) extend both, while `apps/api` extends
-only `@mysite/auth` (server-only, no client code).
+Layers are extended by package name: `web` extends `@mysite/ui`; `app`/`admin` extend
+`@mysite/ui` + `@mysite/client`. `apps/api` uses no layer — its Redis-backed session helpers live
+in `apps/api/server/utils`.
+
+Rendering modes:
+
+| App | Mode |
+| --- | --- |
+| Web | Prerendered at build (`nuxt build`, `routeRules` + `nitro.prerender`) |
+| App | SPA (`ssr: false`) |
+| Admin | SPA (`ssr: false`), protected by HTTP Basic auth |
+| API | Server (Nitro routes) |
+
 
 ## Setup
 
@@ -84,9 +94,13 @@ The API uses [Drizzle ORM](https://orm.drizzle.team). Schema lives in
 ```bash
 pnpm --filter @mysite/api db:generate  # generate SQL migrations
 pnpm --filter @mysite/api db:migrate   # apply migrations
-pnpm --filter @mysite/api db:push      # push schema without migrations
+pnpm --filter @mysite/api db:seed      # upsert the dev user
+pnpm --filter @mysite/api db:push      # push schema without migrations (prototyping)
 pnpm --filter @mysite/api db:studio    # run Drizzle Studio locally (no Docker)
 ```
+
+The seed creates `dev@mysite.com` / `password123` (override with `SEED_EMAIL` /
+`SEED_PASSWORD`). Passwords are hashed with argon2.
 
 `GET /api/health/ready` pings both Postgres and Redis.
 
@@ -181,8 +195,13 @@ pnpm --filter @mysite/api db:migrate
 
 ### Auth and DNS
 
-Cross-subdomain auth uses the `mysite_session` cookie (see `@mysite/config`);
+`POST /api/auth/login` verifies credentials against Postgres with argon2 and
+creates an **opaque session id** stored in Redis (`session:<id>`, 7-day TTL).
+The browser only ever receives that id, in an HttpOnly `mysite_session` cookie
+(`@mysite/config`). `app` uses it client-side (SPA); `admin` is additionally
+gated by HTTP Basic auth server middleware.
+
 `web.mysite.com` → `api.mysite.com` is same-site, so `SameSite=Lax` cookies are
-sent. `CORS_ORIGINS` on the API must list the frontend origins and the API sets
-`Access-Control-Allow-Credentials: true`. Add each subdomain to its Vercel
+sent. `CORS_ORIGINS` on the API must list the frontend origins (the API sends
+`Access-Control-Allow-Credentials: true`). Add each subdomain in your Vercel
 project's Domains settings and point DNS (`A`/`CNAME`).

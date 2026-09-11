@@ -3,16 +3,12 @@ useHead({ title: 'Admin · mysite' })
 </script>
 
 <template>
-  <section class="admin">
-    <h1>Admin</h1>
-    <p>Internal operations console served from admin.mysite.com.</p>
+  <section class="mx-auto mt-16 max-w-3xl px-6">
+    <h1 class="text-2xl font-bold text-highlighted">
+      Admin
+    </h1>
+    <p class="mt-3 text-muted">
+      Internal operations console served from admin.mysite.com.
+    </p>
   </section>
 </template>
-
-<style scoped>
-.admin {
-  max-width: 48rem;
-  margin: 4rem auto;
-  padding: 0 1.5rem;
-}
-</style>

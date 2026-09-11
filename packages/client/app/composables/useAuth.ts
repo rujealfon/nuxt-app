@@ -12,11 +12,12 @@ export function useSessionQuery() {
 
   return useQuery({
     key: SESSION_QUERY_KEY,
-    query: async () => {
+    query: async ({ signal }) => {
       try {
         return await $fetch<SessionUser>('/api/auth/session', {
           baseURL: config.public.apiBase,
           credentials: 'include',
+          signal,
         })
       }
       catch (error) {

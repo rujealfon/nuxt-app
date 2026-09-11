@@ -3,7 +3,15 @@ import { apiBaseFor, appPorts } from '@mysite/config'
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
-  extends: ['@mysite/ui', '@mysite/auth'],
+  extends: ['@mysite/ui'],
+  routeRules: {
+    '/': { prerender: true },
+  },
+  nitro: {
+    prerender: {
+      crawlLinks: true,
+    },
+  },
   runtimeConfig: {
     public: {
       appName: 'web',

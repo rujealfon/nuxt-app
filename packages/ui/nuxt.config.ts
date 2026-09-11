@@ -1,7 +1,11 @@
+import { fileURLToPath } from 'node:url'
+
 export default defineNuxtConfig({
   modules: [
-    '@pinia/nuxt',
-    '@pinia/colada-nuxt',
+    '@nuxt/ui',
     '@vueuse/nuxt',
+  ],
+  css: [
+    fileURLToPath(new URL('./app/assets/css/main.css', import.meta.url)),
   ],
 })

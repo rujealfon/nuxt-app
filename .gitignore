@@ -18,6 +18,7 @@ logs
 .DS_Store
 .fleet
 .idea
+.playwright-mcp
 
 # Local env files
 .env

@@ -1,32 +1,37 @@
-import type { SessionUser } from '@mysite/types'
+import { eq } from 'drizzle-orm'
+import { z } from 'zod'
+import { users } from '../../database/schema'
+
+const loginSchema = z.object({
+  email: z.email(),
+  password: z.string().min(1),
+})
 
 export default defineEventHandler(async (event) => {
-  const body = await readBody<{ email?: string, password?: string }>(event)
+  const parsed = loginSchema.safeParse(await readBody(event))
 
-  if (!body?.email || !body?.password) {
+  if (!parsed.success) {
     throw createError({
       statusCode: 400,
-      statusMessage: 'Email and password are required',
+      statusMessage: 'A valid email and password are required',
     })
   }
 
-  const user: SessionUser = {
-    id: 'usr_1',
-    email: body.email,
-    name: body.email.split('@')[0] || body.email,
-    roles: ['user'],
+  const db = useDb()
+  const [user] = await db
+    .select()
+    .from(users)
+    .where(eq(users.email, parsed.data.email))
+    .limit(1)
+
+  if (!user || !(await verifyPassword(parsed.data.password, user.passwordHash))) {
+    throw createError({
+      statusCode: 401,
+      statusMessage: 'Invalid credentials',
+    })
   }
 
-  const token = Buffer.from(
-    JSON.stringify({
-      sub: user.id,
-      email: user.email,
-      name: user.name,
-      roles: user.roles,
-    }),
-  ).toString('base64url')
+  await createSession(event, user.id)
 
-  setSessionToken(event, token)
-
-  return user
+  return toSessionUser(user)
 })

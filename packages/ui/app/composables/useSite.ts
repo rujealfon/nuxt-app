@@ -10,7 +10,7 @@ interface SiteRuntimeConfig {
 
 export function useSite() {
   const config = useRuntimeConfig()
-  const site = config.public as unknown as SiteRuntimeConfig
+  const site = config.public as SiteRuntimeConfig
 
   const urls: Record<SiteKey, string> = {
     web: site.webUrl,

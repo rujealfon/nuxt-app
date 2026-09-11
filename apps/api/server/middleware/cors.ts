@@ -15,10 +15,14 @@ export default defineEventHandler((event) => {
 
   const allowed = configured.length ? configured : defaults
 
-  if (origin && (allowed.includes('*') || allowed.includes(origin))) {
+  if (origin && allowed.includes(origin)) {
     setHeader(event, 'access-control-allow-origin', origin)
     setHeader(event, 'access-control-allow-credentials', 'true')
     setHeader(event, 'vary', 'Origin')
+  }
+  else if (allowed.includes('*')) {
+    // Wildcard can't be combined with credentials; browsers reject it.
+    setHeader(event, 'access-control-allow-origin', '*')
   }
 
   setHeader(event, 'access-control-allow-methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS')

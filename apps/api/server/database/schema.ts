@@ -4,5 +4,14 @@ export const users = pgTable('users', {
   id: uuid().primaryKey().defaultRandom(),
   email: text().notNull().unique(),
   name: text(),
+  passwordHash: text().notNull(),
+  roles: text().array().notNull().default(['user']),
   createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp({ withTimezone: true })
+    .notNull()
+    .defaultNow()
+    .$onUpdateFn(() => new Date()),
 })
+
+export type User = typeof users.$inferSelect
+export type NewUser = typeof users.$inferInsert

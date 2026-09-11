@@ -9,9 +9,8 @@
   },
   "main": "./nuxt.config.ts",
   "dependencies": {
-    "@pinia/colada": "^1.4.4",
-    "@pinia/colada-nuxt": "^1.1.0",
-    "@pinia/nuxt": "^1.0.2",
-    "@vueuse/nuxt": "^14.4.0"
+    "@nuxt/ui": "^4.11.1",
+    "@vueuse/nuxt": "^14.4.0",
+    "tailwindcss": "^4.3.3"
   }
 }

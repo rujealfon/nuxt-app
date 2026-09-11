@@ -9,8 +9,8 @@ COPY apps/api/package.json ./apps/api/
 COPY apps/web/package.json ./apps/web/
 COPY apps/app/package.json ./apps/app/
 COPY apps/admin/package.json ./apps/admin/
+COPY packages/client/package.json ./packages/client/
 COPY packages/ui/package.json ./packages/ui/
-COPY packages/auth/package.json ./packages/auth/
 COPY packages/types/package.json ./packages/types/
 COPY packages/config/package.json ./packages/config/
 

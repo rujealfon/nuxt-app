@@ -1,4 +1,4 @@
-export default defineEventHandler((event) => {
-  clearSessionToken(event)
+export default defineEventHandler(async (event) => {
+  await destroySession(event)
   return { ok: true }
 })
