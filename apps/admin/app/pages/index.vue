@@ -1,4 +1,20 @@
 <script setup lang="ts">
+const { user, signOut } = useAuth()
+
+const isSigningOut = ref(false)
+
+async function handleSignOut() {
+  isSigningOut.value = true
+
+  try {
+    await signOut()
+    await navigateTo('/login')
+  }
+  finally {
+    isSigningOut.value = false
+  }
+}
+
 useHead({ title: 'Admin · mysite' })
 </script>
 
@@ -10,5 +26,17 @@ useHead({ title: 'Admin · mysite' })
     <p class="mt-3 text-muted">
       Internal operations console served from admin.mysite.com.
     </p>
+    <p v-if="user" class="mt-3 text-default">
+      Signed in as <strong>{{ user.email }}</strong>
+    </p>
+    <UButton
+      v-if="user"
+      class="mt-6"
+      variant="outline"
+      color="neutral"
+      :loading="isSigningOut"
+      label="Sign out"
+      @click="handleSignOut"
+    />
   </section>
 </template>

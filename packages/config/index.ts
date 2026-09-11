@@ -8,5 +8,3 @@ export const appPorts = {
 export function apiBaseFor(env: string | undefined): string {
   return env || `http://localhost:${appPorts.api}`
 }
-
-export const cookieName = 'mysite_session'

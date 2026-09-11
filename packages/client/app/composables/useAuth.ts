@@ -1,66 +1,46 @@
 import type { LoginCredentials } from '@mysite/types'
-import { sessionUserSchema } from '@mysite/types'
+import { createAuthClient } from 'better-auth/vue'
 
-const SESSION_QUERY_KEY = ['auth', 'session'] as const
+let client: ReturnType<typeof createAuthClient> | undefined
 
-export function useSessionQuery() {
-  const config = useRuntimeConfig()
+export function useAuthClient() {
+  if (!client) {
+    const config = useRuntimeConfig()
+    client = createAuthClient({
+      baseURL: config.public.apiBase,
+      fetchOptions: {
+        credentials: 'include',
+      },
+    })
+  }
 
-  return useQuery({
-    key: SESSION_QUERY_KEY,
-    query: async ({ signal }) => {
-      try {
-        const data = await $fetch<unknown>('/api/auth/session', {
-          baseURL: config.public.apiBase,
-          credentials: 'include',
-          signal,
-        })
-        return sessionUserSchema.parse(data)
-      }
-      catch (error) {
-        // A missing session is a valid "signed out" state, not an error.
-        if ((error as { statusCode?: number }).statusCode === 401) {
-          return null
-        }
-        throw error
-      }
-    },
-  })
+  return client
 }
 
 export function useAuth() {
-  const config = useRuntimeConfig()
-  const queryCache = useQueryCache()
+  const client = useAuthClient()
+  const session = client.useSession()
 
-  const session = useSessionQuery()
-  const user = computed(() => session.data.value ?? null)
+  const user = computed(() => session.value.data?.user ?? null)
+  const isPending = computed(() => session.value.isPending)
 
-  const login = useMutation({
-    mutation: async (credentials: LoginCredentials) => {
-      const data = await $fetch<unknown>('/api/auth/login', {
-        baseURL: config.public.apiBase,
-        method: 'POST',
-        credentials: 'include',
-        body: credentials,
-      })
-      return sessionUserSchema.parse(data)
-    },
-    onSuccess(signedInUser) {
-      queryCache.setQueryData(SESSION_QUERY_KEY, signedInUser)
-    },
-  })
+  async function signIn(credentials: LoginCredentials) {
+    const { error } = await client.signIn.email(credentials)
 
-  const logout = useMutation({
-    mutation: () =>
-      $fetch('/api/auth/logout', {
-        baseURL: config.public.apiBase,
-        method: 'POST',
-        credentials: 'include',
-      }),
-    onSuccess() {
-      queryCache.setQueryData(SESSION_QUERY_KEY, null)
-    },
-  })
+    if (error) {
+      throw new Error(error.message || 'Unable to sign in')
+    }
+  }
 
-  return { user, session, login, logout }
+  async function signOut() {
+    await client.signOut()
+  }
+
+  return {
+    user,
+    session,
+    isPending,
+    signIn,
+    signOut,
+  }
 }

@@ -1,8 +1,9 @@
-import { hash } from '@node-rs/argon2'
 import { eq } from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/node-postgres'
 import { Pool } from 'pg'
-import { users } from './schema'
+import { createAuth } from './auth'
+import * as schema from './schema'
+import { user } from './schema'
 
 try {
   process.loadEnvFile()
@@ -21,24 +22,29 @@ if (!connectionString) {
 }
 
 const pool = new Pool({ connectionString })
-const db = drizzle(pool, { casing: 'snake_case' })
+const db = drizzle(pool, { schema, casing: 'snake_case' })
 
 async function main() {
-  const passwordHash = await hash(password)
-  const existing = await db
+  const auth = createAuth(db, {
+    secret: process.env.BETTER_AUTH_SECRET ?? '',
+    baseURL: process.env.BETTER_AUTH_URL ?? '',
+  })
+
+  const [existing] = await db
     .select()
-    .from(users)
-    .where(eq(users.email, email))
+    .from(user)
+    .where(eq(user.email, email))
     .limit(1)
 
-  if (existing.length) {
-    await db.update(users).set({ passwordHash }).where(eq(users.email, email))
-    console.log(`Updated seed user: ${email}`)
+  if (existing) {
+    // Cascades to the user's accounts and sessions.
+    await db.delete(user).where(eq(user.id, existing.id))
   }
-  else {
-    await db.insert(users).values({ email, name: 'Dev', passwordHash, roles: ['user'] })
-    console.log(`Created seed user: ${email}`)
-  }
+
+  await auth.api.signUpEmail({ body: { email, password, name: 'Dev' } })
+  await db.update(user).set({ role: 'admin' }).where(eq(user.email, email))
+
+  console.log(`Seeded admin user: ${email}`)
 
   await pool.end()
 }

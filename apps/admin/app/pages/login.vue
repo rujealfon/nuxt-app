@@ -3,6 +3,7 @@ import type { LoginCredentials } from '@mysite/types'
 import type { AuthFormField, FormSubmitEvent } from '@nuxt/ui'
 import { loginSchema } from '@mysite/types'
 
+const route = useRoute()
 const { signIn, isPending } = useAuth()
 
 const fields: AuthFormField[] = [
@@ -17,14 +18,14 @@ async function onSubmit(event: FormSubmitEvent<LoginCredentials>) {
 
   try {
     await signIn(event.data)
-    await navigateTo('/')
+    await navigateTo(typeof route.query.redirect === 'string' ? route.query.redirect : '/')
   }
   catch {
     errorMessage.value = 'Invalid email or password'
   }
 }
 
-useHead({ title: 'Sign in · mysite' })
+useHead({ title: 'Sign in · admin' })
 </script>
 
 <template>
@@ -33,9 +34,9 @@ useHead({ title: 'Sign in · mysite' })
       <UAuthForm
         :schema="loginSchema"
         :fields="fields"
-        title="Welcome back"
-        description="Sign in to your account."
-        icon="i-lucide-lock"
+        title="Admin sign in"
+        description="Administrator access only."
+        icon="i-lucide-shield"
         :submit="{ label: 'Sign in', block: true, loading: isPending }"
         @submit="onSubmit"
       >

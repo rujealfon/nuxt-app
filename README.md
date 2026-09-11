@@ -14,13 +14,13 @@ Shared packages:
 | Package | Purpose |
 | --- | --- |
 | `@mysite/ui` | Nuxt layer: [Nuxt UI](https://ui.nuxt.com/) components, theme, `useSite()`, [VueUse](https://vueuse.org/) |
-| `@mysite/client` | Nuxt layer: [Pinia](https://pinia.vuejs.org/) + [Pinia Colada](https://pinia-colada.esm.dev/), `useAuth()` |
-| `@mysite/types` | Shared Zod schemas + inferred types (session, login) |
-| `@mysite/config` | Ports, cookie name, API base helper |
+| `@mysite/client` | Nuxt layer: [Pinia](https://pinia.vuejs.org/) + [Pinia Colada](https://pinia-colada.esm.dev/), Better Auth Vue client (`useAuth()`, `useAuthClient()`) |
+| `@mysite/types` | Shared Zod schemas + inferred types (login) |
+| `@mysite/config` | Ports, API base helper |
 
 Layers are extended by package name: `web` extends `@mysite/ui`; `app`/`admin` extend
-`@mysite/ui` + `@mysite/client`. `apps/api` uses no layer — its Redis-backed session helpers live
-in `apps/api/server/utils`.
+`@mysite/ui` + `@mysite/client`. `apps/api` uses no layer — its Better Auth setup lives in
+`apps/api/server/database/auth.ts` and `apps/api/server/utils/auth.ts`.
 
 Rendering modes:
 
@@ -28,7 +28,7 @@ Rendering modes:
 | --- | --- |
 | Web | Prerendered at build (`nuxt build`, `routeRules` + `nitro.prerender`) |
 | App | SPA (`ssr: false`) |
-| Admin | SPA (`ssr: false`), protected by HTTP Basic auth |
+| Admin | SPA (`ssr: false`), protected by Better Auth (`role === 'admin'`) |
 | API | Server (Nitro routes) |
 
 ## Setup
@@ -85,18 +85,16 @@ pnpm clean       # turbo run clean (nuxt cleanup)
 
 ## Database
 
-Postgres 18 and Redis run in Docker (`docker-compose.yml`), exposed on host
-ports `55432` and `6381` to match `DATABASE_URL` / `REDIS_URL` in
-`apps/api/.env.example`.
+Postgres 18 runs in Docker (`docker-compose.yml`), exposed on host port `55432`
+to match `DATABASE_URL` in `apps/api/.env.example`.
 
 ```bash
-pnpm db:up     # start postgres + redis
+pnpm db:up     # start postgres
 pnpm db:logs   # tail logs (postgres)
 pnpm db:down   # stop and remove containers
 ```
 
 - Postgres: `postgres://nuxt_app_user:nuxt_app_password@localhost:55432/nuxt_app_db`
-- Redis: `redis://localhost:6381`
 
 Drizzle Studio runs in its own container (host port `4984`):
 
@@ -108,22 +106,24 @@ Open <https://local.drizzle.studio?port=4984> to browse the database. (The
 container logs a `?host=0.0.0.0` URL — ignore it; the browser must target the
 host-mapped port via `?port=4984`.)
 
-The API uses [Drizzle ORM](https://orm.drizzle.team). Schema lives in
-`apps/api/server/database/schema.ts`; server helpers are auto-imported via
-`useDb()` and `useRedis()`.
+The API uses [Drizzle ORM](https://orm.drizzle.team) with
+[Better Auth](https://better-auth.com) tables (`user`, `session`, `account`,
+`verification`). Schema lives in `apps/api/server/database/schema.ts` (re-exported
+from the generated `auth-schema.ts`); server helpers are auto-imported via `useDb()`.
 
 ```bash
-pnpm --filter @mysite/api db:generate  # generate SQL migrations
-pnpm --filter @mysite/api db:migrate   # apply migrations
-pnpm --filter @mysite/api db:seed      # upsert the dev user
-pnpm --filter @mysite/api db:push      # push schema without migrations (prototyping)
-pnpm --filter @mysite/api db:studio    # run Drizzle Studio locally (no Docker)
+pnpm --filter @mysite/api db:generate       # generate SQL migrations
+pnpm --filter @mysite/api db:migrate        # apply migrations
+pnpm --filter @mysite/api db:seed           # upsert the dev admin user
+pnpm --filter @mysite/api db:push           # push schema without migrations (prototyping)
+pnpm --filter @mysite/api db:studio         # run Drizzle Studio locally (no Docker)
+pnpm --filter @mysite/api db:auth:generate  # regenerate the Better Auth Drizzle schema
 ```
 
-The seed creates `dev@mysite.com` / `password123` (override with `SEED_EMAIL` /
-`SEED_PASSWORD`). Passwords are hashed with argon2.
+The seed signs up `dev@mysite.com` / `password123` (override with `SEED_EMAIL` /
+`SEED_PASSWORD`) through Better Auth and grants it the `admin` role.
 
-`GET /api/health/ready` pings both Postgres and Redis.
+`GET /api/health/ready` pings Postgres.
 
 ### Local subdomains (optional)
 
@@ -177,14 +177,16 @@ NUXT_PUBLIC_APP_URL=https://app.mysite.com
 NUXT_PUBLIC_ADMIN_URL=https://admin.mysite.com
 ```
 
-Admin additionally needs `NUXT_ADMIN_USER` / `NUXT_ADMIN_PASSWORD`.
+Admin additionally needs none — it signs in through the same Better Auth API and
+gates on the `admin` role.
 
 API (`apps/api`) — Production + Preview:
 
 ```
 DATABASE_URL=postgresql://...@ep-xxx-pooler.<region>.aws.neon.tech/neondb?sslmode=require
 DATABASE_DRIVER=neon
-REDIS_URL=rediss://default:password@host:port
+BETTER_AUTH_URL=https://api.mysite.com
+BETTER_AUTH_SECRET=            # openssl rand -base64 32
 CORS_ORIGINS=https://web.mysite.com,https://app.mysite.com,https://admin.mysite.com
 ```
 
@@ -193,15 +195,13 @@ CORS_ORIGINS=https://web.mysite.com,https://app.mysite.com,https://admin.mysite.
 - **Postgres: Neon.** Use the **pooled** connection string. `useDb()` detects a
   `*.neon.tech` host (or `DATABASE_DRIVER=neon`) and uses
   `drizzle-orm/neon-http` — no TCP pool, serverless-friendly. Note the HTTP
-  driver does not support `db.transaction()`; use a batch or the pooled
-  websocket driver if you need transactions.
-- **Redis: TCP only.** `useRedis()` uses `ioredis` on `REDIS_URL`. Point it at
-  any TCP Redis — a managed provider's TLS URL (`rediss://...`) on Vercel, or
-  the Docker container locally. No REST/HTTP client is involved.
+  driver does not support `db.transaction()`, and Better Auth creates the user +
+  credential account in a transaction on sign-up; use a TCP/`pg` service (or the
+  pooled websocket driver) if you rely on sign-up in production.
 
-Local dev is unchanged: `useDb()` uses `pg` and `useRedis()` uses `ioredis`,
-pointed at the Docker containers from `docker-compose.yml`. The DB seam returns
-a stable `NodePgDatabase` type, so app code never branches on the driver.
+Local dev is unchanged: `useDb()` uses `pg`, pointed at the Docker container
+from `docker-compose.yml`. The DB seam returns a stable `NodePgDatabase` type,
+so app code never branches on the driver.
 
 ### Migrations
 
@@ -215,13 +215,20 @@ pnpm --filter @mysite/api db:migrate
 
 ### Auth and DNS
 
-`POST /api/auth/login` verifies credentials against Postgres with argon2 and
-creates an **opaque session id** stored in Redis (`session:<id>`, 7-day TTL).
-The browser only ever receives that id, in an HttpOnly `mysite_session` cookie
-(`@mysite/config`). `app` uses it client-side (SPA); `admin` is additionally
-gated by HTTP Basic auth server middleware.
+[Better Auth](https://better-auth.com) handles email + password authentication.
+Its handler is mounted at `/api/auth/[...all]` on the API
+(`apps/api/server/api/auth/[...all].ts`) with the Drizzle adapter; sessions live
+in Postgres (`session` table) and travel in Better Auth's HttpOnly cookie.
+Config is in `apps/api/server/database/auth.ts` (shared with the CLI and seed),
+and server guards (`getCurrentUser`, `requireUser`) are in
+`apps/api/server/utils/session.ts`.
+
+The `@mysite/client` layer wraps the Better Auth Vue client: `app` uses
+`useAuth()` for sign-in/out and session state; `admin` adds a global route
+middleware requiring `user.role === 'admin'`.
 
 `web.mysite.com` → `api.mysite.com` is same-site, so `SameSite=Lax` cookies are
-sent. `CORS_ORIGINS` on the API must list the frontend origins (the API sends
-`Access-Control-Allow-Credentials: true`). Add each subdomain in your Vercel
-project's Domains settings and point DNS (`A`/`CNAME`).
+sent. `CORS_ORIGINS` lists the frontend origins for CORS *and* feeds Better
+Auth's `trustedOrigins` (the API sends `Access-Control-Allow-Credentials: true`).
+Set `BETTER_AUTH_URL` to the API's public origin. Add each subdomain in your
+Vercel project's Domains settings and point DNS (`A`/`CNAME`).

@@ -1,29 +1,21 @@
-import type { SessionUser } from '@mysite/types'
-import { eq } from 'drizzle-orm'
-import { users } from '../database/schema'
+import { createAuth } from '../database/auth'
 
-type UserRow = typeof users.$inferSelect
+let instance: ReturnType<typeof createAuth> | undefined
 
-export function toSessionUser(user: UserRow): SessionUser {
-  return {
-    id: user.id,
-    email: user.email,
-    name: user.name ?? user.email,
-    roles: user.roles,
-  }
+function createInstance() {
+  const config = useRuntimeConfig()
+
+  return createAuth(useDb(), {
+    secret: config.betterAuthSecret,
+    baseURL: config.betterAuthUrl,
+    trustedOrigins: (config.corsOrigins || '')
+      .split(',')
+      .map(origin => origin.trim())
+      .filter(Boolean),
+  })
 }
 
-export async function getCurrentUser(
-  event: Parameters<typeof getCookie>[0],
-): Promise<SessionUser | null> {
-  const userId = await getSessionUserId(event)
-
-  if (!userId) {
-    return null
-  }
-
-  const db = useDb()
-  const [row] = await db.select().from(users).where(eq(users.id, userId)).limit(1)
-
-  return row ? toSessionUser(row) : null
+export function useAuth() {
+  instance ??= createInstance()
+  return instance
 }

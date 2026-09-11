@@ -1,6 +1,18 @@
 <script setup lang="ts">
-const { user, logout } = useAuth()
-const { mutate: signOut, isLoading: isSigningOut } = logout
+const { user, signOut } = useAuth()
+
+const isSigningOut = ref(false)
+
+async function handleSignOut() {
+  isSigningOut.value = true
+
+  try {
+    await signOut()
+  }
+  finally {
+    isSigningOut.value = false
+  }
+}
 
 useHead({ title: 'App · mysite' })
 </script>
@@ -26,7 +38,7 @@ useHead({ title: 'App · mysite' })
       color="neutral"
       :loading="isSigningOut"
       label="Sign out"
-      @click="signOut()"
+      @click="handleSignOut"
     />
   </section>
 </template>

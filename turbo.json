@@ -11,10 +11,9 @@
       "env": [
         "DATABASE_URL",
         "DATABASE_DRIVER",
-        "REDIS_URL",
+        "BETTER_AUTH_SECRET",
+        "BETTER_AUTH_URL",
         "CORS_ORIGINS",
-        "NUXT_ADMIN_USER",
-        "NUXT_ADMIN_PASSWORD",
         "NUXT_PUBLIC_API_BASE",
         "NUXT_PUBLIC_WEB_URL",
         "NUXT_PUBLIC_APP_URL",
