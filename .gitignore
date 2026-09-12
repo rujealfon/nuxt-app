@@ -7,6 +7,9 @@
 dist
 .vercel
 
+# @nuxt/test-utils generated setup
+.nuxtrc
+
 # Turborepo
 .turbo
 

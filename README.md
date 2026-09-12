@@ -152,6 +152,30 @@ pnpm lint:fix
 For auto-fix on save, install the VS Code ESLint extension and add the
 recommended settings from the config's README.
 
+## Testing
+
+Hermetic [Vitest](https://vitest.dev) + [`@nuxt/test-utils`](https://nuxt.com/docs/4.x/getting-started/testing),
+run from a single root config (`vitest.config.ts`) using projects — no Docker or
+external services required.
+
+```bash
+pnpm test                 # run everything once
+pnpm test:watch           # watch mode
+pnpm test --project api   # one project (unit | api | ui | client | web | app | admin)
+```
+
+- `unit` (node env): pure logic in `packages/{config,types,logger}` and
+  `apps/api/test/unit/`.
+- `api` (e2e): boots the real Nitro server for `apps/api` and asserts the
+  versioning contract — discovery, `X-Api-Version`, and JSON 404s. The rate
+  limiter is disabled with `RATE_LIMIT_ENABLED=false`.
+- `ui`, `client`, `web`, `app`, `admin` (Nuxt env): composables, components,
+  route middleware, and pages via `mockNuxtImport` / `mountSuspended`.
+
+New tests go in a `test/` folder next to the code they cover. CI
+(`.github/workflows/ci.yml`) runs install, lint, type-check, and test on every
+push and pull request.
+
 ## Build
 
 ```bash

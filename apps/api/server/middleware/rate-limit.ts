@@ -8,6 +8,12 @@ const EXEMPT_PREFIXES = ['/api/auth', '/api/health']
 const storage = createRateLimitStorage()
 
 export default defineEventHandler(async (event) => {
+  const config = useRuntimeConfig(event)
+
+  if (!config.rateLimitEnabled) {
+    return
+  }
+
   const path = event.path
 
   const exempt = !path.startsWith('/api/')

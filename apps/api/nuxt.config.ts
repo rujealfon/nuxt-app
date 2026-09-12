@@ -23,5 +23,6 @@ export default defineNuxtConfig({
     betterAuthUrl: process.env.BETTER_AUTH_URL || '',
     redisUrl: process.env.REDIS_URL || '',
     corsOrigins: process.env.CORS_ORIGINS || '',
+    rateLimitEnabled: process.env.RATE_LIMIT_ENABLED !== 'false',
   },
 })
