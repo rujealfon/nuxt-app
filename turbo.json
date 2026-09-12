@@ -1,5 +1,6 @@
 {
   "$schema": "https://v2-10-12.turborepo.dev/schema.json",
+  "ui": "tui",
   "tasks": {
     "nuxt:prepare": {
       "dependsOn": ["^nuxt:prepare"],
