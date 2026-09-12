@@ -91,9 +91,10 @@ ports `55432` and `6381` to match `DATABASE_URL` / `REDIS_URL` in
 sessions live in Postgres.
 
 ```bash
-pnpm db:up     # start postgres + redis + drizzle-studio
+pnpm db:up     # start postgres + redis + drizzle-studio (waits until healthy)
 pnpm db:logs   # tail logs (postgres)
-pnpm db:down   # stop and remove containers
+pnpm db:down   # stop and remove containers (volumes kept)
+pnpm db:reset  # DESTRUCTIVE: down -v (wipes data) then rebuild + up
 ```
 
 - Postgres: `postgres://nuxt_app_user:nuxt_app_password@localhost:55432/nuxt_app_db`
