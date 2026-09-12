@@ -1,6 +1,5 @@
-export default defineEventHandler(() => {
-  return {
-    message: 'Hello from api.mysite.com',
-    version: 'v1',
-  }
+import { v1 } from '@mysite/types'
+
+export default defineVersionedHandler('v1', () => {
+  return v1.helloResponseSchema.parse(getHelloMessage())
 })

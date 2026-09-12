@@ -14,3 +14,6 @@ export const registerSchema = z.object({
 })
 
 export type RegisterCredentials = z.infer<typeof registerSchema>
+
+// Versioned API contracts, namespaced by version (`v1.helloResponseSchema`).
+export * as v1 from './v1'

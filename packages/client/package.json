@@ -12,6 +12,7 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "@mysite/config": "workspace:*",
     "@mysite/types": "workspace:*",
     "@pinia/colada": "^1.4.4",
     "@pinia/colada-nuxt": "^1.1.0",

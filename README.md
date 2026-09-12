@@ -178,6 +178,7 @@ Frontends (`web`, `app`, `admin`) — Production + Preview:
 
 ```
 NUXT_PUBLIC_API_BASE=https://api.mysite.com
+NUXT_PUBLIC_API_VERSION=v1          # optional; defaults to the current version
 NUXT_PUBLIC_WEB_URL=https://web.mysite.com
 NUXT_PUBLIC_APP_URL=https://app.mysite.com
 NUXT_PUBLIC_ADMIN_URL=https://admin.mysite.com
@@ -254,3 +255,39 @@ sent. `CORS_ORIGINS` lists the frontend origins for CORS *and* feeds Better
 Auth's `trustedOrigins` (the API sends `Access-Control-Allow-Credentials: true`).
 Set `BETTER_AUTH_URL` to the API's public origin. Add each subdomain in your
 Vercel project's Domains settings and point DNS (`A`/`CNAME`).
+
+### API versioning
+
+Product endpoints are path-versioned under `/api/<version>/`; infrastructure
+routes are intentionally unversioned — `/api/auth/*` (Better Auth) and
+`/api/health*` (monitoring). An unversioned or unknown product path (e.g.
+`/api/hello`, `/api/v9/hello`) returns a JSON `404`, so clients must be explicit
+about the version.
+
+The registry lives in `packages/config` (`apiVersions`, `currentApiVersion`,
+`deprecatedApiVersions`) — one source of truth shared by the API and the
+frontends. `GET /api` reports what's available:
+
+```json
+{ "current": "v1", "versions": [{ "version": "v1", "deprecated": false }] }
+```
+
+In `apps/api`, version folders are thin HTTP adapters that call the
+version-agnostic domain logic in `server/services/` (auto-imported like
+`server/utils/`). Wrap routes with `defineVersionedHandler('v1', ...)`: it sets
+`X-Api-Version` on every response and adds `Deprecation` + `Sunset` headers once
+the version appears in `deprecatedApiVersions`.
+
+To ship a new version:
+
+1. Add `server/api/v2/**` handlers, reusing `server/services/` where behaviour is
+   unchanged.
+2. Append `'v2'` to `apiVersions` and set `currentApiVersion = 'v2'`.
+3. Mark the old one: `deprecatedApiVersions = { v1: { sunset: '2026-12-31' } }`.
+4. After the sunset date, delete `server/api/v1/**` and drop the registry entry.
+
+Frontends target a version with `NUXT_PUBLIC_API_VERSION` (defaults to
+`currentApiVersion`). `useApi()` from `@mysite/client` returns a `$fetch`
+instance scoped to `<apiBase>/api/<version>` (credentials included) plus an
+`apiUrl(path)` helper for `useFetch`; Better Auth keeps its own unversioned
+client (`useAuthClient`).

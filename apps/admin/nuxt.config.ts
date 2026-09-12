@@ -1,4 +1,4 @@
-import { apiBaseFor, appPorts } from '@mysite/config'
+import { apiBaseFor, appPorts, currentApiVersion } from '@mysite/config'
 
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
@@ -17,6 +17,7 @@ export default defineNuxtConfig({
       appUrl: `http://localhost:${appPorts.app}`,
       adminUrl: `http://localhost:${appPorts.admin}`,
       apiBase: apiBaseFor(process.env.NUXT_PUBLIC_API_BASE),
+      apiVersion: process.env.NUXT_PUBLIC_API_VERSION || currentApiVersion,
     },
   },
 })
