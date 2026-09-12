@@ -5,10 +5,9 @@ import { execSync } from 'node:child_process'
 // reparented and keep holding its port). Mirrors appPorts in packages/config.
 const PORTS = [3000, 3001, 3002, 3003]
 
-for (const port of PORTS) {
-  let pids = []
+function listeners(port) {
   try {
-    pids = execSync(`lsof -ti tcp:${port} -sTCP:LISTEN`, {
+    return execSync(`lsof -ti tcp:${port} -sTCP:LISTEN`, {
       stdio: ['ignore', 'pipe', 'ignore'],
     })
       .toString()
@@ -18,15 +17,47 @@ for (const port of PORTS) {
   }
   catch {
     // Nothing listening.
+    return []
   }
+}
 
-  for (const pid of pids) {
+function signal(pids, name) {
+  for (const { pid, port } of pids) {
+    console.log(`Stopping listener on :${port} (pid ${pid}) — ${name}`)
     try {
-      process.kill(Number(pid), 'SIGKILL')
-      console.log(`Stopped leftover listener on :${port} (pid ${pid})`)
+      process.kill(pid, name)
     }
     catch {
       // Already gone.
     }
   }
+}
+
+// Try to let them shut down cleanly first.
+const target = new Map()
+for (const port of PORTS) {
+  for (const pid of listeners(port)) {
+    target.set(Number(pid), port)
+  }
+}
+
+if (!target.size) {
+  console.log('No dev listeners found.')
+  process.exit(0)
+}
+
+signal([...target].map(([pid, port]) => ({ pid, port })), 'SIGTERM')
+
+// Give processes a moment to exit, then force-kill any survivors.
+await new Promise(resolve => setTimeout(resolve, 1000))
+
+const survivors = []
+for (const port of PORTS) {
+  for (const pid of listeners(port)) {
+    survivors.push({ pid: Number(pid), port })
+  }
+}
+
+if (survivors.length) {
+  signal(survivors, 'SIGKILL')
 }
