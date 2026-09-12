@@ -1,4 +1,4 @@
-import type { LoginCredentials } from '@mysite/types'
+import type { LoginCredentials, RegisterCredentials } from '@mysite/types'
 import { createAuthClient } from 'better-auth/vue'
 
 let client: ReturnType<typeof createAuthClient> | undefined
@@ -32,6 +32,14 @@ export function useAuth() {
     }
   }
 
+  async function signUp(credentials: RegisterCredentials) {
+    const { error } = await client.signUp.email(credentials)
+
+    if (error) {
+      throw new Error(error.message || 'Unable to sign up')
+    }
+  }
+
   async function signOut() {
     await client.signOut()
   }
@@ -41,6 +49,7 @@ export function useAuth() {
     session,
     isPending,
     signIn,
+    signUp,
     signOut,
   }
 }

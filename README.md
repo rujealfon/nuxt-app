@@ -241,8 +241,10 @@ sessions in Redis. The API's own routes get the same Redis-backed limiter
 exempt so monitoring isn't throttled).
 
 The `@mysite/client` layer wraps the Better Auth Vue client: `app` uses
-`useAuth()` for sign-in/out and session state; `admin` adds a global route
-middleware requiring `user.role === 'admin'`.
+`useAuth()` for sign-in/out, sign-up and session state; `admin` adds a global
+route middleware requiring `user.role === 'admin'`. `app` exposes open
+registration at `/register` (new users get `role: 'user'`; only the seed user is
+an admin).
 
 `web.mysite.com` → `api.mysite.com` is same-site, so `SameSite=Lax` cookies are
 sent. `CORS_ORIGINS` lists the frontend origins for CORS *and* feeds Better

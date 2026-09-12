@@ -1,42 +1,43 @@
 <script setup lang="ts">
-import type { LoginCredentials } from '@mysite/types'
+import type { RegisterCredentials } from '@mysite/types'
 import type { AuthFormField, FormSubmitEvent } from '@nuxt/ui'
-import { loginSchema } from '@mysite/types'
+import { registerSchema } from '@mysite/types'
 
-const { signIn, isPending } = useAuth()
+const { signUp, isPending } = useAuth()
 
 const fields: AuthFormField[] = [
+  { name: 'name', type: 'text', label: 'Name', placeholder: 'Your name', required: true },
   { name: 'email', type: 'email', label: 'Email', placeholder: 'you@example.com', required: true },
   { name: 'password', type: 'password', label: 'Password', placeholder: '••••••••', required: true },
 ]
 
 const errorMessage = ref('')
 
-async function onSubmit(event: FormSubmitEvent<LoginCredentials>) {
+async function onSubmit(event: FormSubmitEvent<RegisterCredentials>) {
   errorMessage.value = ''
 
   try {
-    await signIn(event.data)
+    await signUp(event.data)
     await navigateTo('/')
   }
-  catch {
-    errorMessage.value = 'Invalid email or password'
+  catch (error) {
+    errorMessage.value = error instanceof Error ? error.message : 'Unable to create your account'
   }
 }
 
-useHead({ title: 'Sign in · mysite' })
+useHead({ title: 'Create account · mysite' })
 </script>
 
 <template>
   <div class="flex min-h-dvh items-center justify-center px-6">
     <UPageCard class="w-full max-w-md">
       <UAuthForm
-        :schema="loginSchema"
+        :schema="registerSchema"
         :fields="fields"
-        title="Welcome back"
-        description="Sign in to your account."
-        icon="i-lucide-lock"
-        :submit="{ label: 'Sign in', block: true, loading: isPending }"
+        title="Create your account"
+        description="Sign up to get started."
+        icon="i-lucide-user-plus"
+        :submit="{ label: 'Create account', block: true, loading: isPending }"
         @submit="onSubmit"
       >
         <template #validation>
@@ -49,9 +50,9 @@ useHead({ title: 'Sign in · mysite' })
         </template>
       </UAuthForm>
       <p class="mt-4 text-center text-sm text-muted">
-        New here?
-        <NuxtLink to="/register" class="text-primary font-medium">
-          Create an account
+        Already have an account?
+        <NuxtLink to="/login" class="text-primary font-medium">
+          Sign in
         </NuxtLink>
       </p>
     </UPageCard>
