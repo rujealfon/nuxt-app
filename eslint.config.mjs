@@ -1,4 +1,5 @@
 import antfu from '@antfu/eslint-config'
+import vuejsAccessibility from 'eslint-plugin-vuejs-accessibility'
 
 export default antfu({
   type: 'app',
@@ -7,6 +8,14 @@ export default antfu({
   ignores: [
     '**/pnpm-lock.yaml',
   ],
+  formatters: {
+    css: 'prettier',
+    prettierOptions: {
+      plugins: ['prettier-plugin-css-order'],
+      cssDeclarationSorterKeepOverrides: false,
+      cssDeclarationSorterOrder: 'alphabetical',
+    },
+  },
 }, {
   rules: {
     // Nuxt and Nitro expose these as Node globals.
@@ -20,4 +29,13 @@ export default antfu({
   rules: {
     'no-console': 'off',
   },
+}, {
+  // Wire the flat/recommended rules to Vue files only, so the plugin's
+  // global parser/globals don't override @antfu's per-file setup.
+  name: 'mysite/vuejs-accessibility',
+  files: ['**/*.vue'],
+  plugins: {
+    'vuejs-accessibility': vuejsAccessibility,
+  },
+  rules: vuejsAccessibility.configs['flat/recommended'][1].rules,
 })

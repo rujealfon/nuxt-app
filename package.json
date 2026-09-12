@@ -20,14 +20,24 @@
     "lint:fix": "eslint --fix",
     "type-check": "turbo run type-check",
     "clean": "turbo run clean",
-    "postinstall": "turbo run nuxt:prepare"
+    "postinstall": "turbo run nuxt:prepare",
+    "prepare": "husky"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^9.5.1",
     "eslint": "^10.10.0",
+    "eslint-plugin-format": "^2.0.1",
+    "eslint-plugin-vuejs-accessibility": "^2.6.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.5.1",
     "nuxt": "^4.5.2",
+    "prettier": "^3.9.6",
+    "prettier-plugin-css-order": "^2.2.0",
     "turbo": "^2.10.12",
     "vue": "^3.5.42",
     "vue-router": "^5.3.1"
+  },
+  "lint-staged": {
+    "*": "eslint --fix --no-warn-ignored"
   }
 }
