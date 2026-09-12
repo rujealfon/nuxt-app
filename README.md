@@ -91,7 +91,7 @@ ports `55432` and `6381` to match `DATABASE_URL` / `REDIS_URL` in
 sessions live in Postgres.
 
 ```bash
-pnpm db:up     # start postgres + redis
+pnpm db:up     # start postgres + redis + drizzle-studio
 pnpm db:logs   # tail logs (postgres)
 pnpm db:down   # stop and remove containers
 ```
@@ -99,10 +99,12 @@ pnpm db:down   # stop and remove containers
 - Postgres: `postgres://nuxt_app_user:nuxt_app_password@localhost:55432/nuxt_app_db`
 - Redis: `redis://localhost:6381`
 
-Drizzle Studio runs in its own container (host port `4984`):
+Drizzle Studio is part of the same compose project (host port `4984`), so
+`db:up` starts it too. Use `db:studio` to rebuild its image after dependency
+changes:
 
 ```bash
-pnpm db:studio   # build + start drizzle-studio
+pnpm db:studio   # rebuild + start drizzle-studio
 ```
 
 Open <https://local.drizzle.studio?port=4984> to browse the database. (The
