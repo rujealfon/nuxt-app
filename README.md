@@ -15,8 +15,9 @@ Shared packages:
 | --- | --- |
 | `@nuxt-app/ui` | Nuxt layer: [Nuxt UI](https://ui.nuxt.com/) components, theme, `useSite()`, [VueUse](https://vueuse.org/) |
 | `@nuxt-app/client` | Nuxt layer: [Pinia](https://pinia.vuejs.org/) + [Pinia Colada](https://pinia-colada.esm.dev/), Better Auth Vue client (`useAuth()`, `useAuthClient()`) |
-| `@nuxt-app/types` | Shared Zod schemas + inferred types (login) |
-| `@nuxt-app/config` | Ports, API base helper |
+| `@nuxt-app/types` | Shared Zod schemas + inferred types for authentication and versioned API contracts |
+| `@nuxt-app/config` | Ports, API base helper, API version registry |
+| `@nuxt-app/logger` | Shared Pino logger factory |
 
 Layers are extended by package name: `web` extends `@nuxt-app/ui`; `app`/`admin` extend
 `@nuxt-app/ui` + `@nuxt-app/client`. `apps/api` uses no layer — its Better Auth setup lives in
@@ -31,7 +32,25 @@ Rendering modes:
 | Admin | SPA (`ssr: false`), protected by Better Auth (`role === 'admin'`) |
 | API | Server (Nitro routes) |
 
+## Contributor guides
+
+Read [AGENTS.md](AGENTS.md) for repository-wide coding, testing, and PR
+conventions. When changing an app, also read its guide:
+
+- [Web](apps/web/AGENTS.md): public pages, prerendering, and navigation.
+- [App](apps/app/AGENTS.md): user authentication flows and API clients.
+- [Admin](apps/admin/AGENTS.md): role-based routing and admin interface tests.
+- [API](apps/api/AGENTS.md): versioned endpoints, services, and database changes.
+
+The root guide applies throughout the repository; app guides add guidance for
+their directories. Keep contributor rules in these guides and setup, operation,
+and deployment instructions in this README. Update the relevant documentation
+when changing those workflows.
+
 ## Setup
+
+Use Node.js 22 (matching CI) and the pnpm version pinned in `package.json`.
+Run the commands below from the repository root.
 
 ```bash
 pnpm install
@@ -42,7 +61,13 @@ Copy the env examples for the apps you run:
 ```bash
 cp apps/api/.env.example apps/api/.env
 cp apps/web/.env.example apps/web/.env
+cp apps/app/.env.example apps/app/.env
+cp apps/admin/.env.example apps/admin/.env
 ```
+
+The frontend examples use production URLs. For local development, set the
+`NUXT_PUBLIC_*_URL` values to the corresponding `http://localhost:3000`–`3002`
+origins and `NUXT_PUBLIC_API_BASE` in app/admin to `http://localhost:3003`.
 
 ## Development
 
@@ -87,7 +112,7 @@ pnpm clean       # turbo run clean (nuxt cleanup)
 
 Postgres 18 and Redis 8 run in Docker (`docker-compose.yml`), exposed on host
 ports `55432` and `6381` to match `DATABASE_URL` / `REDIS_URL` in
-`apps/api/.env.example`. Redis is used only by the Better Auth rate limiter —
+`apps/api/.env.example`. Redis backs Better Auth and product API rate limiting;
 sessions live in Postgres.
 
 ```bash
@@ -165,16 +190,22 @@ pnpm test --project api   # one project (unit | api | ui | client | web | app | 
 ```
 
 - `unit` (node env): pure logic in `packages/{config,types,logger}` and
-  `apps/api/test/unit/`.
+  colocated tests under `apps/api/server/`.
 - `api` (e2e): boots the real Nitro server for `apps/api` and asserts the
   versioning contract — discovery, `X-Api-Version`, and JSON 404s. The rate
   limiter is disabled with `RATE_LIMIT_ENABLED=false`.
 - `ui`, `client`, `web`, `app`, `admin` (Nuxt env): composables, components,
   route middleware, and pages via `mockNuxtImport` / `mountSuspended`.
 
-New tests go in a `test/` folder next to the code they cover. CI
-(`.github/workflows/ci.yml`) runs install, lint, type-check, and test on every
-push and pull request.
+Name tests `*.spec.ts`. Frontend and Nuxt-layer tests may live under `app/`
+beside source files or in `test/`; shared config/types/logger tests live in
+their package's `test/` directory. Colocate API unit tests under `server/`
+and put API integration tests in `apps/api/test/e2e/`. See
+[`vitest.config.ts`](vitest.config.ts) for the discovery patterns.
+
+CI ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs install, lint,
+type-check, and test on pushes to `main` and on pull requests. No coverage
+threshold is configured; cover changed behavior and regressions.
 
 ## Build
 
