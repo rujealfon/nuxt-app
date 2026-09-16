@@ -17,6 +17,8 @@ Run from the repository root:
 
 ## Endpoint Conventions
 
+When adding protected business operations, changing error responses, coordinating database writes, or introducing external side effects, read [the backend patterns guide](../../docs/backend-patterns.md). Its planned helpers and error mapping must be implemented and tested before being treated as runtime behavior.
+
 Keep product endpoints under `server/api/v1/` (or another registered version), named with HTTP suffixes such as `hello.get.ts`. Wrap them with `defineVersionedHandler('v1', ...)`, delegate domain logic to services, and use response schemas from `@nuxt-app/types`. Maintain the version registry in `packages/config` when introducing versions.
 
 Keep `/api/auth/*` and `/api/health*` unversioned. Preserve version headers and JSON 404 responses for unknown product routes. Use `requireUser(event)` for authenticated endpoints and add role checks where required; it only checks authentication.

@@ -55,6 +55,10 @@ foundations remain in `packages/`. API handlers call explicitly imported
 `server/services/<domain>/` entrypoints. See [the architecture guide](docs/architecture.md)
 for dependency rules, current examples, and when to extract shared code.
 
+For use cases, authorization policies, API errors, transactions, and background
+work, see [Backend Patterns and Growth Plan](docs/backend-patterns.md). It records
+what to introduce as features grow and how to verify each pattern.
+
 ## Setup
 
 Use Node.js 22 (matching CI) and the pnpm version pinned in `package.json`.

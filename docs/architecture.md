@@ -76,6 +76,14 @@ shared domain packages only when multiple apps need the same behavior. Use Nuxt
 layers for reusable Nuxt configuration and capabilities; ordinary features do
 not need their own layer.
 
+## Backend growth
+
+For protected business operations, product error contracts, persistence,
+multi-write transactions, and durable external effects, follow
+[Backend Patterns and Growth Plan](backend-patterns.md). It distinguishes current
+runtime behavior from implementation conventions and defines adoption triggers
+and verification requirements for each pattern.
+
 ## Verification
 
 Run `pnpm lint`, `pnpm type-check`, and `pnpm test` before review. Architecture
