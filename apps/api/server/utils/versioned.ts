@@ -1,5 +1,5 @@
-import type { ApiVersion } from '@mysite/config'
-import { deprecatedApiVersions } from '@mysite/config'
+import type { ApiVersion } from '@nuxt-app/config'
+import { deprecatedApiVersions } from '@nuxt-app/config'
 
 type VersionedHandler = Parameters<typeof defineEventHandler>[0]
 

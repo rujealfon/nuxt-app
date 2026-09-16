@@ -3,6 +3,6 @@ import { getHelloMessage } from './hello'
 
 describe('getHelloMessage', () => {
   it('returns the service greeting', () => {
-    expect(getHelloMessage()).toEqual({ message: 'Hello from api.mysite.com' })
+    expect(getHelloMessage()).toEqual({ message: 'Hello from api.nuxt-app.com' })
   })
 })

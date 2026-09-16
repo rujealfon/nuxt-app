@@ -1,10 +1,10 @@
-import { apiBaseFor, appPorts, currentApiVersion } from '@mysite/config'
+import { apiBaseFor, appPorts, currentApiVersion } from '@nuxt-app/config'
 
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
   ssr: false,
-  extends: ['@mysite/ui', '@mysite/client'],
+  extends: ['@nuxt-app/ui', '@nuxt-app/client'],
   app: {
     head: {
       meta: [{ name: 'robots', content: 'noindex, nofollow' }],

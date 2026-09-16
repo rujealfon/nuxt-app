@@ -23,7 +23,7 @@ describe('api versioning', async () => {
 
     expect(response.status).toBe(200)
     expect(response.headers.get('x-api-version')).toBe('v1')
-    expect(await response.json()).toEqual({ message: 'Hello from api.mysite.com' })
+    expect(await response.json()).toEqual({ message: 'Hello from api.nuxt-app.com' })
   })
 
   it('returns a JSON 404 for unversioned product paths', async () => {

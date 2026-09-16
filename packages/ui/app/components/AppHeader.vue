@@ -10,7 +10,7 @@ const links = [
 
 <template>
   <header class="flex items-center justify-between gap-4 border-b border-default px-6 py-4">
-    <strong class="text-highlighted">mysite</strong>
+    <strong class="text-highlighted">nuxt-app</strong>
     <nav class="flex items-center gap-1">
       <UButton
         v-for="link in links"

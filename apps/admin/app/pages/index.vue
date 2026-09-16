@@ -15,7 +15,7 @@ async function handleSignOut() {
   }
 }
 
-useHead({ title: 'Admin · mysite' })
+useHead({ title: 'Admin · nuxt-app' })
 </script>
 
 <template>
@@ -24,7 +24,7 @@ useHead({ title: 'Admin · mysite' })
       Admin
     </h1>
     <p class="mt-3 text-muted">
-      Internal operations console served from admin.mysite.com.
+      Internal operations console served from admin.nuxt-app.com.
     </p>
     <p v-if="user" class="mt-3 text-default">
       Signed in as <strong>{{ user.email }}</strong>

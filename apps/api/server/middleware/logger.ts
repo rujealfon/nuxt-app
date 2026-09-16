@@ -1,4 +1,4 @@
-import type { Logger } from '@mysite/logger'
+import type { Logger } from '@nuxt-app/logger'
 
 // Health checks are hit constantly by monitoring; keep routine successes at
 // debug so they don't drown the request log.

@@ -32,7 +32,7 @@ export default antfu({
 }, {
   // Wire the flat/recommended rules to Vue files only, so the plugin's
   // global parser/globals don't override @antfu's per-file setup.
-  name: 'mysite/vuejs-accessibility',
+  name: 'nuxt-app/vuejs-accessibility',
   files: ['**/*.vue'],
   plugins: {
     'vuejs-accessibility': vuejsAccessibility,

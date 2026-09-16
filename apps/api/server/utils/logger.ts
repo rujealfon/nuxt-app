@@ -1,5 +1,5 @@
-import type { Logger } from '@mysite/logger'
-import { createLogger } from '@mysite/logger'
+import type { Logger } from '@nuxt-app/logger'
+import { createLogger } from '@nuxt-app/logger'
 
 let logger: Logger | undefined
 

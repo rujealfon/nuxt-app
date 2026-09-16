@@ -14,7 +14,7 @@ async function handleSignOut() {
   }
 }
 
-useHead({ title: 'App · mysite' })
+useHead({ title: 'App · nuxt-app' })
 </script>
 
 <template>

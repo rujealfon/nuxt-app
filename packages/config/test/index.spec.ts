@@ -7,7 +7,7 @@ describe('apiBaseFor', () => {
   })
 
   it('returns the provided base unchanged', () => {
-    expect(apiBaseFor('https://api.mysite.com')).toBe('https://api.mysite.com')
+    expect(apiBaseFor('https://api.nuxt-app.com')).toBe('https://api.nuxt-app.com')
   })
 })
 

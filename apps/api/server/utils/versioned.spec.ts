@@ -6,7 +6,7 @@ const defineEventHandler = vi.fn((handler: unknown) => handler)
 vi.stubGlobal('setHeader', setHeader)
 vi.stubGlobal('defineEventHandler', defineEventHandler)
 
-const { deprecatedApiVersions } = await import('@mysite/config')
+const { deprecatedApiVersions } = await import('@nuxt-app/config')
 const { defineVersionedHandler } = await import('./versioned')
 
 describe('defineVersionedHandler', () => {

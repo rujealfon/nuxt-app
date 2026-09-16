@@ -7,11 +7,15 @@
 dist
 .vercel
 
-# @nuxt/test-utils generated setup
-.nuxtrc
-
 # Turborepo
 .turbo
+
+# Playwright
+.playwright-mcp
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
 
 # Node dependencies
 node_modules
@@ -24,7 +28,6 @@ logs
 .DS_Store
 .fleet
 .idea
-.playwright-mcp
 
 # Local env files
 .env

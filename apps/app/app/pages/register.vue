@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import type { RegisterCredentials } from '@mysite/types'
+import type { RegisterCredentials } from '@nuxt-app/types'
 import type { AuthFormField, FormSubmitEvent } from '@nuxt/ui'
-import { registerSchema } from '@mysite/types'
+import { registerSchema } from '@nuxt-app/types'
 
 const { signUp, isPending } = useAuth()
 
@@ -25,7 +25,7 @@ async function onSubmit(event: FormSubmitEvent<RegisterCredentials>) {
   }
 }
 
-useHead({ title: 'Create account · mysite' })
+useHead({ title: 'Create account · nuxt-app' })
 </script>
 
 <template>

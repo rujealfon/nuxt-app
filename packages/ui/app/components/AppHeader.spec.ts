@@ -7,7 +7,7 @@ describe('appHeader', () => {
     const wrapper = await mountSuspended(AppHeader)
     const text = wrapper.text()
 
-    expect(text).toContain('mysite')
+    expect(text).toContain('nuxt-app')
     expect(text).toContain('Home')
     expect(text).toContain('App')
     expect(text).toContain('Admin')

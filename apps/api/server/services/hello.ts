@@ -1,5 +1,5 @@
 export function getHelloMessage() {
   return {
-    message: 'Hello from api.mysite.com',
+    message: 'Hello from api.nuxt-app.com',
   }
 }

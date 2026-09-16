@@ -1,5 +1,5 @@
 {
-  "name": "@mysite/config",
+  "name": "@nuxt-app/config",
   "type": "module",
   "version": "0.0.0",
   "private": true,

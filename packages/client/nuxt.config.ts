@@ -1,4 +1,4 @@
-import { currentApiVersion } from '@mysite/config'
+import { currentApiVersion } from '@nuxt-app/config'
 
 export default defineNuxtConfig({
   modules: [

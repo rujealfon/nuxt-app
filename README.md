@@ -1,25 +1,25 @@
-# mysite
+# nuxt-app
 
 pnpm monorepo with four independently deployable Nuxt apps sharing common packages.
 
 | App | Subdomain | Local port | Source |
 | --- | --- | --- | --- |
-| Web | `web.mysite.com` | 3000 | `apps/web` |
-| App | `app.mysite.com` | 3001 | `apps/app` |
-| Admin | `admin.mysite.com` | 3002 | `apps/admin` |
-| API | `api.mysite.com` | 3003 | `apps/api` |
+| Web | `web.nuxt-app.com` | 3000 | `apps/web` |
+| App | `app.nuxt-app.com` | 3001 | `apps/app` |
+| Admin | `admin.nuxt-app.com` | 3002 | `apps/admin` |
+| API | `api.nuxt-app.com` | 3003 | `apps/api` |
 
 Shared packages:
 
 | Package | Purpose |
 | --- | --- |
-| `@mysite/ui` | Nuxt layer: [Nuxt UI](https://ui.nuxt.com/) components, theme, `useSite()`, [VueUse](https://vueuse.org/) |
-| `@mysite/client` | Nuxt layer: [Pinia](https://pinia.vuejs.org/) + [Pinia Colada](https://pinia-colada.esm.dev/), Better Auth Vue client (`useAuth()`, `useAuthClient()`) |
-| `@mysite/types` | Shared Zod schemas + inferred types (login) |
-| `@mysite/config` | Ports, API base helper |
+| `@nuxt-app/ui` | Nuxt layer: [Nuxt UI](https://ui.nuxt.com/) components, theme, `useSite()`, [VueUse](https://vueuse.org/) |
+| `@nuxt-app/client` | Nuxt layer: [Pinia](https://pinia.vuejs.org/) + [Pinia Colada](https://pinia-colada.esm.dev/), Better Auth Vue client (`useAuth()`, `useAuthClient()`) |
+| `@nuxt-app/types` | Shared Zod schemas + inferred types (login) |
+| `@nuxt-app/config` | Ports, API base helper |
 
-Layers are extended by package name: `web` extends `@mysite/ui`; `app`/`admin` extend
-`@mysite/ui` + `@mysite/client`. `apps/api` uses no layer — its Better Auth setup lives in
+Layers are extended by package name: `web` extends `@nuxt-app/ui`; `app`/`admin` extend
+`@nuxt-app/ui` + `@nuxt-app/client`. `apps/api` uses no layer — its Better Auth setup lives in
 `apps/api/server/database/auth.ts` and `apps/api/server/utils/auth.ts`.
 
 Rendering modes:
@@ -118,15 +118,15 @@ The API uses [Drizzle ORM](https://orm.drizzle.team) with
 from the generated `auth-schema.ts`); server helpers are auto-imported via `useDb()`.
 
 ```bash
-pnpm --filter @mysite/api db:generate       # generate SQL migrations
-pnpm --filter @mysite/api db:migrate        # apply migrations
-pnpm --filter @mysite/api db:seed           # upsert the dev admin user
-pnpm --filter @mysite/api db:push           # push schema without migrations (prototyping)
-pnpm --filter @mysite/api db:studio         # run Drizzle Studio locally (no Docker)
-pnpm --filter @mysite/api db:auth:generate  # regenerate the Better Auth Drizzle schema
+pnpm --filter @nuxt-app/api db:generate       # generate SQL migrations
+pnpm --filter @nuxt-app/api db:migrate        # apply migrations
+pnpm --filter @nuxt-app/api db:seed           # upsert the dev admin user
+pnpm --filter @nuxt-app/api db:push           # push schema without migrations (prototyping)
+pnpm --filter @nuxt-app/api db:studio         # run Drizzle Studio locally (no Docker)
+pnpm --filter @nuxt-app/api db:auth:generate  # regenerate the Better Auth Drizzle schema
 ```
 
-The seed signs up `dev@mysite.com` / `password123` (override with `SEED_EMAIL` /
+The seed signs up `dev@nuxt-app.com` / `password123` (override with `SEED_EMAIL` /
 `SEED_PASSWORD`) through Better Auth and grants it the `admin` role.
 
 `GET /api/health/ready` pings Postgres and Redis.
@@ -136,7 +136,7 @@ The seed signs up `dev@mysite.com` / `password123` (override with `SEED_EMAIL` /
 Add to `/etc/hosts`:
 
 ```
-127.0.0.1 web.local.mysite.com app.local.mysite.com admin.local.mysite.com api.local.mysite.com
+127.0.0.1 web.local.nuxt-app.com app.local.nuxt-app.com admin.local.nuxt-app.com api.local.nuxt-app.com
 ```
 
 ## Lint
@@ -201,11 +201,11 @@ For every project:
 Frontends (`web`, `app`, `admin`) — Production + Preview:
 
 ```
-NUXT_PUBLIC_API_BASE=https://api.mysite.com
+NUXT_PUBLIC_API_BASE=https://api.nuxt-app.com
 NUXT_PUBLIC_API_VERSION=v1          # optional; defaults to the current version
-NUXT_PUBLIC_WEB_URL=https://web.mysite.com
-NUXT_PUBLIC_APP_URL=https://app.mysite.com
-NUXT_PUBLIC_ADMIN_URL=https://admin.mysite.com
+NUXT_PUBLIC_WEB_URL=https://web.nuxt-app.com
+NUXT_PUBLIC_APP_URL=https://app.nuxt-app.com
+NUXT_PUBLIC_ADMIN_URL=https://admin.nuxt-app.com
 ```
 
 Admin additionally needs none — it signs in through the same Better Auth API and
@@ -216,10 +216,10 @@ API (`apps/api`) — Production + Preview:
 ```
 DATABASE_URL=postgresql://...@ep-xxx-pooler.<region>.aws.neon.tech/neondb?sslmode=require
 DATABASE_DRIVER=neon
-BETTER_AUTH_URL=https://api.mysite.com
+BETTER_AUTH_URL=https://api.nuxt-app.com
 BETTER_AUTH_SECRET=            # openssl rand -base64 32
 REDIS_URL=rediss://default:password@host:port
-CORS_ORIGINS=https://web.mysite.com,https://app.mysite.com,https://admin.mysite.com
+CORS_ORIGINS=https://web.nuxt-app.com,https://app.nuxt-app.com,https://admin.nuxt-app.com
 ```
 
 ### Managed services
@@ -246,8 +246,8 @@ returns a stable `NodePgDatabase` type, so app code never branches on the driver
 against the Neon pooled URL (not from the Vercel build):
 
 ```bash
-pnpm --filter @mysite/api db:generate
-pnpm --filter @mysite/api db:migrate
+pnpm --filter @nuxt-app/api db:generate
+pnpm --filter @nuxt-app/api db:migrate
 ```
 
 ### Auth and DNS
@@ -268,13 +268,13 @@ sessions in Redis. The API's own routes get the same Redis-backed limiter
 `/api/auth/*` and `/api/health*` is limited per IP + route (health checks are
 exempt so monitoring isn't throttled).
 
-The `@mysite/client` layer wraps the Better Auth Vue client: `app` uses
+The `@nuxt-app/client` layer wraps the Better Auth Vue client: `app` uses
 `useAuth()` for sign-in/out, sign-up and session state; `admin` adds a global
 route middleware requiring `user.role === 'admin'`. `app` exposes open
 registration at `/register` (new users get `role: 'user'`; only the seed user is
 an admin).
 
-`web.mysite.com` → `api.mysite.com` is same-site, so `SameSite=Lax` cookies are
+`web.nuxt-app.com` → `api.nuxt-app.com` is same-site, so `SameSite=Lax` cookies are
 sent. `CORS_ORIGINS` lists the frontend origins for CORS *and* feeds Better
 Auth's `trustedOrigins` (the API sends `Access-Control-Allow-Credentials: true`).
 Set `BETTER_AUTH_URL` to the API's public origin. Add each subdomain in your
@@ -311,7 +311,7 @@ To ship a new version:
 4. After the sunset date, delete `server/api/v1/**` and drop the registry entry.
 
 Frontends target a version with `NUXT_PUBLIC_API_VERSION` (defaults to
-`currentApiVersion`). `useApi()` from `@mysite/client` returns a `$fetch`
+`currentApiVersion`). `useApi()` from `@nuxt-app/client` returns a `$fetch`
 instance scoped to `<apiBase>/api/<version>` (credentials included) plus an
 `apiUrl(path)` helper for `useFetch`; Better Auth keeps its own unversioned
 client (`useAuthClient`).

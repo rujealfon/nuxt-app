@@ -1,4 +1,4 @@
-import { deprecatedApiVersions } from '@mysite/config'
+import { deprecatedApiVersions } from '@nuxt-app/config'
 import { describe, expect, it } from 'vitest'
 import { isApiVersion, versionMeta } from './api-version'
 

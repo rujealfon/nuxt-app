@@ -1,5 +1,5 @@
 {
-  "name": "@mysite/api",
+  "name": "@nuxt-app/api",
   "type": "module",
   "version": "0.0.0",
   "private": true,
@@ -19,10 +19,10 @@
     "clean": "nuxt cleanup"
   },
   "dependencies": {
-    "@mysite/config": "workspace:*",
-    "@mysite/logger": "workspace:*",
-    "@mysite/types": "workspace:*",
     "@neondatabase/serverless": "^1.1.0",
+    "@nuxt-app/config": "workspace:*",
+    "@nuxt-app/logger": "workspace:*",
+    "@nuxt-app/types": "workspace:*",
     "better-auth": "^1.7.4",
     "drizzle-orm": "^0.45.2",
     "ioredis": "^5.11.1",

@@ -1,9 +1,9 @@
-import { appPorts } from '@mysite/config'
+import { appPorts } from '@nuxt-app/config'
 
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
-  extends: ['@mysite/ui'],
+  extends: ['@nuxt-app/ui'],
   routeRules: {
     '/': { prerender: true },
   },

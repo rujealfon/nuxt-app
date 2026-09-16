@@ -1,4 +1,4 @@
-import type { LoginCredentials, RegisterCredentials } from '@mysite/types'
+import type { LoginCredentials, RegisterCredentials } from '@nuxt-app/types'
 import { createAuthClient } from 'better-auth/vue'
 
 let client: ReturnType<typeof createAuthClient> | undefined

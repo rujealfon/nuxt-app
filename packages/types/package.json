@@ -1,5 +1,5 @@
 {
-  "name": "@mysite/types",
+  "name": "@nuxt-app/types",
   "type": "module",
   "version": "0.0.0",
   "private": true,

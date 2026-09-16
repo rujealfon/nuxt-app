@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import type { LoginCredentials } from '@mysite/types'
+import type { LoginCredentials } from '@nuxt-app/types'
 import type { AuthFormField, FormSubmitEvent } from '@nuxt/ui'
-import { loginSchema } from '@mysite/types'
+import { loginSchema } from '@nuxt-app/types'
 
 const { signIn, isPending } = useAuth()
 
@@ -24,7 +24,7 @@ async function onSubmit(event: FormSubmitEvent<LoginCredentials>) {
   }
 }
 
-useHead({ title: 'Sign in · mysite' })
+useHead({ title: 'Sign in · nuxt-app' })
 </script>
 
 <template>

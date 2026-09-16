@@ -1,5 +1,5 @@
-import type { ApiVersion } from '@mysite/config'
-import { apiVersions, currentApiVersion, deprecatedApiVersions } from '@mysite/config'
+import type { ApiVersion } from '@nuxt-app/config'
+import { apiVersions, currentApiVersion, deprecatedApiVersions } from '@nuxt-app/config'
 
 export { apiVersions, currentApiVersion }
 export type { ApiVersion }

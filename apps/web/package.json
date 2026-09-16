@@ -1,5 +1,5 @@
 {
-  "name": "@mysite/web",
+  "name": "@nuxt-app/web",
   "type": "module",
   "version": "0.0.0",
   "private": true,
@@ -14,8 +14,8 @@
     "clean": "nuxt cleanup"
   },
   "dependencies": {
-    "@mysite/config": "workspace:*",
-    "@mysite/ui": "workspace:*",
+    "@nuxt-app/config": "workspace:*",
+    "@nuxt-app/ui": "workspace:*",
     "@nuxt/ui": "^4.11.1",
     "nuxt": "^4.5.2",
     "vue": "^3.5.42",

@@ -13,7 +13,7 @@ describe('web index page', () => {
   it('renders the hero', async () => {
     const wrapper = await mountSuspended(IndexPage)
 
-    expect(wrapper.text()).toContain('Welcome to mysite')
+    expect(wrapper.text()).toContain('Welcome to nuxt-app')
   })
 
   it('opens the app in a new context', async () => {

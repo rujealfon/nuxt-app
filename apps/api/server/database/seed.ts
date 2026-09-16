@@ -12,7 +12,7 @@ catch {
   // .env is optional; fall back to the process environment.
 }
 
-const email = process.env.SEED_EMAIL || 'dev@mysite.com'
+const email = process.env.SEED_EMAIL || 'dev@nuxt-app.com'
 const password = process.env.SEED_PASSWORD || 'password123'
 
 const connectionString = process.env.DATABASE_URL

@@ -22,7 +22,7 @@ export function createAuth(
   config: AuthConfig,
 ) {
   return betterAuth({
-    appName: 'mysite',
+    appName: 'nuxt-app',
     baseURL: config.baseURL,
     secret: config.secret,
     database: drizzleAdapter(db, {
