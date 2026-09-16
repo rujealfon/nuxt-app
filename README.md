@@ -47,6 +47,14 @@ their directories. Keep contributor rules in these guides and setup, operation,
 and deployment instructions in this README. Update the relevant documentation
 when changing those workflows.
 
+## Architecture
+
+Substantial frontend behavior lives in app-local `app/features/<feature>/`
+modules. Route files compose their public exports; shared Nuxt UI and client
+foundations remain in `packages/`. API handlers call explicitly imported
+`server/services/<domain>/` entrypoints. See [the architecture guide](docs/architecture.md)
+for dependency rules, current examples, and when to extract shared code.
+
 ## Setup
 
 Use Node.js 22 (matching CI) and the pnpm version pinned in `package.json`.
@@ -189,8 +197,8 @@ pnpm test:watch           # watch mode
 pnpm test --project api   # one project (unit | api | ui | client | web | app | admin)
 ```
 
-- `unit` (node env): pure logic in `packages/{config,types,logger}` and
-  colocated tests under `apps/api/server/`.
+- `unit` (node env): architecture checks in `test/`, pure logic in
+  `packages/{config,types,logger}`, and colocated tests under `apps/api/server/`.
 - `api` (e2e): boots the real Nitro server for `apps/api` and asserts the
   versioning contract — discovery, `X-Api-Version`, and JSON 404s. The rate
   limiter is disabled with `RATE_LIMIT_ENABLED=false`.
@@ -328,8 +336,9 @@ frontends. `GET /api` reports what's available:
 ```
 
 In `apps/api`, version folders are thin HTTP adapters that call the
-version-agnostic domain logic in `server/services/` (auto-imported like
-`server/utils/`). Wrap routes with `defineVersionedHandler('v1', ...)`: it sets
+version-agnostic domain logic in `server/services/<domain>/`. Import each
+domain explicitly through its `index.ts` entrypoint; infrastructure helpers in
+`server/utils/` remain auto-imported. Wrap routes with `defineVersionedHandler('v1', ...)`: it sets
 `X-Api-Version` on every response and adds `Deprecation` + `Sunset` headers once
 the version appears in `deprecatedApiVersions`.
 

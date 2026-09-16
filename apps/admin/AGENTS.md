@@ -4,7 +4,7 @@
 
 Follow the shared conventions and PR checks in [the root guide](../../AGENTS.md). This directory contains the administrator SPA, running on port 3002 with `ssr: false`. It extends `@nuxt-app/ui` and `@nuxt-app/client`; reusable components and authentication helpers belong in those packages.
 
-Pages live in `app/pages/`, and `app/middleware/auth.global.ts` controls route access. The Nuxt configuration adds `noindex, nofollow` metadata; preserve it when changing app metadata.
+Pages live in `app/pages/`; the login route composes `AdminLoginScreen` from `app/features/auth/index.ts`. Keep login UI and submission behavior in that feature. `app/middleware/auth.global.ts` controls route access. The Nuxt configuration adds `noindex, nofollow` metadata; preserve it when changing app metadata.
 
 ## Development Commands
 

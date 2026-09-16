@@ -1,5 +1,6 @@
 import antfu from '@antfu/eslint-config'
 import vuejsAccessibility from 'eslint-plugin-vuejs-accessibility'
+import { architecture, workspaceResolvers } from './eslint.architecture.mjs'
 
 export default antfu({
   type: 'app',
@@ -38,4 +39,4 @@ export default antfu({
     'vuejs-accessibility': vuejsAccessibility,
   },
   rules: vuejsAccessibility.configs['flat/recommended'][1].rules,
-})
+}, architecture, ...workspaceResolvers)

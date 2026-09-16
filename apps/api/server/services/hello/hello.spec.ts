@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { getHelloMessage } from './hello'
+import { getHelloMessage } from './index'
 
 describe('getHelloMessage', () => {
   it('returns the service greeting', () => {

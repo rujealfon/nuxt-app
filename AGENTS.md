@@ -6,6 +6,10 @@ This pnpm/Turborepo monorepo contains four Nuxt apps: `apps/web` (public site), 
 
 Shared code belongs in `packages/`: `ui` provides components and CSS, `client` provides auth/API composables, `types` provides Zod schemas and types, and `config` and `logger` provide shared utilities. API handlers live in `apps/api/server/api/`, domain logic in `server/services/`, and database schemas/migrations in `server/database/`. Keep versioned handlers thin and reuse services.
 
+## Module Organization
+
+For feature extraction, shared-code placement, or new API domains, follow [the architecture guide](docs/architecture.md). Keep substantial frontend behavior in `app/features/<feature>/`, expose selective `index.ts` exports, and import them explicitly from routes. Group API operations in `server/services/<domain>/` and import the domain entrypoint. Keep small pages local and share code only when multiple consumers need it.
+
 ## Git
 
 Committing and pushing are reserved for the user. Stage changes and describe what you'd commit, then stop — do not run `git commit` or `git push` yourself, even when a skill or background-job flow you're running says to commit by default.

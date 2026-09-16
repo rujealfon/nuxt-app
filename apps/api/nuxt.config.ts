@@ -1,19 +1,9 @@
-import { fileURLToPath } from 'node:url'
-
-const servicesDir = fileURLToPath(new URL('./server/services', import.meta.url))
-
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
   app: {
     head: {
       meta: [{ name: 'robots', content: 'noindex, nofollow' }],
-    },
-  },
-  nitro: {
-    imports: {
-      // Domain services shared across API versions; auto-imported like utils.
-      dirs: [`${servicesDir}/**/*`],
     },
   },
   runtimeConfig: {

@@ -42,6 +42,7 @@ export default defineConfig({
           name: 'unit',
           environment: 'node',
           include: [
+            'test/**/*.spec.ts',
             'packages/{config,types,logger}/test/**/*.spec.ts',
             'apps/api/server/**/*.spec.ts',
           ],

@@ -2,7 +2,7 @@
 
 ## Scope & Structure
 
-Follow shared conventions and PR checks in [the root guide](../../AGENTS.md). This app provides Nitro HTTP endpoints on port 3003. Place handlers in `server/api/`, reusable domain logic in `server/services/`, infrastructure helpers in `server/utils/`, request middleware in `server/middleware/`, and startup hooks in `server/plugins/`. Services and utilities are auto-imported.
+Follow shared conventions and PR checks in [the root guide](../../AGENTS.md). This app provides Nitro HTTP endpoints on port 3003. Place handlers in `server/api/`, reusable domain logic in `server/services/<domain>/`, infrastructure helpers in `server/utils/`, request middleware in `server/middleware/`, and startup hooks in `server/plugins/`. Import services explicitly through each domain’s `index.ts`; only infrastructure utilities retain Nuxt auto-imports.
 
 ## Development Commands
 

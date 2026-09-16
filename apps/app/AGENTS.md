@@ -4,7 +4,7 @@
 
 Follow the shared style and PR guidance in [the root guide](../../AGENTS.md). This directory contains the user-facing SPA, running on port 3001 with `ssr: false`. It extends `@nuxt-app/ui` and `@nuxt-app/client`.
 
-Routes live in `app/pages/`: `index.vue` displays session state, `login.vue` handles sign-in, and `register.vue` handles registration. Keep reusable UI in `packages/ui`, auth/API composables in `packages/client`, and shared validation schemas in `packages/types`.
+Routes live in `app/pages/`: `index.vue` displays session state; login and registration routes compose screens exported by `app/features/auth/index.ts`. Auth UI and submission behavior live in that feature’s `ui/` directory. Keep reusable UI in `packages/ui`, auth/API composables in `packages/client`, and shared validation schemas in `packages/types`.
 
 ## Development Commands
 
