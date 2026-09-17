@@ -1,7 +1,7 @@
 // Rate limits the API's own Nitro routes. Better Auth rate-limits `/api/auth/*`
 // itself (with stricter per-endpoint rules); health checks are exempt so
-// monitoring isn't throttled.
-const EXEMPT_PREFIXES = ['/api/auth', '/api/health']
+// monitoring isn't throttled, and docs are exempt as static reference content.
+const EXEMPT_PREFIXES = ['/api/auth', '/api/health', '/api/docs', '/api/openapi.json']
 
 const storage = createRateLimitStorage()
 

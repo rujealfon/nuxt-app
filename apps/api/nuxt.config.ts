@@ -13,6 +13,15 @@ export default defineNuxtConfig({
   nitro: {
     // Renders the product error contract for every thrown failure.
     errorHandler: fileURLToPath(new URL('./server/error', import.meta.url)),
+    // Embeds the Scalar UI bundle for `/api/docs-assets/*` so docs work
+    // offline and stay version-pinned with the API. Only `standalone.js` is
+    // served; the sibling build files are inert build artifacts.
+    serverAssets: [
+      {
+        baseName: 'scalar-docs',
+        dir: fileURLToPath(new URL('./node_modules/@scalar/api-reference/dist/browser', import.meta.url)),
+      },
+    ],
   },
   runtimeConfig: {
     databaseUrl: process.env.DATABASE_URL || '',
@@ -22,5 +31,9 @@ export default defineNuxtConfig({
     redisUrl: process.env.REDIS_URL || '',
     corsOrigins: process.env.CORS_ORIGINS || '',
     rateLimitEnabled: process.env.RATE_LIMIT_ENABLED !== 'false',
+    // Scalar docs are development-only: on for `nuxt dev`, off in production
+    // builds unless explicitly enabled (contract tests enable it to exercise
+    // the docs routes against prod builds).
+    docsEnabled: process.env.DOCS_ENABLED === 'true' || process.env.NODE_ENV === 'development',
   },
 })

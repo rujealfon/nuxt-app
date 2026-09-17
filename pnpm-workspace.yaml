@@ -1,3 +1,25 @@
+minimumReleaseAgeExclude:
+  - '@scalar/agent-chat@0.12.31'
+  - '@scalar/api-client@3.19.0'
+  - '@scalar/api-reference@1.69.0'
+  - '@scalar/asyncapi-upgrader@0.1.10'
+  - '@scalar/blocks@0.1.17'
+  - '@scalar/code-highlight@0.4.6'
+  - '@scalar/components@0.29.2'
+  - '@scalar/helpers@0.12.0'
+  - '@scalar/json-magic@0.13.5'
+  - '@scalar/localization@0.2.0'
+  - '@scalar/oas-utils@0.20.0'
+  - '@scalar/openapi-types@0.9.6'
+  - '@scalar/openapi-upgrader@0.2.16'
+  - '@scalar/schemas@0.10.0'
+  - '@scalar/sidebar@0.11.2'
+  - '@scalar/snippetz@0.9.31'
+  - '@scalar/themes@0.18.0'
+  - '@scalar/types@0.20.0'
+  - '@scalar/use-hooks@0.4.12'
+  - '@scalar/workspace-store@0.61.0'
+
 packages:
   - apps/*
   - packages/*

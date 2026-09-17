@@ -329,8 +329,9 @@ Vercel project's Domains settings and point DNS (`A`/`CNAME`).
 ### API versioning
 
 Product endpoints are path-versioned under `/api/<version>/`; infrastructure
-routes are intentionally unversioned — `/api/auth/*` (Better Auth) and
-`/api/health*` (monitoring). An unversioned or unknown product path (e.g.
+routes are intentionally unversioned — `/api/auth/*` (Better Auth),
+`/api/health*` (monitoring), and `/api/docs` + `/api/openapi.json` (Scalar
+API docs, development-only, self-hosted from the installed `@scalar/api-reference` bundle). An unversioned or unknown product path (e.g.
 `/api/hello`, `/api/v9/hello`) returns a JSON `404`, so clients must be explicit
 about the version.
 

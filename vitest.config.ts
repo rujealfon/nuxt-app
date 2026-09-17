@@ -61,6 +61,9 @@ export default defineConfig({
             BETTER_AUTH_URL: 'http://localhost:3003',
             BETTER_AUTH_SECRET: 'test-secret-test-secret-test-secret',
             RATE_LIMIT_ENABLED: 'false',
+            // Contract tests run prod builds; the dev-only docs need an
+            // explicit opt-in there.
+            DOCS_ENABLED: 'true',
           },
         },
       },
