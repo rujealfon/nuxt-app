@@ -15,9 +15,11 @@ export const registerSchema = z.object({
 
 export type RegisterCredentials = z.infer<typeof registerSchema>
 
-// Product error contract. Stable across API versions: every product route
-// answers failures with one of these codes and a safe message.
-export const productErrorCodes = [
+// API error contract. Stable across versions: every versioned route answers
+// failures with one of these codes and a safe, non-empty message.
+// `invalid_input` may include input details; other codes must not.
+// Not used by infra routes (Better Auth, health).
+export const apiErrorCodes = [
   'invalid_input',
   'unauthenticated',
   'forbidden',
@@ -27,14 +29,29 @@ export const productErrorCodes = [
   'internal_error',
 ] as const
 
-export type ProductErrorCode = (typeof productErrorCodes)[number]
+export type ApiErrorCode = (typeof apiErrorCodes)[number]
 
-export const productErrorSchema = z.object({
-  error: z.enum(productErrorCodes),
-  message: z.string(),
+export const inputDetailSchema = z.object({
+  path: z.array(z.string()),
+  message: z.string().min(1),
 })
 
-export type ProductError = z.infer<typeof productErrorSchema>
+export type InputDetail = z.infer<typeof inputDetailSchema>
+
+export const apiErrorSchema = z.object({
+  error: z.enum(apiErrorCodes),
+  message: z.string().min(1),
+  details: z.array(inputDetailSchema).min(1).optional(),
+}).refine(
+  body => body.error === 'invalid_input' || body.details === undefined,
+)
+
+export type ApiError = z.infer<typeof apiErrorSchema>
+
+export function parseApiError(data: unknown): ApiError | null {
+  const parsed = apiErrorSchema.safeParse(data)
+  return parsed.success ? parsed.data : null
+}
 
 // Actor contract. Derived client- and server-side from the Better Auth
 // session: the authenticated identity a request acts as, with the role the UI

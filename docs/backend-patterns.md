@@ -4,7 +4,7 @@
 
 This guide establishes conventions for new backend features. The feature modules,
 service entrypoints, and import rules in [the architecture guide](architecture.md)
-are implemented. The product error contract is implemented; the policies,
+are implemented. The API error contract is implemented; the policies,
 repositories, and job infrastructure described below are implementation guidance,
 not existing runtime helpers.
 
@@ -58,7 +58,7 @@ Keep frontend access checks for navigation and presentation. Deny unmatched
 permissions and check every protected request, following
 [OWASP authorization guidance](https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Cheat_Sheet.html).
 
-## Product error contract
+## API error contract
 
 For the first implementation, preserve the existing product catch-all shape:
 
@@ -66,7 +66,7 @@ For the first implementation, preserve the existing product catch-all shape:
 { "error": "not_found", "message": "The requested resource was not found" }
 ```
 
-Use stable machine-readable codes; clients branch on `error`, not message text.
+`invalid_input` may also include `details: { path, message }[]` when at least one input detail is usable. The key is omitted otherwise. Clients branch on `error`, never on message text; they use input details only to recover fields. The error adapter reads domain failures only: a thrown `ZodError` stays `internal_error`. A blank message override keeps the code and the default safe message; `message` is never joined from details.
 Define the shared schema and inferred types in `packages/types`. Keep
 transport-independent business failures private to the server, and translate
 them at the HTTP adapter. The mapping is:
@@ -85,11 +85,12 @@ Log unexpected failures with a correlation ID and return a safe generic message.
 Keep stack traces, SQL details, credentials, and internal provider errors out of
 responses. Preserve existing rate-limit status and retry headers.
 
-The server mapping and serializer are implemented: product code raises a product
+The server mapping and serializer are implemented: domain code raises a domain
 failure, and the error adapter (`server/error.ts`) renders the contract and
-normalizes unexpected failures to `internal_error`. Client handling lands with
-its first consumer. `X-Api-Version` headers set before a failure survive onto
-error responses; assess compatibility before changing an established version.
+normalizes unexpected failures to `internal_error`. `useApi().parseApiError`
+reads a caught versioned-route failure through the API error contract; screens that call
+those routes consume the code and, for `invalid_input`, input details. `X-Api-Version` headers set before a failure survive onto
+the API error contract; assess compatibility before changing an established version.
 Better Auth and health endpoints retain their own contracts.
 
 ## Persistence, transactions, and adapters

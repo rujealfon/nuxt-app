@@ -1,11 +1,12 @@
-import type { ProductErrorCode } from '@nuxt-app/types'
-import { productErrorCodes } from '@nuxt-app/types'
+import type { ApiErrorCode } from '@nuxt-app/types'
+import { apiErrorCodes } from '@nuxt-app/types'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const setResponseStatus = vi.fn()
 const send = vi.fn((...args: unknown[]) => args)
 const loggerError = vi.fn()
-const useLogger = vi.fn(() => ({ error: loggerError }))
+const loggerWarn = vi.fn()
+const useLogger = vi.fn(() => ({ error: loggerError, warn: loggerWarn }))
 
 vi.stubGlobal('defineNitroErrorHandler', vi.fn((handler: unknown) => handler))
 vi.stubGlobal('setResponseStatus', setResponseStatus)
@@ -13,13 +14,13 @@ vi.stubGlobal('send', send)
 vi.stubGlobal('useLogger', useLogger)
 
 const { default: errorHandler } = await import('./error')
-const { productFailure } = await import('./utils/product-failure')
+const { domainFailure } = await import('./utils/domain-failure')
 
 type ErrorHandler = (error: unknown, event: unknown) => unknown
 
 const handle = errorHandler as unknown as ErrorHandler
 
-const statuses: Record<ProductErrorCode, number> = {
+const statuses: Record<ApiErrorCode, number> = {
   invalid_input: 400,
   unauthenticated: 401,
   forbidden: 403,
@@ -46,12 +47,12 @@ describe('error adapter', () => {
     vi.clearAllMocks()
   })
 
-  it.each(productErrorCodes.map(code => [code, statuses[code]] as const))(
-    'renders %s as %i with the product error contract',
+  it.each(apiErrorCodes.map(code => [code, statuses[code]] as const))(
+    'renders %s as %i with the API error contract',
     (code, status) => {
       const event = makeEvent()
 
-      handle(productFailure(code, 'A message'), event)
+      handle(domainFailure(code, 'A message'), event)
 
       expect(setResponseStatus).toHaveBeenCalledWith(event, status)
       expect(send).toHaveBeenCalledWith(
@@ -64,7 +65,7 @@ describe('error adapter', () => {
 
   it('recognises a failure wrapped by h3', () => {
     const event = makeEvent()
-    const wrapped = Object.assign(new Error('wrapped'), { cause: productFailure('not_found') })
+    const wrapped = Object.assign(new Error('wrapped'), { cause: domainFailure('not_found') })
 
     handle(wrapped, event)
 
@@ -148,5 +149,125 @@ describe('error adapter', () => {
 
     expect(send).not.toHaveBeenCalled()
     expect(setResponseStatus).not.toHaveBeenCalled()
+  })
+
+  it('keeps the code when an override message is empty', () => {
+    const event = makeEvent()
+
+    handle(domainFailure('not_found', ''), event)
+
+    expect(setResponseStatus).toHaveBeenCalledWith(event, 404)
+    expect(sentBody(send.mock.calls[0] as unknown[])).toEqual({
+      error: 'not_found',
+      message: 'The requested resource was not found',
+    })
+  })
+
+  it('warns when an override message is dropped, without the override text', () => {
+    const event = makeEvent()
+
+    handle(domainFailure('not_found', ''), event)
+
+    expect(loggerWarn).toHaveBeenCalledWith({ code: 'not_found' }, expect.any(String))
+    expect(loggerWarn.mock.calls[0]?.[0]).toEqual({ code: 'not_found' })
+  })
+
+  it('includes input details on invalid_input', () => {
+    const event = makeEvent()
+
+    handle(domainFailure('invalid_input', undefined, [
+      { path: ['email'], message: 'Enter a valid email address' },
+      { path: ['password'], message: 'Password is required' },
+    ]), event)
+
+    expect(setResponseStatus).toHaveBeenCalledWith(event, 400)
+    expect(sentBody(send.mock.calls[0] as unknown[])).toEqual({
+      error: 'invalid_input',
+      message: 'The request was invalid',
+      details: [
+        { path: ['email'], message: 'Enter a valid email address' },
+        { path: ['password'], message: 'Password is required' },
+      ],
+    })
+  })
+
+  it('omits input details on a code other than invalid_input', () => {
+    const event = makeEvent()
+
+    handle(domainFailure('not_found', undefined, [
+      { path: ['id'], message: 'Missing' },
+    ]), event)
+
+    expect(sentBody(send.mock.calls[0] as unknown[])).toEqual({
+      error: 'not_found',
+      message: 'The requested resource was not found',
+    })
+  })
+
+  it('omits details when every input detail is unusable', () => {
+    const event = makeEvent()
+
+    handle(domainFailure('invalid_input', undefined, [
+      { path: ['email'], message: '' },
+    ]), event)
+
+    expect(sentBody(send.mock.calls[0] as unknown[])).toEqual({
+      error: 'invalid_input',
+      message: 'The request was invalid',
+    })
+    expect(loggerWarn).toHaveBeenCalledWith({ code: 'invalid_input' }, expect.any(String))
+  })
+
+  it('warns about dropped details when the message override is also unusable', () => {
+    const event = makeEvent()
+
+    handle(domainFailure('invalid_input', '', [
+      { path: ['email'], message: '' },
+    ]), event)
+
+    expect(sentBody(send.mock.calls[0] as unknown[])).toEqual({
+      error: 'invalid_input',
+      message: 'The request was invalid',
+    })
+    expect(loggerWarn.mock.calls).toEqual(expect.arrayContaining([
+      [{ code: 'invalid_input' }, expect.any(String)],
+    ]))
+    expect(loggerWarn.mock.calls.length).toBeGreaterThanOrEqual(2)
+  })
+
+  it('keeps usable input details and drops the rest', () => {
+    const event = makeEvent()
+
+    handle(domainFailure('invalid_input', undefined, [
+      { path: ['email'], message: 'Enter a valid email address' },
+      { path: ['password'], message: '' },
+    ]), event)
+
+    expect(sentBody(send.mock.calls[0] as unknown[])).toEqual({
+      error: 'invalid_input',
+      message: 'The request was invalid',
+      details: [{ path: ['email'], message: 'Enter a valid email address' }],
+    })
+  })
+
+  it('does not map a thrown ZodError onto invalid_input', async () => {
+    const { z } = await import('zod')
+    const event = makeEvent()
+    let zodError: unknown
+
+    try {
+      z.string().parse(1)
+    }
+    catch (error) {
+      zodError = error
+    }
+
+    handle(zodError, event)
+
+    expect(sentBody(send.mock.calls[0] as unknown[])).toEqual({
+      error: 'internal_error',
+      message: 'An unexpected error occurred',
+    })
+    expect(loggerError).toHaveBeenCalled()
   })
 })

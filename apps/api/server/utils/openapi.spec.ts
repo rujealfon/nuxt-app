@@ -42,10 +42,16 @@ describe('buildOpenApiDocument', () => {
       type: 'object',
       properties: { message: { type: 'string' } },
     })
-    expect(document.components.schemas.ProductError).toMatchObject({
+    expect(document.components.schemas.ApiError).toMatchObject({
       type: 'object',
     })
-    expect(JSON.stringify(document.components.schemas.ProductError)).toContain('not_found')
+    expect(JSON.stringify(document.components.schemas.ApiError)).toContain('not_found')
+    expect(document.components.schemas.ApiError).toMatchObject({
+      properties: {
+        message: { minLength: 1 },
+        details: { type: 'array', minItems: 1 },
+      },
+    })
   })
 
   it('keeps docs, spec, and API on one origin so try-it needs no CORS', () => {

@@ -1,6 +1,6 @@
 import type { ApiVersion } from '@nuxt-app/config'
 import { apiVersions, currentApiVersion, versionMeta } from '@nuxt-app/config'
-import { productErrorSchema, v1 } from '@nuxt-app/types'
+import { apiErrorSchema, v1 } from '@nuxt-app/types'
 import { z } from 'zod'
 
 // JSON Schema fragments. Product shapes derive from the shared Zod contracts
@@ -47,12 +47,12 @@ function toJsonSchema(schema: z.ZodType): JsonSchema {
   return z.toJSONSchema(schema) as unknown as JsonSchema
 }
 
-function productErrorResponse(): OpenApiResponse {
+function apiErrorResponse(): OpenApiResponse {
   return {
-    description: 'Product error contract. Clients branch on `error`, not message text.',
+    description: 'API error contract. Clients branch on `error`, not message text.',
     content: {
       'application/json': {
-        schema: { $ref: '#/components/schemas/ProductError' },
+        schema: { $ref: '#/components/schemas/ApiError' },
       },
     },
   }
@@ -89,7 +89,7 @@ function helloOperation(version: ApiVersion): OpenApiOperation {
   return {
     tags: [version],
     summary: 'Greeting operation',
-    description: 'Example versioned product operation. Product routes require an explicit version.',
+    description: 'Example versioned operation. Versioned routes require an explicit version.',
     responses: {
       200: {
         description: 'Greeting message.',
@@ -100,7 +100,7 @@ function helloOperation(version: ApiVersion): OpenApiOperation {
           },
         },
       },
-      default: productErrorResponse(),
+      default: apiErrorResponse(),
     },
   }
 }
@@ -155,7 +155,7 @@ export function buildOpenApiDocument(): OpenApiDocument {
     info: {
       title: 'nuxt-app API',
       version: currentApiVersion,
-      description: 'Product endpoints live under `/api/<version>/` and advertise it via `X-Api-Version`. Infra routes (`/api/auth/*`, `/api/health*`) and these docs are deliberately unversioned. Failures use the product error contract.',
+      description: 'Versioned endpoints live under `/api/<version>/` and advertise it via `X-Api-Version`. Infra routes (`/api/auth/*`, `/api/health*`) and these docs are deliberately unversioned. Failures use the API error contract.',
     },
     servers: [
       { url: '/', description: 'Same origin: docs, spec, and API share one host.' },
@@ -176,7 +176,7 @@ export function buildOpenApiDocument(): OpenApiDocument {
               description: 'Version registry.',
               content: { 'application/json': { schema: versionRegistrySchema() } },
             },
-            default: productErrorResponse(),
+            default: apiErrorResponse(),
           },
         },
       },
@@ -190,7 +190,7 @@ export function buildOpenApiDocument(): OpenApiDocument {
               description: 'OpenAPI 3.1 document.',
               content: { 'application/json': { schema: { type: 'object' } } },
             },
-            default: productErrorResponse(),
+            default: apiErrorResponse(),
           },
         },
       },
@@ -217,7 +217,7 @@ export function buildOpenApiDocument(): OpenApiDocument {
                 },
               },
             },
-            default: productErrorResponse(),
+            default: apiErrorResponse(),
           },
         },
       },
@@ -243,7 +243,7 @@ export function buildOpenApiDocument(): OpenApiDocument {
                 },
               },
             },
-            default: productErrorResponse(),
+            default: apiErrorResponse(),
           },
         },
       },
@@ -251,7 +251,7 @@ export function buildOpenApiDocument(): OpenApiDocument {
     components: {
       schemas: {
         HelloResponse: toJsonSchema(v1.helloResponseSchema),
-        ProductError: toJsonSchema(productErrorSchema),
+        ApiError: toJsonSchema(apiErrorSchema),
       },
     },
   }

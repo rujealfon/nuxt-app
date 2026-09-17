@@ -1,8 +1,9 @@
 import type { Logger } from '@nuxt-app/logger'
-import type { ProductError, ProductErrorCode } from '@nuxt-app/types'
-import { ProductFailure, productFailureMessages } from './utils/product-failure'
+import type { ApiError, ApiErrorCode, InputDetail } from '@nuxt-app/types'
+import { apiErrorSchema, inputDetailSchema } from '@nuxt-app/types'
+import { DomainFailure, domainFailureMessages } from './utils/domain-failure'
 
-const statusByCode: Record<ProductErrorCode, number> = {
+const statusByCode: Record<ApiErrorCode, number> = {
   invalid_input: 400,
   unauthenticated: 401,
   forbidden: 403,
@@ -12,7 +13,7 @@ const statusByCode: Record<ProductErrorCode, number> = {
   internal_error: 500,
 }
 
-const codeByStatus: Partial<Record<number, ProductErrorCode>> = {
+const codeByStatus: Partial<Record<number, ApiErrorCode>> = {
   400: 'invalid_input',
   401: 'unauthenticated',
   403: 'forbidden',
@@ -23,13 +24,13 @@ const codeByStatus: Partial<Record<number, ProductErrorCode>> = {
 }
 
 // h3 wraps a thrown non-H3 error in a new H3Error, keeping the original as
-// `cause`; recognise a product failure at either level.
-function toProductFailure(error: unknown): ProductFailure | undefined {
-  if (error instanceof ProductFailure) {
+// `cause`; recognise a domain failure at either level.
+function toDomainFailure(error: unknown): DomainFailure | undefined {
+  if (error instanceof DomainFailure) {
     return error
   }
 
-  if (error instanceof Error && error.cause instanceof ProductFailure) {
+  if (error instanceof Error && error.cause instanceof DomainFailure) {
     return error.cause
   }
 
@@ -57,7 +58,7 @@ function isUnhandled(error: unknown): boolean {
 
 // Framework 4xx (method-not-allowed, missing pages, validation) must stay
 // client errors. Only unhandled/fatal/missing-status failures become 500.
-function codeFromH3(error: unknown): ProductErrorCode | undefined {
+function codeFromH3(error: unknown): ApiErrorCode | undefined {
   if (isUnhandled(error)) {
     return undefined
   }
@@ -79,7 +80,64 @@ function codeFromH3(error: unknown): ProductErrorCode | undefined {
   return undefined
 }
 
-// Renders every product failure as the product error contract. H3 4xx map onto
+const cannedInternalError: ApiError = {
+  error: 'internal_error',
+  message: domainFailureMessages.internal_error,
+}
+
+function usableInputDetails(
+  code: ApiErrorCode,
+  details: readonly InputDetail[] | undefined,
+): InputDetail[] | undefined {
+  if (code !== 'invalid_input' || !details?.length) {
+    return undefined
+  }
+
+  const usable = details.flatMap((detail) => {
+    const parsed = inputDetailSchema.safeParse(detail)
+    return parsed.success ? [parsed.data] : []
+  })
+
+  return usable.length > 0 ? usable : undefined
+}
+
+function apiErrorBody(
+  code: ApiErrorCode,
+  failure: DomainFailure | undefined,
+  logger: Logger,
+): ApiError {
+  const fallbackMessage = domainFailureMessages[code]
+  const details = usableInputDetails(code, failure?.details)
+  const candidate: ApiError = details
+    ? { error: code, message: failure?.message ?? fallbackMessage, details }
+    : { error: code, message: failure?.message ?? fallbackMessage }
+
+  const parsed = apiErrorSchema.safeParse(candidate)
+
+  if (code === 'invalid_input' && failure?.details && details?.length !== failure.details.length) {
+    logger.warn({ code }, 'dropped unusable input details')
+  }
+
+  if (parsed.success) {
+    return parsed.data
+  }
+
+  logger.warn({ code }, 'dropped unusable API error message override')
+
+  const fallbackCandidate: ApiError = details
+    ? { error: code, message: fallbackMessage, details }
+    : { error: code, message: fallbackMessage }
+  const fallback = apiErrorSchema.safeParse(fallbackCandidate)
+
+  if (fallback.success) {
+    return fallback.data
+  }
+
+  logger.error({ code }, 'API error contract unusable')
+  return cannedInternalError
+}
+
+// Renders every domain failure as the API error contract. H3 4xx map onto
 // the same contract; unexpected failures become `internal_error`. Controlled
 // responses from infra routes (Better Auth, health) are written as Responses
 // and never reach here.
@@ -88,20 +146,17 @@ export default defineNitroErrorHandler((error, event) => {
     return
   }
 
-  const failure = toProductFailure(error)
+  const failure = toDomainFailure(error)
   const code = failure?.code ?? codeFromH3(error) ?? 'internal_error'
+  const logger: Logger = event.context.logger || useLogger()
 
   if (!failure && code === 'internal_error') {
-    const logger: Logger = event.context.logger || useLogger()
     logger.error({ err: error }, 'unhandled error')
   }
 
-  const body: ProductError = {
-    error: code,
-    message: failure?.message ?? productFailureMessages[code],
-  }
+  const body = apiErrorBody(code, failure, logger)
 
-  setResponseStatus(event, statusByCode[code])
+  setResponseStatus(event, statusByCode[body.error])
 
   return send(event, JSON.stringify(body), 'application/json')
 })

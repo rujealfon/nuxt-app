@@ -4,10 +4,10 @@ const getSession = vi.fn()
 
 vi.stubGlobal('useAuth', vi.fn(() => ({ api: { getSession } })))
 
-const { ProductFailure, productFailure } = await import('./product-failure')
+const { DomainFailure, domainFailure } = await import('./domain-failure')
 const { getActor, requireActor } = await import('./session')
 
-vi.stubGlobal('productFailure', productFailure)
+vi.stubGlobal('domainFailure', domainFailure)
 
 const event = { headers: new Headers() } as never
 
@@ -70,7 +70,7 @@ describe('requireActor', () => {
     await expect(requireActor(event)).resolves.toMatchObject({ id: 'user-1', role: 'user' })
   })
 
-  it('throws a product failure without a session', async () => {
+  it('throws a domain failure without a session', async () => {
     getSession.mockResolvedValue(null)
 
     const caught = await requireActor(event).then(
@@ -80,7 +80,7 @@ describe('requireActor', () => {
       (error: unknown) => error,
     )
 
-    expect(caught).toBeInstanceOf(ProductFailure)
-    expect((caught as ProductFailure).code).toBe('unauthenticated')
+    expect(caught).toBeInstanceOf(DomainFailure)
+    expect((caught as DomainFailure).code).toBe('unauthenticated')
   })
 })

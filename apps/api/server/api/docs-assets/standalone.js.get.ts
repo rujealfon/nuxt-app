@@ -7,7 +7,7 @@ export default defineEventHandler(async (event) => {
   const bundle = await useStorage('assets:scalar-docs').getItem('standalone.js')
 
   if (typeof bundle !== 'string' || bundle.length === 0) {
-    throw productFailure('internal_error')
+    throw domainFailure('internal_error')
   }
 
   setHeader(event, 'content-type', 'text/javascript; charset=utf-8')

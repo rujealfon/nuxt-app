@@ -64,7 +64,7 @@ subdirectories as they become useful; avoid empty scaffolding. Keep screen
 behavior in the feature, routing and page metadata in the route, and authoritative
 permissions and business decisions on the server.
 
-Use the existing Better Auth client for authentication state. For product data,
+Use the existing Better Auth client for authentication state. For remote data,
 use the configured Pinia Colada query cache; keep temporary form and dialog
 state local, and use Pinia for client state shared across screens. Add queries,
 mutations, or stores when actual behavior needs them.
@@ -78,7 +78,7 @@ not need their own layer.
 
 ## Backend growth
 
-For protected business operations, product error contracts, persistence,
+For protected business operations, API error contracts, persistence,
 multi-write transactions, and durable external effects, follow
 [Backend Patterns and Growth Plan](backend-patterns.md). It distinguishes current
 runtime behavior from implementation conventions and defines adoption triggers

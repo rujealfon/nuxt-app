@@ -18,6 +18,6 @@ export default defineEventHandler((event) => {
   const config = useRuntimeConfig(event)
 
   if (!config.docsEnabled) {
-    throw productFailure('not_found')
+    throw domainFailure('not_found')
   }
 })

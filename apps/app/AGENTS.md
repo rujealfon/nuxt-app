@@ -21,7 +21,7 @@ Run from the repository root:
 
 Use `useAuth()` for session state, sign-in, sign-up, and sign-out. Reuse `loginSchema` and `registerSchema` from `@nuxt-app/types` with typed Nuxt UI forms. Keep loading indicators, submission errors, and successful navigation explicit in page behavior.
 
-Use the shared `useApi()` composable for versioned product requests; Better Auth uses its own client. Preserve the current distinction between the public registration/login pages and session-dependent content. The home page currently supports both signed-in and signed-out users.
+Use the shared `useApi()` composable for versioned API requests. Parse a caught versioned-route failure with `parseApiError`: branch on `error`, show `message` as the catch-all, and map `details` onto fields for `invalid_input`. Better Auth uses its own client and is not this contract. Preserve the current distinction between the public registration/login pages and session-dependent content. The home page currently supports both signed-in and signed-out users.
 
 ## Testing & Configuration
 

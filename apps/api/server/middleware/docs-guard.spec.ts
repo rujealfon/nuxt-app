@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { ProductFailure } from '../utils/product-failure'
+import { DomainFailure } from '../utils/domain-failure'
 
 let docsEnabled = true
 const useRuntimeConfig = vi.fn(() => ({ docsEnabled }))
@@ -7,8 +7,8 @@ const defineEventHandler = vi.fn((handler: unknown) => handler)
 
 vi.stubGlobal('useRuntimeConfig', useRuntimeConfig)
 vi.stubGlobal('defineEventHandler', defineEventHandler)
-vi.stubGlobal('productFailure', (code: 'not_found') => {
-  throw new ProductFailure(code)
+vi.stubGlobal('domainFailure', (code: 'not_found') => {
+  throw new DomainFailure(code)
 })
 
 const guard = (await import('./docs-guard')).default as (event: { path: string }) => unknown
@@ -35,7 +35,7 @@ describe('docs-guard', () => {
     docsEnabled = false
 
     for (const path of ['/api/docs', '/api/openapi.json', '/api/docs-assets/standalone.js', '/api/docs/unknown']) {
-      expect(() => guard({ path })).toThrowError(ProductFailure)
+      expect(() => guard({ path })).toThrowError(DomainFailure)
     }
 
     expect(useRuntimeConfig).toHaveBeenCalledTimes(4)
@@ -44,7 +44,7 @@ describe('docs-guard', () => {
   it('matches docs paths with query strings', () => {
     docsEnabled = false
 
-    expect(() => guard({ path: '/api/docs?foo=bar' })).toThrowError(ProductFailure)
+    expect(() => guard({ path: '/api/docs?foo=bar' })).toThrowError(DomainFailure)
     expect(guard({ path: '/api/v1/hello?foo=bar' })).toBeUndefined()
   })
 })
