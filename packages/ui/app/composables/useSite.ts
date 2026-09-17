@@ -1,4 +1,4 @@
-export type SiteKey = 'web' | 'app' | 'admin'
+import type { SiteKey } from '@nuxt-app/config'
 
 interface SiteRuntimeConfig {
   appName: SiteKey

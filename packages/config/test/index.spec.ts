@@ -17,7 +17,7 @@ describe('site registry', () => {
   })
 
   it('derives localhost cross-site urls', () => {
-    expect(siteUrls()).toEqual({
+    expect(siteUrls).toEqual({
       webUrl: 'http://localhost:3000',
       appUrl: 'http://localhost:3001',
       adminUrl: 'http://localhost:3002',

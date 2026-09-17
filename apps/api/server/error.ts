@@ -12,6 +12,16 @@ const statusByCode: Record<ProductErrorCode, number> = {
   internal_error: 500,
 }
 
+const codeByStatus: Partial<Record<number, ProductErrorCode>> = {
+  400: 'invalid_input',
+  401: 'unauthenticated',
+  403: 'forbidden',
+  404: 'not_found',
+  405: 'invalid_input',
+  409: 'conflict',
+  429: 'rate_limited',
+}
+
 // h3 wraps a thrown non-H3 error in a new H3Error, keeping the original as
 // `cause`; recognise a product failure at either level.
 function toProductFailure(error: unknown): ProductFailure | undefined {
@@ -26,29 +36,69 @@ function toProductFailure(error: unknown): ProductFailure | undefined {
   return undefined
 }
 
-// Renders every product failure as the product error contract and normalizes
-// unexpected failures to `internal_error`. Controlled responses from infra
-// routes (Better Auth, health) are written as Responses and never reach here.
+function statusCodeOf(error: unknown): number | undefined {
+  if (!error || typeof error !== 'object' || !('statusCode' in error)) {
+    return undefined
+  }
+
+  return typeof error.statusCode === 'number' ? error.statusCode : undefined
+}
+
+function isUnhandled(error: unknown): boolean {
+  if (!error || typeof error !== 'object') {
+    return false
+  }
+
+  return Boolean(
+    ('unhandled' in error && error.unhandled)
+    || ('fatal' in error && error.fatal),
+  )
+}
+
+// Framework 4xx (method-not-allowed, missing pages, validation) must stay
+// client errors. Only unhandled/fatal/missing-status failures become 500.
+function codeFromH3(error: unknown): ProductErrorCode | undefined {
+  if (isUnhandled(error)) {
+    return undefined
+  }
+
+  const status = statusCodeOf(error)
+
+  if (status === undefined) {
+    return undefined
+  }
+
+  if (codeByStatus[status]) {
+    return codeByStatus[status]
+  }
+
+  if (status >= 400 && status < 500) {
+    return 'invalid_input'
+  }
+
+  return undefined
+}
+
+// Renders every product failure as the product error contract. H3 4xx map onto
+// the same contract; unexpected failures become `internal_error`. Controlled
+// responses from infra routes (Better Auth, health) are written as Responses
+// and never reach here.
 export default defineNitroErrorHandler((error, event) => {
   if (event.handled) {
     return
   }
 
   const failure = toProductFailure(error)
-  const code = failure?.code ?? 'internal_error'
+  const code = failure?.code ?? codeFromH3(error) ?? 'internal_error'
 
-  if (code === 'internal_error') {
+  if (!failure && code === 'internal_error') {
     const logger: Logger = event.context.logger || useLogger()
     logger.error({ err: error }, 'unhandled error')
   }
 
-  const body: ProductError & { stack?: string } = {
+  const body: ProductError = {
     error: code,
-    message: failure?.message ?? productFailureMessages.internal_error,
-  }
-
-  if (!failure && import.meta.dev && error instanceof Error && error.stack) {
-    body.stack = error.stack
+    message: failure?.message ?? productFailureMessages[code],
   }
 
   setResponseStatus(event, statusByCode[code])

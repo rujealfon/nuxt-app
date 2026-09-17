@@ -1,10 +1,18 @@
 <script setup lang="ts">
-const { actor } = useAuth()
-const { isSigningOut, signOut } = useSignOut({
-  onSignedOut: () => {
-    navigateTo('/login')
-  },
-})
+const { actor, signOut: signOutAction } = useAuth()
+const isSigningOut = ref(false)
+
+async function signOut() {
+  isSigningOut.value = true
+
+  try {
+    await signOutAction()
+    await navigateTo('/login')
+  }
+  finally {
+    isSigningOut.value = false
+  }
+}
 
 useHead({ title: 'Admin · nuxt-app' })
 </script>

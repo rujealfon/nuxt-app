@@ -1,6 +1,17 @@
 <script setup lang="ts">
-const { actor } = useAuth()
-const { isSigningOut, signOut } = useSignOut()
+const { actor, signOut: signOutAction } = useAuth()
+const isSigningOut = ref(false)
+
+async function signOut() {
+  isSigningOut.value = true
+
+  try {
+    await signOutAction()
+  }
+  finally {
+    isSigningOut.value = false
+  }
+}
 
 useHead({ title: 'App · nuxt-app' })
 </script>

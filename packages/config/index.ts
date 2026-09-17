@@ -1,21 +1,13 @@
-// Sites with a browser surface. Ports and cross-site URLs derive from this
-// registry; each app adds its own `appName` in its Nuxt config. The `SiteKey`
-// union also lives in `packages/ui` (`useSite`) until the workspace supports
-// sharing it without a new package edge.
-export const sites = {
-  web: { port: 3000 },
-  app: { port: 3001 },
-  admin: { port: 3002 },
-} as const
-
-export type SiteKey = keyof typeof sites
-
+// Sites with a browser surface share this port table with the API. Localhost
+// URLs derive from it; each app adds its own `appName` in its Nuxt config.
 export const appPorts = {
-  web: sites.web.port,
-  app: sites.app.port,
-  admin: sites.admin.port,
+  web: 3000,
+  app: 3001,
+  admin: 3002,
   api: 3003,
 } as const
+
+export type SiteKey = 'web' | 'app' | 'admin'
 
 export function apiBaseFor(env: string | undefined): string {
   return env || `http://localhost:${appPorts.api}`
@@ -24,13 +16,11 @@ export function apiBaseFor(env: string | undefined): string {
 // Localhost-defaulted cross-site URLs for `runtimeConfig.public`. Each app
 // spreads these and adds its own `appName`; `NUXT_PUBLIC_*` env vars override
 // individual URLs at runtime through Nuxt's own mapping.
-export function siteUrls() {
-  return {
-    webUrl: `http://localhost:${sites.web.port}`,
-    appUrl: `http://localhost:${sites.app.port}`,
-    adminUrl: `http://localhost:${sites.admin.port}`,
-  }
-}
+export const siteUrls = {
+  webUrl: `http://localhost:${appPorts.web}`,
+  appUrl: `http://localhost:${appPorts.app}`,
+  adminUrl: `http://localhost:${appPorts.admin}`,
+} as const
 
 // Product API versions. Domain endpoints live under `/api/<version>/`; infra
 // routes (auth, health) are deliberately unversioned. To ship a new version:

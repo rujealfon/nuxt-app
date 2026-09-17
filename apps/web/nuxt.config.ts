@@ -15,7 +15,7 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       appName: 'web',
-      ...siteUrls(),
+      ...siteUrls,
     },
   },
 })

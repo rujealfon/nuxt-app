@@ -8,7 +8,7 @@ const root = fileURLToPath(new URL('..', import.meta.url))
 // layer publishes to apps through Nuxt's auto-imports. Compared with exact
 // equality — adding or renaming a public symbol must update this list
 // deliberately, so nothing joins the interface by accident.
-const clientComposables = ['useApi', 'useAuth', 'useSignOut']
+const clientComposables = ['useApi', 'useAuth']
 const uiComposables = ['useSite']
 const uiComponents = ['AppHeader', 'AppShell', 'AuthScreen']
 

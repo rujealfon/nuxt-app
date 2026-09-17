@@ -16,15 +16,26 @@ const props = defineProps<{
 
 const errorMessage = ref('')
 
+function inAppPath(path: string): string {
+  return path.startsWith('/') && !path.startsWith('//') ? path : '/'
+}
+
 async function onSubmit(event: FormSubmitEvent<T>) {
   errorMessage.value = ''
 
   try {
     await props.submitAction(event.data)
-    await navigateTo(props.redirectTo)
   }
   catch {
     errorMessage.value = props.failureMessage
+    return
+  }
+
+  try {
+    await navigateTo(inAppPath(props.redirectTo))
+  }
+  catch {
+    errorMessage.value = 'Unable to continue'
   }
 }
 </script>

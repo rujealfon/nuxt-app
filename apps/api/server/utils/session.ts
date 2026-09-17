@@ -1,18 +1,12 @@
 import type { Actor } from '@nuxt-app/types'
 import type { H3Event } from 'h3'
-import { actorSchema } from '@nuxt-app/types'
+import { actorFromSession } from '@nuxt-app/types'
 
-// The trusted actor context for this request, narrowed to the shared actor
-// contract. An unrecognised session shape or role resolves to no actor at all.
+// The trusted actor context for this request. Unknown roles normalize to
+// `user`, never up; a session that is missing or not an actor is no actor.
 export async function getActor(event: H3Event): Promise<Actor | null> {
   const session = await useAuth().api.getSession({ headers: event.headers })
-
-  if (!session?.user) {
-    return null
-  }
-
-  const parsed = actorSchema.safeParse(session.user)
-  return parsed.success ? parsed.data : null
+  return actorFromSession(session)
 }
 
 // The only gate for authenticated endpoints. Throws a product failure when

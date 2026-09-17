@@ -13,7 +13,7 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       appName: 'admin',
-      ...siteUrls(),
+      ...siteUrls,
       apiBase: apiBaseFor(process.env.NUXT_PUBLIC_API_BASE),
       apiVersion: process.env.NUXT_PUBLIC_API_VERSION || currentApiVersion,
     },

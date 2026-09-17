@@ -48,11 +48,25 @@ export const roleSchema = z.enum(roles)
 export const actorSchema = z.object({
   id: z.string(),
   email: z.email(),
-  name: z.string().nullable().optional(),
+  name: z.string().nullable(),
   role: roleSchema.catch('user'),
 })
 
 export type Actor = z.infer<typeof actorSchema>
+
+export const actorSessionSchema = z.object({
+  user: actorSchema,
+})
+
+export function parseActor(user: unknown): Actor | null {
+  const parsed = actorSchema.safeParse(user)
+  return parsed.success ? parsed.data : null
+}
+
+export function actorFromSession(data: unknown): Actor | null {
+  const parsed = actorSessionSchema.safeParse(data)
+  return parsed.success ? parsed.data.user : null
+}
 
 // Versioned API contracts, namespaced by version (`v1.helloResponseSchema`).
 export * as v1 from './v1'

@@ -21,24 +21,24 @@ export interface DbConfig {
   driver?: string
 }
 
+export type DatabaseDriver = 'pg' | 'neon'
+
 export interface DbHandle {
   db: Database
-  canTransact: boolean
   withTransaction: <T>(fn: (tx: Database) => Promise<T>) => Promise<T>
 }
 
-function usesNeon(config: DbConfig): boolean {
-  return config.driver === 'neon' || config.url.includes('neon.tech')
+export function selectDriver(config: DbConfig): DatabaseDriver {
+  return config.driver === 'neon' || config.url.includes('neon.tech') ? 'neon' : 'pg'
 }
 
 // Pure factory shared by the runtime (`useDb`) and the CLI scripts
-// (`seed.ts`, `better-auth.config.ts`), so every consumer selects a driver and
-// learns its capability the same way.
+// (`seed.ts`, `better-auth.config.ts`). Driver selection is `selectDriver`;
+// this only constructs the matching client.
 export function createDb(config: DbConfig): DbHandle {
-  if (usesNeon(config)) {
+  if (selectDriver(config) === 'neon') {
     return {
       db: drizzleNeon(neon(config.url), { schema, casing: 'snake_case' }),
-      canTransact: false,
       withTransaction: () => Promise.reject(
         new Error('Transactions are not supported by the neon-http driver'),
       ),
@@ -54,7 +54,6 @@ export function createDb(config: DbConfig): DbHandle {
 
   return {
     db,
-    canTransact: true,
     withTransaction: <T>(fn: (tx: Database) => Promise<T>) => db.transaction(tx => fn(tx)),
   }
 }

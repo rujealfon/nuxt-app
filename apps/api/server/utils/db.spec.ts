@@ -1,22 +1,24 @@
 import { describe, expect, it } from 'vitest'
-import { createDb } from './db'
+import { createDb, selectDriver } from './db'
 
 const pgUrl = 'postgres://user:pass@localhost:5432/db'
 const neonUrl = 'postgres://user:pass@ep-foo-123456.us-east-2.aws.neon.tech/db'
 
-describe('createDb', () => {
+describe('selectDriver', () => {
   it('selects the pg driver for a local postgres url', () => {
-    expect(createDb({ url: pgUrl }).canTransact).toBe(true)
+    expect(selectDriver({ url: pgUrl })).toBe('pg')
   })
 
   it('selects the neon driver for a neon host', () => {
-    expect(createDb({ url: neonUrl }).canTransact).toBe(false)
+    expect(selectDriver({ url: neonUrl })).toBe('neon')
   })
 
   it('selects the neon driver when configured explicitly', () => {
-    expect(createDb({ url: pgUrl, driver: 'neon' }).canTransact).toBe(false)
+    expect(selectDriver({ url: pgUrl, driver: 'neon' })).toBe('neon')
   })
+})
 
+describe('createDb', () => {
   it('fails transactions loudly on the neon driver', async () => {
     const handle = createDb({ url: neonUrl })
 

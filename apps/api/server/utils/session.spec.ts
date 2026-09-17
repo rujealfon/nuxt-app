@@ -67,7 +67,7 @@ describe('requireActor', () => {
       role: 'user',
     }))
 
-    await expect(getActor(event)).resolves.toMatchObject({ id: 'user-1', role: 'user' })
+    await expect(requireActor(event)).resolves.toMatchObject({ id: 'user-1', role: 'user' })
   })
 
   it('throws a product failure without a session', async () => {
