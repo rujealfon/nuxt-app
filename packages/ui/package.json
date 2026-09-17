@@ -1,0 +1,19 @@
+{
+  "name": "@nuxt-app/ui",
+  "type": "module",
+  "version": "0.0.0",
+  "private": true,
+  "exports": {
+    ".": "./nuxt.config.ts",
+    "./package.json": "./package.json"
+  },
+  "main": "./nuxt.config.ts",
+  "scripts": {
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@nuxt/ui": "^4.11.1",
+    "@vueuse/nuxt": "^14.4.0",
+    "tailwindcss": "^4.3.3"
+  }
+}

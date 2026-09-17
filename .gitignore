@@ -5,6 +5,17 @@
 .nitro
 .cache
 dist
+.vercel
+
+# Turborepo
+.turbo
+
+# Playwright
+.playwright-mcp
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
 
 # Node dependencies
 node_modules

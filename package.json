@@ -2,16 +2,50 @@
   "name": "nuxt-app",
   "type": "module",
   "private": true,
+  "packageManager": "pnpm@12.4.2",
   "scripts": {
-    "build": "nuxt build",
-    "dev": "nuxt dev",
-    "generate": "nuxt generate",
-    "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "dev:web": "pnpm --filter @nuxt-app/web dev",
+    "dev:app": "pnpm --filter @nuxt-app/app dev",
+    "dev:admin": "pnpm --filter @nuxt-app/admin dev",
+    "dev:api": "pnpm --filter @nuxt-app/api dev",
+    "dev": "turbo run dev",
+    "dev:stop": "node scripts/stop-dev.mjs",
+    "db:up": "docker compose up -d --wait --remove-orphans",
+    "db:down": "docker compose down",
+    "db:logs": "docker compose logs -f postgres",
+    "db:studio": "docker compose up -d --build --wait drizzle-studio && echo 'Drizzle Studio -> https://local.drizzle.studio?port=4984'",
+    "db:reset": "docker compose down -v && docker compose up -d --build --wait --remove-orphans",
+    "build": "turbo run build",
+    "lint": "eslint",
+    "lint:fix": "eslint --fix",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "type-check": "turbo run type-check",
+    "clean": "turbo run clean",
+    "postinstall": "turbo run nuxt:prepare",
+    "prepare": "husky"
   },
-  "dependencies": {
+  "devDependencies": {
+    "@antfu/eslint-config": "^9.5.1",
+    "@nuxt/test-utils": "^4.3.2",
+    "@vue/test-utils": "^2.5.0",
+    "eslint": "^10.10.0",
+    "eslint-import-resolver-typescript": "^4.4.5",
+    "eslint-plugin-boundaries": "^7.2.0",
+    "eslint-plugin-format": "^2.0.1",
+    "eslint-plugin-vuejs-accessibility": "^2.6.0",
+    "happy-dom": "^20.14.5",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.5.1",
     "nuxt": "^4.5.2",
+    "prettier": "^3.9.6",
+    "prettier-plugin-css-order": "^2.2.0",
+    "turbo": "^2.10.13",
+    "vitest": "^5.0.1",
     "vue": "^3.5.42",
     "vue-router": "^5.3.1"
+  },
+  "lint-staged": {
+    "*": "eslint --fix --no-warn-ignored"
   }
 }

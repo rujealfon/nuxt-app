@@ -1,0 +1,22 @@
+{
+  "name": "@nuxt-app/client",
+  "type": "module",
+  "version": "0.0.0",
+  "private": true,
+  "exports": {
+    ".": "./nuxt.config.ts",
+    "./package.json": "./package.json"
+  },
+  "main": "./nuxt.config.ts",
+  "scripts": {
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@nuxt-app/config": "workspace:*",
+    "@nuxt-app/types": "workspace:*",
+    "@pinia/colada": "^1.4.4",
+    "@pinia/colada-nuxt": "^1.1.0",
+    "@pinia/nuxt": "^1.0.2",
+    "better-auth": "^1.7.4"
+  }
+}
