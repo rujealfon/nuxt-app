@@ -13,6 +13,9 @@ describe('buildOpenApiDocument', () => {
   it('covers every registered version with tags and versioned paths', () => {
     const document = buildOpenApiDocument()
 
+    expect(document.tags.map(tag => tag.name)).toContain('infra')
+    expect(document.paths['/api/health']?.get.tags).toEqual(['infra'])
+
     for (const version of apiVersions) {
       expect(document.tags.map(tag => tag.name)).toContain(version)
       expect(

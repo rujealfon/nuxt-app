@@ -26,7 +26,7 @@ describe('api versioning', async () => {
     expect(await response.json()).toEqual({ message: 'Hello from api.nuxt-app.com' })
   })
 
-  it('returns a JSON 404 for unversioned product paths', async () => {
+  it('returns a JSON 404 when the version prefix is missing', async () => {
     const response = await fetch('/api/hello')
 
     expect(response.status).toBe(404)

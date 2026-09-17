@@ -18,8 +18,8 @@ function parseCaughtApiError(error: unknown) {
   return parseApiErrorBody(error)
 }
 
-// Versioned product API client. Better Auth keeps its own unversioned client
-// (inside `useAuth`); this is for the `/api/<version>/*` domain routes.
+// Versioned-route client. Better Auth keeps its own unversioned client
+// (inside `useAuth`); this is for `/api/<version>/*`.
 export function useApi() {
   const config = useRuntimeConfig()
   const baseURL = `${config.public.apiBase}/api/${config.public.apiVersion}`

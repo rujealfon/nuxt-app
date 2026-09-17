@@ -3,9 +3,10 @@ import { apiVersions, currentApiVersion, versionMeta } from '@nuxt-app/config'
 import { apiErrorSchema, v1 } from '@nuxt-app/types'
 import { z } from 'zod'
 
-// JSON Schema fragments. Product shapes derive from the shared Zod contracts
-// so the served document cannot drift from what handlers parse; infra shapes
-// without a Zod contract are written out next to the route they describe.
+// JSON Schema fragments. Versioned-route shapes derive from the shared Zod
+// contracts so the served document cannot drift from what handlers parse;
+// infra shapes without a Zod contract are written out next to the route they
+// describe.
 type JsonSchema = Record<string, unknown>
 
 interface OpenApiHeader {
@@ -105,9 +106,9 @@ function helloOperation(version: ApiVersion): OpenApiOperation {
   }
 }
 
-// Product operations served per API version. Keyed by every registered version
-// so shipping a new registry entry fails type-check until its operations are
-// documented here.
+// Versioned-route operations served per API version. Keyed by every registered
+// version so shipping a new registry entry fails type-check until its
+// operations are documented here.
 function versionedPaths(): Record<string, OpenApiPathItem> {
   const operationsByVersion: Record<ApiVersion, Record<string, OpenApiPathItem>> = {
     v1: {
@@ -155,15 +156,15 @@ export function buildOpenApiDocument(): OpenApiDocument {
     info: {
       title: 'nuxt-app API',
       version: currentApiVersion,
-      description: 'Versioned endpoints live under `/api/<version>/` and advertise it via `X-Api-Version`. Infra routes (`/api/auth/*`, `/api/health*`) and these docs are deliberately unversioned. Failures use the API error contract.',
+      description: 'Versioned routes live under `/api/<version>/` and advertise it via `X-Api-Version`. Infra routes (`/api/auth/*`, `/api/health*`, `GET /api`, `/api/docs*`, `/api/openapi.json`) are unversioned. Failures use the API error contract except Better Auth and health, which keep their own.',
     },
     servers: [
       { url: '/', description: 'Same origin: docs, spec, and API share one host.' },
     ],
     tags: [
       { name: 'meta', description: 'Version registry and API documentation.' },
-      ...apiVersions.map(version => ({ name: version, description: `Versioned product operations (${versionMeta(version).deprecated ? 'deprecated' : 'current'}).` })),
-      { name: 'system', description: 'Unversioned health checks.' },
+      ...apiVersions.map(version => ({ name: version, description: `Versioned-route operations (${versionMeta(version).deprecated ? 'deprecated' : 'current'}).` })),
+      { name: 'infra', description: 'Unversioned health checks.' },
     ],
     paths: {
       '/api': {
@@ -197,7 +198,7 @@ export function buildOpenApiDocument(): OpenApiDocument {
       ...versionedPaths(),
       '/api/health': {
         get: {
-          tags: ['system'],
+          tags: ['infra'],
           summary: 'Liveness check',
           responses: {
             200: {
@@ -223,7 +224,7 @@ export function buildOpenApiDocument(): OpenApiDocument {
       },
       '/api/health/ready': {
         get: {
-          tags: ['system'],
+          tags: ['infra'],
           summary: 'Readiness check',
           description: 'Probes PostgreSQL and Redis.',
           responses: {

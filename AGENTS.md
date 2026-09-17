@@ -10,7 +10,7 @@ Shared code belongs in `packages/`: `ui` provides components and CSS, `client` p
 
 For feature extraction, shared-code placement, or new API domains, follow [the architecture guide](docs/architecture.md). Keep substantial frontend behavior in `app/features/<feature>/`, expose selective `index.ts` exports, and import them explicitly from routes. Group API operations in `server/services/<domain>/` and import the domain entrypoint. Keep small pages local and share code only when multiple consumers need it.
 
-For authorization policies, API error contracts, persistence transactions, or durable jobs, follow [the backend patterns guide](docs/backend-patterns.md), including its adoption triggers and verification requirements.
+For authorization policies, the API error contract, persistence transactions, or durable jobs, follow [the backend patterns guide](docs/backend-patterns.md), including its adoption triggers and verification requirements.
 
 ## Git
 

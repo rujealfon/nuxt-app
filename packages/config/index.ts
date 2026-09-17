@@ -22,8 +22,9 @@ export const siteUrls = {
   adminUrl: `http://localhost:${appPorts.admin}`,
 } as const
 
-// Product API versions. Domain endpoints live under `/api/<version>/`; infra
-// routes (auth, health) are deliberately unversioned. To ship a new version:
+// Versioned-route versions. Versioned routes live under `/api/<version>/`;
+// infra routes (auth, health, docs, version registry) are unversioned. To
+// ship a new version:
 // append it here, bump `currentApiVersion`, add a `v<next>` contracts namespace
 // to `@nuxt-app/types`, and mark the old one in `deprecatedApiVersions` with a
 // `sunset` date.

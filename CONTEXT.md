@@ -6,11 +6,11 @@ A pnpm/Turborepo monorepo of Nuxt applications: a public site, a user SPA, an ad
 
 **Versioned route**:
 An HTTP endpoint under a registered API version (`/api/<version>/*`) that serves application behavior.
-_Avoid_: public API, business endpoint, product route
+_Avoid_: public API, business endpoint, product route, product endpoint, product API, domain endpoint
 
 **Infra route**:
-An unversioned endpoint that supports the platform rather than application behavior — Better Auth (`/api/auth/*`) and health checks (`/api/health*`). Infra routes keep their own response contracts.
-_Avoid_: system endpoint, internal route
+An unversioned endpoint that supports the platform rather than application behavior: Better Auth (`/api/auth/*`), health (`/api/health*`), the version registry (`GET /api`), and API docs (`/api/docs*`, `/api/openapi.json`).
+_Avoid_: system endpoint, internal route, infrastructure route
 
 **Actor**:
 The authenticated identity a request acts as: a user id, email, name, and role. Client and server both derive it from the Better Auth session; the UI and middleware gate on the role.
@@ -21,7 +21,7 @@ A transport-independent failure raised when an operation cannot complete — val
 _Avoid_: error, exception, API error, product failure, ProductFailure
 
 **API error contract**:
-The single response shape every versioned route uses for failures: a stable machine-readable code, a safe, non-empty human-readable message, and, when the code is `invalid_input`, optional input details. Clients branch on the code, never the message; they use input details only to recover fields. Infra routes (Better Auth, health) keep their own contracts.
+The single failure shape for versioned routes: a stable code, a safe non-empty message, and optional input details only on `invalid_input`. Clients branch on the code, never the message; Better Auth and health keep their own contracts, while other infra-route failures still use this shape.
 _Avoid_: error response, error format, Zod issue, validation error, ProductError
 
 **Input detail**:

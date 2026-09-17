@@ -40,7 +40,7 @@ conventions. When changing an app, also read its guide:
 - [Web](apps/web/AGENTS.md): public pages, prerendering, and navigation.
 - [App](apps/app/AGENTS.md): user authentication flows and API clients.
 - [Admin](apps/admin/AGENTS.md): role-based routing and admin interface tests.
-- [API](apps/api/AGENTS.md): versioned endpoints, services, and database changes.
+- [API](apps/api/AGENTS.md): versioned routes, services, and database changes.
 
 The root guide applies throughout the repository; app guides add guidance for
 their directories. Keep contributor rules in these guides and setup, operation,
@@ -124,7 +124,7 @@ pnpm clean       # turbo run clean (nuxt cleanup)
 
 Postgres 18 and Redis 8 run in Docker (`docker-compose.yml`), exposed on host
 ports `55432` and `6381` to match `DATABASE_URL` / `REDIS_URL` in
-`apps/api/.env.example`. Redis backs Better Auth and product API rate limiting;
+`apps/api/.env.example`. Redis backs Better Auth and versioned-route rate limiting;
 sessions live in Postgres.
 
 ```bash
@@ -328,12 +328,12 @@ Vercel project's Domains settings and point DNS (`A`/`CNAME`).
 
 ### API versioning
 
-Product endpoints are path-versioned under `/api/<version>/`; infrastructure
-routes are intentionally unversioned — `/api/auth/*` (Better Auth),
-`/api/health*` (monitoring), and `/api/docs` + `/api/openapi.json` (Scalar
-API docs, development-only, self-hosted from the installed `@scalar/api-reference` bundle). An unversioned or unknown product path (e.g.
-`/api/hello`, `/api/v9/hello`) returns a JSON `404`, so clients must be explicit
-about the version.
+Versioned routes are path-versioned under `/api/<version>/`. Infra routes are
+unversioned — `/api/auth/*` (Better Auth), `/api/health*` (monitoring),
+`GET /api` (version registry), and `/api/docs` + `/api/openapi.json` (Scalar
+API docs, development-only, self-hosted from the installed `@scalar/api-reference`
+bundle). A missing or unknown version (e.g. `/api/hello`, `/api/v9/hello`)
+returns a JSON `404`, so clients must be explicit about the version.
 
 The registry lives in `packages/config` (`apiVersions`, `currentApiVersion`,
 `deprecatedApiVersions`) — one source of truth shared by the API and the
