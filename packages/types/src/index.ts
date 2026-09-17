@@ -85,5 +85,8 @@ export function actorFromSession(data: unknown): Actor | null {
   return parsed.success ? parsed.data.user : null
 }
 
+export { createPageNumberResponseSchema, createPaginationResponseSchema, pageNumberQuerySchema, paginationQuerySchema } from './pagination'
+export type { PageNumberQuery, PageNumberResponse, PaginationQuery, PaginationResponse } from './pagination'
+
 // Versioned API contracts, namespaced by version (`v1.helloResponseSchema`).
 export * as v1 from './v1'

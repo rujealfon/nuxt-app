@@ -10,7 +10,7 @@ const root = fileURLToPath(new URL('..', import.meta.url))
 // deliberately, so nothing joins the interface by accident.
 const clientComposables = ['useApi', 'useAuth']
 const uiComposables = ['useSite']
-const uiComponents = ['AppHeader', 'AppShell', 'AuthScreen']
+const uiComponents = ['AppHeader', 'AppShell', 'AuthScreen', 'LoadMoreButton', 'PageNumberPagination']
 
 function exportedSymbols(dir: string): string[] {
   return readdirSync(dir, { withFileTypes: true })
