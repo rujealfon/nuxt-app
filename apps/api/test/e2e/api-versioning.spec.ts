@@ -30,14 +30,20 @@ describe('api versioning', async () => {
     const response = await fetch('/api/hello')
 
     expect(response.status).toBe(404)
-    await expect(response.json()).resolves.toMatchObject({ error: 'not_found' })
+    await expect(response.json()).resolves.toEqual({
+      error: 'not_found',
+      message: 'The requested resource was not found',
+    })
   })
 
   it('returns a JSON 404 for unknown versions', async () => {
     const response = await fetch('/api/v9/hello')
 
     expect(response.status).toBe(404)
-    await expect(response.json()).resolves.toMatchObject({ error: 'not_found' })
+    await expect(response.json()).resolves.toEqual({
+      error: 'not_found',
+      message: 'The requested resource was not found',
+    })
   })
 
   it('keeps health checks unversioned', async () => {
@@ -45,5 +51,27 @@ describe('api versioning', async () => {
 
     expect(response.status).toBe(200)
     await expect(response.json()).resolves.toMatchObject({ status: 'ok' })
+  })
+
+  it('returns a JSON 404 for the origin instead of the Nuxt welcome page', async () => {
+    const response = await fetch('/')
+
+    expect(response.status).toBe(404)
+    expect(response.headers.get('content-type')).toMatch(/json/)
+    await expect(response.json()).resolves.toEqual({
+      error: 'not_found',
+      message: 'The requested resource was not found',
+    })
+  })
+
+  it('returns a JSON 404 for non-API paths', async () => {
+    const response = await fetch('/docs')
+
+    expect(response.status).toBe(404)
+    expect(response.headers.get('content-type')).toMatch(/json/)
+    await expect(response.json()).resolves.toEqual({
+      error: 'not_found',
+      message: 'The requested resource was not found',
+    })
   })
 })

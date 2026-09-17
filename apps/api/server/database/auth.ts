@@ -1,14 +1,9 @@
-import type { NodePgDatabase } from 'drizzle-orm/node-postgres'
+import type { Database } from '../utils/db'
+import type { RateLimitStorage } from '../utils/rate-limit'
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
+import { rateLimitPolicy } from '../utils/rate-limit'
 import * as schema from './schema'
-
-export interface RateLimitStorage {
-  consume: (
-    key: string,
-    rule: { window: number, max: number },
-  ) => Promise<{ allowed: boolean, retryAfter: number | null }>
-}
 
 export interface AuthConfig {
   secret: string
@@ -18,7 +13,7 @@ export interface AuthConfig {
 }
 
 export function createAuth(
-  db: NodePgDatabase<typeof schema>,
+  db: Database,
   config: AuthConfig,
 ) {
   return betterAuth({
@@ -34,8 +29,8 @@ export function createAuth(
     },
     rateLimit: {
       enabled: true,
-      window: 60,
-      max: 100,
+      window: rateLimitPolicy.window,
+      max: rateLimitPolicy.max,
       customStorage: config.rateLimitStorage,
     },
     trustedOrigins: config.trustedOrigins ?? [],

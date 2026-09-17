@@ -412,6 +412,9 @@ importers:
 
   packages/ui:
     dependencies:
+      '@nuxt-app/config':
+        specifier: workspace:*
+        version: link:../config
       '@nuxt/ui':
         specifier: ^4.11.1
         version: 4.11.1(4eff7b2e87eaae0860c0d1ac4f43dc51)

@@ -1,13 +1,12 @@
 <script setup lang="ts">
-const { user, signOut } = useAuth()
-
+const { actor, signOut: signOutAction } = useAuth()
 const isSigningOut = ref(false)
 
-async function handleSignOut() {
+async function signOut() {
   isSigningOut.value = true
 
   try {
-    await signOut()
+    await signOutAction()
     await navigateTo('/login')
   }
   finally {
@@ -26,17 +25,17 @@ useHead({ title: 'Admin · nuxt-app' })
     <p class="mt-3 text-muted">
       Internal operations console served from admin.nuxt-app.com.
     </p>
-    <p v-if="user" class="mt-3 text-default">
-      Signed in as <strong>{{ user.email }}</strong>
+    <p v-if="actor" class="mt-3 text-default">
+      Signed in as <strong>{{ actor.email }}</strong>
     </p>
     <UButton
-      v-if="user"
+      v-if="actor"
       class="mt-6"
       variant="outline"
       color="neutral"
       :loading="isSigningOut"
       label="Sign out"
-      @click="handleSignOut"
+      @click="signOut"
     />
   </section>
 </template>

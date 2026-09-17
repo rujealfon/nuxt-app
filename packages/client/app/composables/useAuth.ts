@@ -1,9 +1,10 @@
-import type { LoginCredentials, RegisterCredentials } from '@nuxt-app/types'
+import type { Actor, LoginCredentials, RegisterCredentials } from '@nuxt-app/types'
+import { actorFromSession } from '@nuxt-app/types'
 import { createAuthClient } from 'better-auth/vue'
 
 let client: ReturnType<typeof createAuthClient> | undefined
 
-export function useAuthClient() {
+function useAuthClient() {
   if (!client) {
     const config = useRuntimeConfig()
     client = createAuthClient({
@@ -21,8 +22,15 @@ export function useAuth() {
   const client = useAuthClient()
   const session = client.useSession()
 
-  const user = computed(() => session.value.data?.user ?? null)
+  const actor = computed(() => actorFromSession(session.value.data))
   const isPending = computed(() => session.value.isPending)
+
+  // Imperative, fresh fetch for navigation guards: the reactive store reflects
+  // the last known session, while a gate needs a current answer.
+  async function getActor(): Promise<Actor | null> {
+    const { data } = await client.getSession()
+    return actorFromSession(data)
+  }
 
   async function signIn(credentials: LoginCredentials) {
     const { error } = await client.signIn.email(credentials)
@@ -45,9 +53,9 @@ export function useAuth() {
   }
 
   return {
-    user,
-    session,
+    actor,
     isPending,
+    getActor,
     signIn,
     signUp,
     signOut,

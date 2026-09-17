@@ -1,3 +1,4 @@
+import type { VersionMeta } from '@nuxt-app/config'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const setHeader = vi.fn()
@@ -6,13 +7,11 @@ const defineEventHandler = vi.fn((handler: unknown) => handler)
 vi.stubGlobal('setHeader', setHeader)
 vi.stubGlobal('defineEventHandler', defineEventHandler)
 
-const { deprecatedApiVersions } = await import('@nuxt-app/config')
-const { defineVersionedHandler } = await import('./versioned')
+const { defineVersionedHandler, deprecationHeaders } = await import('./versioned')
 
 describe('defineVersionedHandler', () => {
   beforeEach(() => {
     setHeader.mockClear()
-    delete deprecatedApiVersions.v1
   })
 
   it('advertises the version and forwards the event', () => {
@@ -27,22 +26,28 @@ describe('defineVersionedHandler', () => {
     expect(result).toBe(event)
   })
 
-  it('adds deprecation headers for a deprecated version', () => {
-    deprecatedApiVersions.v1 = { sunset: '2026-12-31' }
-    const wrapped = defineVersionedHandler('v1', (() => 'ok') as never) as unknown as (event: unknown) => unknown
-    const event = {}
-
-    wrapped(event)
-
-    expect(setHeader).toHaveBeenCalledWith(event, 'deprecation', 'true')
-    expect(setHeader).toHaveBeenCalledWith(event, 'sunset', new Date('2026-12-31').toUTCString())
-  })
-
-  it('omits deprecation headers for a live version', () => {
+  it('omits deprecation headers for the live version', () => {
     const wrapped = defineVersionedHandler('v1', (() => 'ok') as never) as unknown as (event: unknown) => unknown
 
     wrapped({})
 
     expect(setHeader).not.toHaveBeenCalledWith(expect.anything(), 'deprecation', expect.anything())
+  })
+})
+
+describe('deprecationHeaders', () => {
+  it('renders the pair for deprecated metadata', () => {
+    const meta: VersionMeta = { version: 'v1', deprecated: true, sunset: '2026-12-31' }
+
+    expect(deprecationHeaders(meta)).toEqual([
+      ['deprecation', 'true'],
+      ['sunset', new Date('2026-12-31').toUTCString()],
+    ])
+  })
+
+  it('renders nothing for a live version', () => {
+    const meta: VersionMeta = { version: 'v1', deprecated: false }
+
+    expect(deprecationHeaders(meta)).toEqual([])
   })
 })

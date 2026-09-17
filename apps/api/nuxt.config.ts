@@ -1,10 +1,18 @@
+import { fileURLToPath } from 'node:url'
+
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
+  // API-only: no Vue pages. Unmatched paths are JSON 404s from server/routes.
+  pages: false,
   devtools: { enabled: true },
   app: {
     head: {
       meta: [{ name: 'robots', content: 'noindex, nofollow' }],
     },
+  },
+  nitro: {
+    // Renders the product error contract for every thrown failure.
+    errorHandler: fileURLToPath(new URL('./server/error', import.meta.url)),
   },
   runtimeConfig: {
     databaseUrl: process.env.DATABASE_URL || '',

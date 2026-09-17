@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import type { LoginCredentials } from '@nuxt-app/types'
-import type { AuthFormField, FormSubmitEvent } from '@nuxt/ui'
+import type { AuthFormField } from '@nuxt/ui'
 import { loginSchema } from '@nuxt-app/types'
 
 const route = useRoute()
@@ -11,42 +10,22 @@ const fields: AuthFormField[] = [
   { name: 'password', type: 'password', label: 'Password', placeholder: '••••••••', required: true },
 ]
 
-const errorMessage = ref('')
-
-async function onSubmit(event: FormSubmitEvent<LoginCredentials>) {
-  errorMessage.value = ''
-
-  try {
-    await signIn(event.data)
-    await navigateTo(typeof route.query.redirect === 'string' ? route.query.redirect : '/')
-  }
-  catch {
-    errorMessage.value = 'Invalid email or password'
-  }
-}
+const redirectTo = computed(() =>
+  typeof route.query.redirect === 'string' ? route.query.redirect : '/',
+)
 </script>
 
 <template>
-  <div class="flex min-h-dvh items-center justify-center px-6">
-    <UPageCard class="w-full max-w-md">
-      <UAuthForm
-        :schema="loginSchema"
-        :fields="fields"
-        title="Admin sign in"
-        description="Administrator access only."
-        icon="i-lucide-shield"
-        :submit="{ label: 'Sign in', block: true, loading: isPending }"
-        @submit="onSubmit"
-      >
-        <template #validation>
-          <UAlert
-            v-if="errorMessage"
-            color="error"
-            variant="soft"
-            :title="errorMessage"
-          />
-        </template>
-      </UAuthForm>
-    </UPageCard>
-  </div>
+  <AuthScreen
+    title="Admin sign in"
+    description="Administrator access only."
+    icon="i-lucide-shield"
+    :schema="loginSchema"
+    :fields="fields"
+    submit-label="Sign in"
+    :loading="isPending"
+    failure-message="Invalid email or password"
+    :redirect-to="redirectTo"
+    :submit-action="signIn"
+  />
 </template>

@@ -33,7 +33,7 @@ describe('app register page', () => {
     expect(auth.navigateTo).toHaveBeenCalledWith('/')
   })
 
-  it('surfaces the error message from a failed sign up', async () => {
+  it('shows a safe error when sign up fails', async () => {
     auth.signUp.mockRejectedValue(new Error('Email already in use'))
     const wrapper = await mountSuspended(RegisterPage)
 
@@ -42,6 +42,7 @@ describe('app register page', () => {
     })
     await flushPromises()
 
-    expect(wrapper.text()).toContain('Email already in use')
+    expect(wrapper.text()).toContain('Unable to create your account')
+    expect(wrapper.text()).not.toContain('Email already in use')
   })
 })

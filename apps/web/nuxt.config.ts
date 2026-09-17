@@ -1,4 +1,4 @@
-import { appPorts } from '@nuxt-app/config'
+import { siteUrls } from '@nuxt-app/config'
 
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
@@ -15,9 +15,7 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       appName: 'web',
-      webUrl: `http://localhost:${appPorts.web}`,
-      appUrl: `http://localhost:${appPorts.app}`,
-      adminUrl: `http://localhost:${appPorts.admin}`,
+      ...siteUrls,
     },
   },
 })
