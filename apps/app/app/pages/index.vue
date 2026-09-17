@@ -1,18 +1,6 @@
 <script setup lang="ts">
-const { actor, signOut } = useAuth()
-
-const isSigningOut = ref(false)
-
-async function handleSignOut() {
-  isSigningOut.value = true
-
-  try {
-    await signOut()
-  }
-  finally {
-    isSigningOut.value = false
-  }
-}
+const { actor } = useAuth()
+const { isSigningOut, signOut } = useSignOut()
 
 useHead({ title: 'App · nuxt-app' })
 </script>
@@ -38,7 +26,7 @@ useHead({ title: 'App · nuxt-app' })
       color="neutral"
       :loading="isSigningOut"
       label="Sign out"
-      @click="handleSignOut"
+      @click="signOut"
     />
   </section>
 </template>

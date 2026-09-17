@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { apiBaseFor, apiVersions, currentApiVersion, deprecatedApiVersions, versionMeta } from '../index'
+import { apiBaseFor, apiVersions, appPorts, currentApiVersion, deprecatedApiVersions, siteUrls, versionMeta } from '../index'
 
 describe('apiBaseFor', () => {
   it('falls back to the local API port', () => {
@@ -8,6 +8,20 @@ describe('apiBaseFor', () => {
 
   it('returns the provided base unchanged', () => {
     expect(apiBaseFor('https://api.nuxt-app.com')).toBe('https://api.nuxt-app.com')
+  })
+})
+
+describe('site registry', () => {
+  it('derives app ports from the registry', () => {
+    expect(appPorts).toEqual({ web: 3000, app: 3001, admin: 3002, api: 3003 })
+  })
+
+  it('derives localhost cross-site urls', () => {
+    expect(siteUrls()).toEqual({
+      webUrl: 'http://localhost:3000',
+      appUrl: 'http://localhost:3001',
+      adminUrl: 'http://localhost:3002',
+    })
   })
 })
 

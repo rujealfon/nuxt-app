@@ -1,8 +1,6 @@
 // Rate limits the API's own Nitro routes. Better Auth rate-limits `/api/auth/*`
 // itself (with stricter per-endpoint rules); health checks are exempt so
 // monitoring isn't throttled.
-const WINDOW_SECONDS = 60
-const MAX_REQUESTS = 100
 const EXEMPT_PREFIXES = ['/api/auth', '/api/health']
 
 const storage = createRateLimitStorage()
@@ -26,7 +24,7 @@ export default defineEventHandler(async (event) => {
   const ip = getRequestIP(event, { xForwardedFor: true }) || 'unknown'
   const { allowed, retryAfter } = await storage.consume(
     `${ip}:${getMethod(event)}:${path}`,
-    { window: WINDOW_SECONDS, max: MAX_REQUESTS },
+    rateLimitPolicy,
   )
 
   if (!allowed) {

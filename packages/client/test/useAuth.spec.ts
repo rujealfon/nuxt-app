@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { useAuth } from '../app/composables/useAuth'
+import { useSignOut } from '../app/composables/useSignOut'
 
 const signInEmail = vi.fn()
 const signUpEmail = vi.fn()
@@ -100,5 +101,37 @@ describe('useAuth', () => {
     await useAuth().signOut()
 
     expect(signOut).toHaveBeenCalled()
+  })
+})
+
+describe('useSignOut', () => {
+  it('signs out and resets the loading flag', async () => {
+    signOut.mockResolvedValue({ data: {}, error: null })
+    const { isSigningOut, signOut: signOutAction } = useSignOut()
+
+    const promise = signOutAction()
+    expect(isSigningOut.value).toBe(true)
+    await promise
+
+    expect(signOut).toHaveBeenCalled()
+    expect(isSigningOut.value).toBe(false)
+  })
+
+  it('runs the post-sign-out hook', async () => {
+    signOut.mockResolvedValue({ data: {}, error: null })
+    const onSignedOut = vi.fn()
+    const { signOut: signOutAction } = useSignOut({ onSignedOut })
+
+    await signOutAction()
+
+    expect(onSignedOut).toHaveBeenCalled()
+  })
+
+  it('resets the loading flag when sign out fails', async () => {
+    signOut.mockRejectedValue(new Error('nope'))
+    const { isSigningOut, signOut: signOutAction } = useSignOut()
+
+    await expect(signOutAction()).rejects.toThrow('nope')
+    expect(isSigningOut.value).toBe(false)
   })
 })
