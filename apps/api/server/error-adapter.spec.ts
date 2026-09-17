@@ -13,7 +13,7 @@ vi.stubGlobal('setResponseStatus', setResponseStatus)
 vi.stubGlobal('send', send)
 vi.stubGlobal('useLogger', useLogger)
 
-const { default: errorHandler } = await import('./error')
+const { default: errorHandler } = await import('./error-adapter')
 const { domainFailure } = await import('./utils/domain-failure')
 
 type ErrorHandler = (error: unknown, event: unknown) => unknown
@@ -151,7 +151,7 @@ describe('error adapter', () => {
     expect(setResponseStatus).not.toHaveBeenCalled()
   })
 
-  it('keeps the code when an override message is empty', () => {
+  it('keeps `error` when an override message is empty', () => {
     const event = makeEvent()
 
     handle(domainFailure('not_found', ''), event)
@@ -168,8 +168,8 @@ describe('error adapter', () => {
 
     handle(domainFailure('not_found', ''), event)
 
-    expect(loggerWarn).toHaveBeenCalledWith({ code: 'not_found' }, expect.any(String))
-    expect(loggerWarn.mock.calls[0]?.[0]).toEqual({ code: 'not_found' })
+    expect(loggerWarn).toHaveBeenCalledWith({ error: 'not_found' }, expect.any(String))
+    expect(loggerWarn.mock.calls[0]?.[0]).toEqual({ error: 'not_found' })
   })
 
   it('includes input details on invalid_input', () => {
@@ -215,7 +215,7 @@ describe('error adapter', () => {
       error: 'invalid_input',
       message: 'The request was invalid',
     })
-    expect(loggerWarn).toHaveBeenCalledWith({ code: 'invalid_input' }, expect.any(String))
+    expect(loggerWarn).toHaveBeenCalledWith({ error: 'invalid_input' }, expect.any(String))
   })
 
   it('warns about dropped details when the message override is also unusable', () => {
@@ -230,7 +230,7 @@ describe('error adapter', () => {
       message: 'The request was invalid',
     })
     expect(loggerWarn.mock.calls).toEqual(expect.arrayContaining([
-      [{ code: 'invalid_input' }, expect.any(String)],
+      [{ error: 'invalid_input' }, expect.any(String)],
     ]))
     expect(loggerWarn.mock.calls.length).toBeGreaterThanOrEqual(2)
   })

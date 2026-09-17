@@ -1,4 +1,4 @@
-import { parseApiError as parseApiErrorBody } from '@nuxt-app/types'
+import { parseApiError } from '@nuxt-app/types'
 
 type ApiClient = typeof $fetch
 
@@ -7,15 +7,15 @@ let clientBaseURL = ''
 
 // $fetch throws a FetchError whose `data` is the JSON body. Better Auth
 // failures are a different shape and must not parse as the API error contract.
-function parseCaughtApiError(error: unknown) {
+function apiErrorFromCaught(error: unknown) {
   if (error && typeof error === 'object' && 'data' in error) {
-    const fromBody = parseApiErrorBody(error.data)
+    const fromBody = parseApiError(error.data)
     if (fromBody) {
       return fromBody
     }
   }
 
-  return parseApiErrorBody(error)
+  return parseApiError(error)
 }
 
 // Versioned-route client. Better Auth keeps its own unversioned client
@@ -35,6 +35,6 @@ export function useApi() {
   return {
     api: client,
     apiUrl: (path: string) => `${baseURL}${path}`,
-    parseApiError: parseCaughtApiError,
+    parseApiError: apiErrorFromCaught,
   }
 }

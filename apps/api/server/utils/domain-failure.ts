@@ -13,32 +13,32 @@ export const domainFailureMessages: Record<ApiErrorCode, string> = {
 }
 
 // A failure raised by domain code, independent of how it reaches the client.
-// The error adapter maps the code to an HTTP status and the API error
+// The error adapter maps `error` to an HTTP status and the API error
 // contract; domain code never picks a status.
 export class DomainFailure extends Error {
-  readonly code: ApiErrorCode
+  readonly error: ApiErrorCode
   readonly details: readonly InputDetail[] | undefined
 
-  constructor(code: ApiErrorCode, message?: string, details?: readonly InputDetail[]) {
-    super(message ?? domainFailureMessages[code])
+  constructor(error: ApiErrorCode, message?: string, details?: readonly InputDetail[]) {
+    super(message ?? domainFailureMessages[error])
     this.name = 'DomainFailure'
-    this.code = code
+    this.error = error
     this.details = details
   }
 }
 
 export function domainFailure(
-  code: ApiErrorCode,
+  error: ApiErrorCode,
   message?: string,
   details?: readonly InputDetail[],
 ): DomainFailure {
-  return new DomainFailure(code, message, details)
+  return new DomainFailure(error, message, details)
 }
 
 // Request-boundary conversion: a ZodError never reaches the error adapter.
 // Handlers turn parsed issues into a domain failure with input details.
-export function invalidInputFromZod(error: ZodError, message?: string): DomainFailure {
-  const details = error.issues.flatMap((issue) => {
+export function invalidInputFromZod(zodError: ZodError, message?: string): DomainFailure {
+  const details = zodError.issues.flatMap((issue) => {
     const detail = {
       path: issue.path.map(String),
       message: issue.message,

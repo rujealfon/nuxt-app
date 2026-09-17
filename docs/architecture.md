@@ -32,7 +32,7 @@ integration tests can remain in an app's `test/` directory and mount the real
 route. Avoid importing a module's own barrel from production implementation
 files, which can introduce cycles.
 
-Nuxt continues to register pages, middleware, and infrastructure utilities.
+Nuxt continues to register pages, middleware, and server utilities.
 Feature folders and API services are explicitly imported, so their private
 exports never become application-wide auto-imports.
 
@@ -43,9 +43,9 @@ exports never become application-wide auto-imports.
 - Consumers access feature and service modules through `index.ts`.
 - Features are independent of peer features and application composition code.
   Compose multiple features in pages or app-level workflows.
-- API services are independent of peer domains and HTTP adapters. Put
+- API services are independent of peer domains and versioned-route handlers. Put
   cross-domain orchestration in `server/workflows/` when needed. Services may
-  use server infrastructure and database code.
+  use server utilities and database code.
 - Applications share code through workspace packages, not direct app imports.
 - Shared packages remain independent of applications.
 - Frontend code accesses server operations through HTTP and shared contracts.

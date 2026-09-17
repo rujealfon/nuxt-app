@@ -13,7 +13,7 @@ describe('invalidInputFromZod', () => {
 
     const failure = invalidInputFromZod(parsed.error)
 
-    expect(failure.code).toBe('invalid_input')
+    expect(failure.error).toBe('invalid_input')
     expect(failure.message).toBe('The request was invalid')
     expect(failure.details).toEqual([
       { path: ['email'], message: 'Enter a valid email address' },
@@ -23,7 +23,7 @@ describe('invalidInputFromZod', () => {
 })
 
 describe('domainFailureMessages', () => {
-  it('satisfy the API error contract for every code', () => {
+  it('satisfy the API error contract for every `error`', () => {
     for (const code of apiErrorCodes) {
       expect(apiErrorSchema.parse({
         error: code,

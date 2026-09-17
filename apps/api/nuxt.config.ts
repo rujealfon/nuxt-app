@@ -11,8 +11,8 @@ export default defineNuxtConfig({
     },
   },
   nitro: {
-    // Renders the API error contract for every thrown failure.
-    errorHandler: fileURLToPath(new URL('./server/error', import.meta.url)),
+    // Error adapter: renders the API error contract for every thrown failure.
+    errorHandler: fileURLToPath(new URL('./server/error-adapter', import.meta.url)),
     // Embeds the Scalar UI bundle for `/api/docs-assets/*` so docs work
     // offline and stay version-pinned with the API. Only `standalone.js` is
     // served; the sibling build files are inert build artifacts.

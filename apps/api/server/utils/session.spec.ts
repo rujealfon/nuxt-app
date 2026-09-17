@@ -81,6 +81,6 @@ describe('requireActor', () => {
     )
 
     expect(caught).toBeInstanceOf(DomainFailure)
-    expect((caught as DomainFailure).code).toBe('unauthenticated')
+    expect((caught as DomainFailure).error).toBe('unauthenticated')
   })
 })

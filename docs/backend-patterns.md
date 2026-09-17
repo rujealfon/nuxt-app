@@ -5,7 +5,7 @@
 This guide establishes conventions for new backend features. The feature modules,
 service entrypoints, and import rules in [the architecture guide](architecture.md)
 are implemented. The API error contract is implemented; the policies,
-repositories, and job infrastructure described below are implementation guidance,
+repositories, and jobs described below are implementation guidance,
 not existing runtime helpers.
 
 The current versioned route is a greeting. Better Auth owns authentication and
@@ -66,12 +66,12 @@ Preserve this API error contract shape:
 { "error": "not_found", "message": "The requested resource was not found" }
 ```
 
-`invalid_input` may also include `details: { path, message }[]` when at least one input detail is usable. The key is omitted otherwise. Clients branch on `error`, never on message text; they use input details only to recover fields. The error adapter reads domain failures only: a thrown `ZodError` stays `internal_error`. A blank message override keeps the code and the default safe message; `message` is never joined from details.
+`invalid_input` may also include `details: { path, message }[]` when at least one input detail is usable. The key is omitted otherwise. Clients branch on `error`, never on message text; they use input details only to recover fields. The error adapter reads domain failures only: a thrown `ZodError` stays `internal_error`. A blank message override keeps `error` and the default safe message; `message` is never joined from details.
 Define the shared schema and inferred types in `packages/types`. Keep
 transport-independent business failures private to the server, and translate
-them at the HTTP adapter. The mapping is:
+them at the error adapter. The mapping is:
 
-| Code | HTTP status | Meaning |
+| `error` | HTTP status | Meaning |
 | --- | --- | --- |
 | `invalid_input` | 400 | Request data fails validation. |
 | `unauthenticated` | 401 | A valid session is required. |
@@ -86,10 +86,10 @@ Keep stack traces, SQL details, credentials, and internal provider errors out of
 responses. Preserve existing rate-limit status and retry headers.
 
 The error adapter is implemented: domain code raises a domain failure, and the
-error adapter (`server/error.ts`) renders the contract and normalizes unexpected
+error adapter (`server/error-adapter.ts`) renders the contract and normalizes unexpected
 failures to `internal_error`. `useApi().parseApiError` reads a caught
 versioned-route failure through the API error contract; screens that call those
-routes consume the code and, for `invalid_input`, input details. `X-Api-Version`
+routes consume `error` and, for `invalid_input`, input details. `X-Api-Version`
 headers set before a failure survive onto the API error contract; assess
 compatibility before changing an established version. Better Auth and health
 keep their own contracts.
@@ -147,7 +147,7 @@ atomic writes, and external effects. Then deliver one complete path:
 
 1. Add request/response contracts and any required schema migration.
 2. Implement the business operation, policy, and persistence code it needs.
-3. Add the HTTP adapter; raise domain failures so the error adapter can render the API error contract.
+3. Add the versioned route; raise domain failures so the error adapter can render the API error contract.
 4. Test business rules, denied access, database constraints/rollback, and the
    versioned HTTP contract. Use a dedicated test database with deterministic
    setup and cleanup for persistence tests; mocks cannot prove SQL semantics.

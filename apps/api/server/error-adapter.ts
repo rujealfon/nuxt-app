@@ -3,7 +3,7 @@ import type { ApiError, ApiErrorCode, InputDetail } from '@nuxt-app/types'
 import { apiErrorSchema, inputDetailSchema } from '@nuxt-app/types'
 import { DomainFailure, domainFailureMessages } from './utils/domain-failure'
 
-const statusByCode: Record<ApiErrorCode, number> = {
+const statusByError: Record<ApiErrorCode, number> = {
   invalid_input: 400,
   unauthenticated: 401,
   forbidden: 403,
@@ -13,7 +13,7 @@ const statusByCode: Record<ApiErrorCode, number> = {
   internal_error: 500,
 }
 
-const codeByStatus: Partial<Record<number, ApiErrorCode>> = {
+const errorByStatus: Partial<Record<number, ApiErrorCode>> = {
   400: 'invalid_input',
   401: 'unauthenticated',
   403: 'forbidden',
@@ -58,7 +58,7 @@ function isUnhandled(error: unknown): boolean {
 
 // Framework 4xx (method-not-allowed, missing pages, validation) must stay
 // client errors. Only unhandled/fatal/missing-status failures become 500.
-function codeFromH3(error: unknown): ApiErrorCode | undefined {
+function errorFromH3(error: unknown): ApiErrorCode | undefined {
   if (isUnhandled(error)) {
     return undefined
   }
@@ -69,8 +69,8 @@ function codeFromH3(error: unknown): ApiErrorCode | undefined {
     return undefined
   }
 
-  if (codeByStatus[status]) {
-    return codeByStatus[status]
+  if (errorByStatus[status]) {
+    return errorByStatus[status]
   }
 
   if (status >= 400 && status < 500) {
@@ -86,10 +86,10 @@ const cannedInternalError: ApiError = {
 }
 
 function usableInputDetails(
-  code: ApiErrorCode,
+  error: ApiErrorCode,
   details: readonly InputDetail[] | undefined,
 ): InputDetail[] | undefined {
-  if (code !== 'invalid_input' || !details?.length) {
+  if (error !== 'invalid_input' || !details?.length) {
     return undefined
   }
 
@@ -102,38 +102,38 @@ function usableInputDetails(
 }
 
 function apiErrorBody(
-  code: ApiErrorCode,
+  error: ApiErrorCode,
   failure: DomainFailure | undefined,
   logger: Logger,
 ): ApiError {
-  const fallbackMessage = domainFailureMessages[code]
-  const details = usableInputDetails(code, failure?.details)
+  const fallbackMessage = domainFailureMessages[error]
+  const details = usableInputDetails(error, failure?.details)
   const candidate: ApiError = details
-    ? { error: code, message: failure?.message ?? fallbackMessage, details }
-    : { error: code, message: failure?.message ?? fallbackMessage }
+    ? { error, message: failure?.message ?? fallbackMessage, details }
+    : { error, message: failure?.message ?? fallbackMessage }
 
   const parsed = apiErrorSchema.safeParse(candidate)
 
-  if (code === 'invalid_input' && failure?.details && details?.length !== failure.details.length) {
-    logger.warn({ code }, 'dropped unusable input details')
+  if (error === 'invalid_input' && failure?.details && details?.length !== failure.details.length) {
+    logger.warn({ error }, 'dropped unusable input details')
   }
 
   if (parsed.success) {
     return parsed.data
   }
 
-  logger.warn({ code }, 'dropped unusable API error message override')
+  logger.warn({ error }, 'dropped unusable API error message override')
 
   const fallbackCandidate: ApiError = details
-    ? { error: code, message: fallbackMessage, details }
-    : { error: code, message: fallbackMessage }
+    ? { error, message: fallbackMessage, details }
+    : { error, message: fallbackMessage }
   const fallback = apiErrorSchema.safeParse(fallbackCandidate)
 
   if (fallback.success) {
     return fallback.data
   }
 
-  logger.error({ code }, 'API error contract unusable')
+  logger.error({ error }, 'API error contract unusable')
   return cannedInternalError
 }
 
@@ -147,16 +147,16 @@ export default defineNitroErrorHandler((error, event) => {
   }
 
   const failure = toDomainFailure(error)
-  const code = failure?.code ?? codeFromH3(error) ?? 'internal_error'
+  const bodyError = failure?.error ?? errorFromH3(error) ?? 'internal_error'
   const logger: Logger = event.context.logger || useLogger()
 
-  if (!failure && code === 'internal_error') {
+  if (!failure && bodyError === 'internal_error') {
     logger.error({ err: error }, 'unhandled error')
   }
 
-  const body = apiErrorBody(code, failure, logger)
+  const body = apiErrorBody(bodyError, failure, logger)
 
-  setResponseStatus(event, statusByCode[body.error])
+  setResponseStatus(event, statusByError[body.error])
 
   return send(event, JSON.stringify(body), 'application/json')
 })

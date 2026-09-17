@@ -343,9 +343,9 @@ frontends. `GET /api` reports what's available:
 { "current": "v1", "versions": [{ "version": "v1", "deprecated": false }] }
 ```
 
-In `apps/api`, version folders are thin HTTP adapters that call the
+In `apps/api`, version folders are thin versioned-route handlers that call the
 version-agnostic domain logic in `server/services/<domain>/`. Import each
-domain explicitly through its `index.ts` entrypoint; infrastructure helpers in
+domain explicitly through its `index.ts` entrypoint; server utilities in
 `server/utils/` remain auto-imported. Wrap routes with `defineVersionedHandler('v1', ...)`: it sets
 `X-Api-Version` on every response and adds `Deprecation` + `Sunset` headers once
 the version appears in `deprecatedApiVersions`.

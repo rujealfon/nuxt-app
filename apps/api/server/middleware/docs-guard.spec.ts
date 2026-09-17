@@ -7,8 +7,8 @@ const defineEventHandler = vi.fn((handler: unknown) => handler)
 
 vi.stubGlobal('useRuntimeConfig', useRuntimeConfig)
 vi.stubGlobal('defineEventHandler', defineEventHandler)
-vi.stubGlobal('domainFailure', (code: 'not_found') => {
-  throw new DomainFailure(code)
+vi.stubGlobal('domainFailure', (error: 'not_found') => {
+  throw new DomainFailure(error)
 })
 
 const guard = (await import('./docs-guard')).default as (event: { path: string }) => unknown
