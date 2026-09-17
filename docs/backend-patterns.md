@@ -4,8 +4,9 @@
 
 This guide establishes conventions for new backend features. The feature modules,
 service entrypoints, and import rules in [the architecture guide](architecture.md)
-are implemented. The policies, error mapping, repositories, and job infrastructure
-described below are implementation guidance; they are not existing runtime helpers.
+are implemented. The product error contract is implemented; the policies,
+repositories, and job infrastructure described below are implementation guidance,
+not existing runtime helpers.
 
 The current product endpoint is a greeting. Better Auth owns authentication and
 its persistence adapter. Introduce the following patterns with real product
@@ -49,7 +50,7 @@ the module. Shared database schemas, migrations, and connection setup remain in
 `server/database/` and `server/utils/db.ts`. Cross-domain orchestration belongs in
 `server/workflows/`, consistent with the existing import rules.
 
-`requireUser(event)` establishes authentication only. Resource policies decide
+`requireActor(event)` establishes authentication only. Resource policies decide
 whether that actor may perform the operation. Derive ownership, roles, and
 membership from trusted data; scope reads as well as writes. Enforce policies
 inside business operations so jobs and other entrypoints cannot bypass them.
@@ -68,7 +69,7 @@ For the first implementation, preserve the existing product catch-all shape:
 Use stable machine-readable codes; clients branch on `error`, not message text.
 Define the shared schema and inferred types in `packages/types`. Keep
 transport-independent business failures private to the server, and translate
-them at the HTTP adapter. The initial mapping should be:
+them at the HTTP adapter. The mapping is:
 
 | Code | HTTP status | Meaning |
 | --- | --- | --- |
@@ -77,17 +78,19 @@ them at the HTTP adapter. The initial mapping should be:
 | `forbidden` | 403 | The actor cannot perform this operation. |
 | `not_found` | 404 | The resource is absent or intentionally concealed by policy. |
 | `conflict` | 409 | A uniqueness rule or concurrent change prevents completion. |
+| `rate_limited` | 429 | The request rate limit was exceeded; retry headers are preserved. |
 | `internal_error` | 500 | An unexpected failure occurred. |
 
 Log unexpected failures with a correlation ID and return a safe generic message.
 Keep stack traces, SQL details, credentials, and internal provider errors out of
 responses. Preserve existing rate-limit status and retry headers.
 
-This mapping is not applied globally today: Nitro errors and the JSON catch-all
-currently differ. Implement the serializer, server mapping, client handling,
-and contract tests together. Preserve `X-Api-Version` and existing 404 behavior;
-assess compatibility before changing an established version. Better Auth and
-health endpoints retain their own contracts.
+The server mapping and serializer are implemented: product code raises a product
+failure, and the error adapter (`server/error.ts`) renders the contract and
+normalizes unexpected failures to `internal_error`. Client handling lands with
+its first consumer. `X-Api-Version` headers set before a failure survive onto
+error responses; assess compatibility before changing an established version.
+Better Auth and health endpoints retain their own contracts.
 
 ## Persistence, transactions, and adapters
 
@@ -101,11 +104,11 @@ constraints to enforce uniqueness and relationships; use conditional updates or
 version checks when concurrent edits must be detected. Avoid external network
 calls inside database transactions.
 
-Before implementing a multi-write workflow, resolve the capability mismatch in
-`server/utils/db.ts`: it currently exposes both the PostgreSQL and Neon HTTP
-drivers as `NodePgDatabase` through a cast. Verify the actual driver's required
-transaction semantics and expose that capability honestly. A cast does not
-establish support. Verify rollback against the supported database configuration.
+The capability mismatch in `server/utils/db.ts` is resolved: the seam exposes a
+`Database` type without `.transaction()`, and `withTransaction(fn)` is the only
+transaction surface, failing loudly on the neon-http driver. Before implementing
+a multi-write workflow, verify rollback against the supported database
+configuration.
 
 Keep vendor SDK calls inside adapters for email, payments, or storage. Inject
 the small interface needed by the business operation through function arguments

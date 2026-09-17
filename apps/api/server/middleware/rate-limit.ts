@@ -32,6 +32,6 @@ export default defineEventHandler(async (event) => {
   if (!allowed) {
     setHeader(event, 'x-retry-after', String(retryAfter))
     setHeader(event, 'retry-after', retryAfter ?? 0)
-    throw createError({ statusCode: 429, statusMessage: 'Too many requests' })
+    throw productFailure('rate_limited')
   }
 })

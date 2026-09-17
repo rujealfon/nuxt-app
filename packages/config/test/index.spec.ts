@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { apiBaseFor, apiVersions, currentApiVersion, deprecatedApiVersions } from '../index'
+import { apiBaseFor, apiVersions, currentApiVersion, deprecatedApiVersions, versionMeta } from '../index'
 
 describe('apiBaseFor', () => {
   it('falls back to the local API port', () => {
@@ -21,5 +21,23 @@ describe('api version registry', () => {
     for (const version of Object.keys(deprecatedApiVersions)) {
       expect(apiVersions).toContain(version)
     }
+  })
+
+  it('keeps the shared registry frozen', () => {
+    expect(Object.isFrozen(deprecatedApiVersions)).toBe(true)
+  })
+})
+
+describe('versionMeta', () => {
+  it('marks a live version as not deprecated', () => {
+    expect(versionMeta('v1')).toEqual({ version: 'v1', deprecated: false })
+  })
+
+  it('reports the sunset date from an explicit registry', () => {
+    expect(versionMeta('v1', { v1: { sunset: '2026-12-31' } })).toEqual({
+      version: 'v1',
+      deprecated: true,
+      sunset: '2026-12-31',
+    })
   })
 })

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const { user, signOut } = useAuth()
+const { actor, signOut } = useAuth()
 
 const isSigningOut = ref(false)
 
@@ -26,11 +26,11 @@ useHead({ title: 'Admin · nuxt-app' })
     <p class="mt-3 text-muted">
       Internal operations console served from admin.nuxt-app.com.
     </p>
-    <p v-if="user" class="mt-3 text-default">
-      Signed in as <strong>{{ user.email }}</strong>
+    <p v-if="actor" class="mt-3 text-default">
+      Signed in as <strong>{{ actor.email }}</strong>
     </p>
     <UButton
-      v-if="user"
+      v-if="actor"
       class="mt-6"
       variant="outline"
       color="neutral"

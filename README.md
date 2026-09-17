@@ -14,7 +14,7 @@ Shared packages:
 | Package | Purpose |
 | --- | --- |
 | `@nuxt-app/ui` | Nuxt layer: [Nuxt UI](https://ui.nuxt.com/) components, theme, `useSite()`, [VueUse](https://vueuse.org/) |
-| `@nuxt-app/client` | Nuxt layer: [Pinia](https://pinia.vuejs.org/) + [Pinia Colada](https://pinia-colada.esm.dev/), Better Auth Vue client (`useAuth()`, `useAuthClient()`) |
+| `@nuxt-app/client` | Nuxt layer: [Pinia](https://pinia.vuejs.org/) + [Pinia Colada](https://pinia-colada.esm.dev/), Better Auth Vue client (`useAuth()`: actor + session actions) |
 | `@nuxt-app/types` | Shared Zod schemas + inferred types for authentication and versioned API contracts |
 | `@nuxt-app/config` | Ports, API base helper, API version registry |
 | `@nuxt-app/logger` | Shared Pino logger factory |
@@ -269,10 +269,10 @@ CORS_ORIGINS=https://web.nuxt-app.com,https://app.nuxt-app.com,https://admin.nux
 
 - **Postgres: Neon.** Use the **pooled** connection string. `useDb()` detects a
   `*.neon.tech` host (or `DATABASE_DRIVER=neon`) and uses
-  `drizzle-orm/neon-http` — no TCP pool, serverless-friendly. Note the HTTP
-  driver does not support `db.transaction()`, and Better Auth creates the user +
-  credential account in a transaction on sign-up; use a TCP/`pg` service (or the
-  pooled websocket driver) if you rely on sign-up in production.
+  `drizzle-orm/neon-http` — no TCP pool, serverless-friendly. The HTTP driver
+  cannot run transactions: the database handle never advertises
+  `.transaction()`, and `withTransaction()` fails loudly. Use a TCP/`pg` service
+  (or the pooled websocket driver) when you need transactional writes.
 - **Redis: rate limiting only.** `useRedis()` (ioredis) backs the Better Auth
   rate limiter through a custom `consume` implementation in
   `apps/api/server/utils/rate-limit.ts` (atomic `INCR` + `PEXPIRE` via Lua) —
@@ -281,7 +281,8 @@ CORS_ORIGINS=https://web.nuxt-app.com,https://app.nuxt-app.com,https://admin.nux
 
 Local dev is unchanged: `useDb()` uses `pg` and `useRedis()` uses `ioredis`,
 both pointed at the Docker containers from `docker-compose.yml`. The DB seam
-returns a stable `NodePgDatabase` type, so app code never branches on the driver.
+returns a `Database` type without `.transaction()`; use `withTransaction(fn)`
+for atomic writes — it fails loudly when the configured driver cannot transact.
 
 ### Migrations
 
@@ -358,4 +359,4 @@ Frontends target a version with `NUXT_PUBLIC_API_VERSION` (defaults to
 `currentApiVersion`). `useApi()` from `@nuxt-app/client` returns a `$fetch`
 instance scoped to `<apiBase>/api/<version>` (credentials included) plus an
 `apiUrl(path)` helper for `useFetch`; Better Auth keeps its own unversioned
-client (`useAuthClient`).
+client (internal to `useAuth()`).

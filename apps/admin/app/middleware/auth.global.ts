@@ -3,11 +3,10 @@ export default defineNuxtRouteMiddleware(async (to) => {
     return
   }
 
-  const client = useAuthClient()
-  const { data } = await client.getSession()
-  const role = (data?.user as { role?: string } | undefined)?.role
+  const { getActor } = useAuth()
+  const actor = await getActor()
 
-  if (!data?.user || role !== 'admin') {
+  if (actor?.role !== 'admin') {
     return navigateTo({ path: '/login', query: { redirect: to.fullPath } })
   }
 })

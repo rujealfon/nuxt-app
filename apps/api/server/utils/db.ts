@@ -1,39 +1,79 @@
-import type { NodePgDatabase } from 'drizzle-orm/node-postgres'
+import type { NeonHttpQueryResultHKT } from 'drizzle-orm/neon-http'
+import type { NodePgQueryResultHKT } from 'drizzle-orm/node-postgres'
+import type { PgDatabase } from 'drizzle-orm/pg-core'
 import { neon } from '@neondatabase/serverless'
 import { drizzle as drizzleNeon } from 'drizzle-orm/neon-http'
 import { drizzle as drizzlePg } from 'drizzle-orm/node-postgres'
 import { Pool } from 'pg'
 import * as schema from '../database/schema'
 
-let db: NodePgDatabase<typeof schema> | undefined
-let pool: Pool | undefined
+// The honest database interface callers see: the query surface both drivers
+// implement. The neon-http driver declares `.transaction()` but throws at
+// runtime, so transactions stay off this type — `withTransaction` is the only
+// transaction surface, and it fails loudly when the driver cannot support one.
+export type Database = Omit<
+  PgDatabase<NodePgQueryResultHKT | NeonHttpQueryResultHKT, typeof schema>,
+  'transaction'
+>
 
-function usesNeon(): boolean {
-  const config = useRuntimeConfig()
-  return config.databaseDriver === 'neon' || config.databaseUrl.includes('neon.tech')
+export interface DbConfig {
+  url: string
+  driver?: string
 }
 
-function createDb(): NodePgDatabase<typeof schema> {
-  const config = useRuntimeConfig()
+export interface DbHandle {
+  db: Database
+  canTransact: boolean
+  withTransaction: <T>(fn: (tx: Database) => Promise<T>) => Promise<T>
+}
 
-  if (usesNeon()) {
-    // HTTP driver: no TCP pool, ideal for serverless. No transaction support.
-    return drizzleNeon(neon(config.databaseUrl), {
-      schema,
-      casing: 'snake_case',
-    }) as unknown as NodePgDatabase<typeof schema>
+function usesNeon(config: DbConfig): boolean {
+  return config.driver === 'neon' || config.url.includes('neon.tech')
+}
+
+// Pure factory shared by the runtime (`useDb`) and the CLI scripts
+// (`seed.ts`, `better-auth.config.ts`), so every consumer selects a driver and
+// learns its capability the same way.
+export function createDb(config: DbConfig): DbHandle {
+  if (usesNeon(config)) {
+    return {
+      db: drizzleNeon(neon(config.url), { schema, casing: 'snake_case' }),
+      canTransact: false,
+      withTransaction: () => Promise.reject(
+        new Error('Transactions are not supported by the neon-http driver'),
+      ),
+    }
   }
 
-  pool ??= new Pool({
-    connectionString: config.databaseUrl,
+  // pg driver: TCP pool, interactive transactions supported.
+  const db = drizzlePg(new Pool({
+    connectionString: config.url,
     max: 10,
     allowExitOnIdle: true,
-  })
+  }), { schema, casing: 'snake_case' })
 
-  return drizzlePg(pool, { schema, casing: 'snake_case' })
+  return {
+    db,
+    canTransact: true,
+    withTransaction: <T>(fn: (tx: Database) => Promise<T>) => db.transaction(tx => fn(tx)),
+  }
 }
 
-export function useDb(): NodePgDatabase<typeof schema> {
-  db ??= createDb()
-  return db
+let handle: DbHandle | undefined
+
+function dbHandle(): DbHandle {
+  if (!handle) {
+    const config = useRuntimeConfig()
+    handle = createDb({ url: config.databaseUrl, driver: config.databaseDriver })
+  }
+
+  return handle
+}
+
+export function useDb(): Database {
+  return dbHandle().db
+}
+
+export function withTransaction<T>(fn: (tx: Database) => Promise<T>): Promise<T> {
+  return dbHandle().withTransaction(fn)
 }

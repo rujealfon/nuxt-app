@@ -1,7 +1,5 @@
-import { drizzle } from 'drizzle-orm/node-postgres'
-import { Pool } from 'pg'
 import { createAuth } from './server/database/auth'
-import * as schema from './server/database/schema'
+import { createDb } from './server/utils/db'
 
 try {
   process.loadEnvFile()
@@ -13,10 +11,10 @@ catch {
 // Config used only by the Better Auth CLI (`pnpm db:auth:generate`) to emit the
 // Drizzle schema/migration. Runtime auth lives in `server/utils/auth.ts`.
 export const auth = createAuth(
-  drizzle(new Pool({ connectionString: process.env.DATABASE_URL }), {
-    schema,
-    casing: 'snake_case',
-  }),
+  createDb({
+    url: process.env.DATABASE_URL ?? '',
+    driver: process.env.DATABASE_DRIVER,
+  }).db,
   {
     secret: process.env.BETTER_AUTH_SECRET ?? '',
     baseURL: process.env.BETTER_AUTH_URL ?? '',

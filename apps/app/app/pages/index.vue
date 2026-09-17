@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const { user, signOut } = useAuth()
+const { actor, signOut } = useAuth()
 
 const isSigningOut = ref(false)
 
@@ -22,8 +22,8 @@ useHead({ title: 'App · nuxt-app' })
     <h1 class="text-2xl font-bold text-highlighted">
       Product app
     </h1>
-    <p v-if="user" class="mt-3 text-default">
-      Signed in as <strong>{{ user.email }}</strong>
+    <p v-if="actor" class="mt-3 text-default">
+      Signed in as <strong>{{ actor.email }}</strong>
     </p>
     <div v-else class="mt-3 flex items-center gap-3">
       <p class="text-muted">
@@ -32,7 +32,7 @@ useHead({ title: 'App · nuxt-app' })
       <UButton to="/login" variant="outline" color="neutral" label="Sign in" />
     </div>
     <UButton
-      v-if="user"
+      v-if="actor"
       class="mt-6"
       variant="outline"
       color="neutral"

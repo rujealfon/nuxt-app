@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { loginSchema, registerSchema, v1 } from '../src'
+import { actorSchema, loginSchema, productErrorSchema, registerSchema, v1 } from '../src'
 
 describe('auth schemas', () => {
   it('accepts valid login credentials', () => {
@@ -23,5 +23,29 @@ describe('v1 contracts', () => {
 
   it('rejects a response without a message', () => {
     expect(v1.helloResponseSchema.safeParse({}).success).toBe(false)
+  })
+})
+
+describe('product error contract', () => {
+  it('accepts a known code', () => {
+    expect(productErrorSchema.safeParse({ error: 'not_found', message: 'Gone' }).success).toBe(true)
+  })
+
+  it('rejects an unknown code', () => {
+    expect(productErrorSchema.safeParse({ error: 'teapot', message: 'Nope' }).success).toBe(false)
+  })
+})
+
+describe('actor contract', () => {
+  it('accepts a complete actor', () => {
+    expect(actorSchema.safeParse({ id: 'u1', email: 'admin@example.com', name: null, role: 'admin' }).success).toBe(true)
+  })
+
+  it('defaults an unknown role to user', () => {
+    expect(actorSchema.parse({ id: 'u1', email: 'user@example.com', role: 'owner' })).toMatchObject({ role: 'user' })
+  })
+
+  it('rejects a missing id', () => {
+    expect(actorSchema.safeParse({ email: 'user@example.com', role: 'user' }).success).toBe(false)
   })
 })

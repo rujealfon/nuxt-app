@@ -1,4 +1,4 @@
-import type { NodePgDatabase } from 'drizzle-orm/node-postgres'
+import type { Database } from '../utils/db'
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import * as schema from './schema'
@@ -18,7 +18,7 @@ export interface AuthConfig {
 }
 
 export function createAuth(
-  db: NodePgDatabase<typeof schema>,
+  db: Database,
   config: AuthConfig,
 ) {
   return betterAuth({

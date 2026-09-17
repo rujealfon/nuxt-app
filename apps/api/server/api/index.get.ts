@@ -1,4 +1,4 @@
-import { apiVersions, currentApiVersion } from '@nuxt-app/config'
+import { apiVersions, currentApiVersion, versionMeta } from '@nuxt-app/config'
 
 export default defineEventHandler(() => {
   return {

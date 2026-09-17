@@ -6,11 +6,11 @@ import IndexPage from '../app/pages/index.vue'
 
 const auth = vi.hoisted(() => ({
   signOut: vi.fn(),
-  user: { email: 'user@example.com' },
+  actor: { email: 'user@example.com' },
 }))
 
 mockNuxtImport('useAuth', () => () => ({
-  user: ref(auth.user),
+  actor: ref(auth.actor),
   signOut: auth.signOut,
 }))
 
