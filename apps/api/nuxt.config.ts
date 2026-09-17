@@ -13,13 +13,14 @@ export default defineNuxtConfig({
   nitro: {
     // Error adapter: renders the API error contract for every thrown failure.
     errorHandler: fileURLToPath(new URL('./server/error-adapter', import.meta.url)),
-    // Embeds the Scalar UI bundle for `/api/docs-assets/*` so docs work
-    // offline and stay version-pinned with the API. Only `standalone.js` is
-    // served; the sibling build files are inert build artifacts.
+    // Embeds only the Scalar IIFE the docs page loads. The rest of
+    // `dist/browser` (chunks, ESM, source maps) stays out of the server
+    // bundle; HTTP still 404s anything but `standalone.js`.
     serverAssets: [
       {
         baseName: 'scalar-docs',
         dir: fileURLToPath(new URL('./node_modules/@scalar/api-reference/dist/browser', import.meta.url)),
+        pattern: 'standalone.js',
       },
     ],
   },

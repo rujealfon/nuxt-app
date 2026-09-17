@@ -2,6 +2,7 @@ import type { FormSchema } from '@nuxt/ui'
 import { mockNuxtImport, mountSuspended } from '@nuxt/test-utils/runtime'
 import { flushPromises } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { nextTick } from 'vue'
 import AuthScreen from './AuthScreen.vue'
 
 const navigateTo = vi.hoisted(() => vi.fn())
@@ -85,5 +86,25 @@ describe('authScreen', () => {
 
     expect(wrapper.text()).toContain('Unable to continue')
     expect(wrapper.text()).not.toContain('Invalid email or password')
+  })
+
+  it('ignores a second submit while the first is in flight', async () => {
+    let finish: (() => void) | undefined
+    const submitAction = vi.fn(() => new Promise<void>((resolve) => {
+      finish = resolve
+    }))
+    const wrapper = await mountScreen({ submitAction })
+
+    await wrapper.getComponent({ name: 'UAuthForm' }).vm.$emit('submit', { data: { email: 'user@example.com' } })
+    await nextTick()
+    await wrapper.getComponent({ name: 'UAuthForm' }).vm.$emit('submit', { data: { email: 'user@example.com' } })
+
+    expect(submitAction).toHaveBeenCalledTimes(1)
+    expect(wrapper.getComponent({ name: 'UAuthForm' }).props('submit')).toMatchObject({ loading: true })
+
+    finish?.()
+    await flushPromises()
+
+    expect(wrapper.getComponent({ name: 'UAuthForm' }).props('submit')).toMatchObject({ loading: false })
   })
 })

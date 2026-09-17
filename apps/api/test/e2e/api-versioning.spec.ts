@@ -69,6 +69,8 @@ describe('api versioning', async () => {
 
     expect(response.status).toBe(404)
     expect(response.headers.get('content-type')).toMatch(/json/)
+    expect(response.headers.get('x-content-type-options')).toBe('nosniff')
+    expect(response.headers.get('cache-control')).toBe('no-cache')
     await expect(response.json()).resolves.toEqual({
       error: 'not_found',
       message: 'The requested resource was not found',

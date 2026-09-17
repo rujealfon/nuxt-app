@@ -28,8 +28,22 @@ export interface DbHandle {
   withTransaction: <T>(fn: (tx: Database) => Promise<T>) => Promise<T>
 }
 
+function neonHostname(url: string): boolean {
+  try {
+    const host = new URL(url).hostname
+    return host === 'neon.tech' || host.endsWith('.neon.tech')
+  }
+  catch {
+    return false
+  }
+}
+
 export function selectDriver(config: DbConfig): DatabaseDriver {
-  return config.driver === 'neon' || config.url.includes('neon.tech') ? 'neon' : 'pg'
+  if (config.driver === 'pg' || config.driver === 'neon') {
+    return config.driver
+  }
+
+  return neonHostname(config.url) ? 'neon' : 'pg'
 }
 
 // Pure factory shared by the runtime (`useDb`) and the CLI scripts

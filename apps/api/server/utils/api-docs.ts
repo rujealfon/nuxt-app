@@ -1,5 +1,5 @@
 // Self-hosted Scalar shell. The UI bundle loads from our own origin
-// (`nitro.publicAssets` serves the installed `@scalar/api-reference`
+// (`nitro.serverAssets` embeds the installed `@scalar/api-reference`
 // standalone build), so docs work offline and stay version-pinned with the API.
 
 export const openApiSpecUrl = '/api/openapi.json'
@@ -23,8 +23,8 @@ function escapeHtml(value: string): string {
 // Nitro; the route sets the HTML content type.
 export function buildDocsHtml(options: DocsHtmlOptions = {}): string {
   const title = escapeHtml(options.title ?? 'nuxt-app API docs')
-  const specUrl = options.specUrl ?? openApiSpecUrl
-  const jsUrl = options.jsUrl ?? scalarStandaloneJsUrl
+  const specUrl = JSON.stringify(options.specUrl ?? openApiSpecUrl)
+  const jsUrl = escapeHtml(options.jsUrl ?? scalarStandaloneJsUrl)
 
   return `<!doctype html>
 <html lang="en">
@@ -38,7 +38,7 @@ export function buildDocsHtml(options: DocsHtmlOptions = {}): string {
     <div id="app"></div>
     <script src="${jsUrl}"></script>
     <script>
-      Scalar.createApiReference('#app', { url: '${specUrl}' })
+      Scalar.createApiReference('#app', { url: ${specUrl} })
     </script>
   </body>
 </html>

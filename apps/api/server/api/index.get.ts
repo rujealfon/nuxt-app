@@ -1,8 +1,9 @@
 import { apiVersions, currentApiVersion, versionMeta } from '@nuxt-app/config'
+import { versionRegistrySchema } from '../utils/infra'
 
 export default defineEventHandler(() => {
-  return {
+  return versionRegistrySchema.parse({
     current: currentApiVersion,
     versions: apiVersions.map(version => versionMeta(version)),
-  }
+  })
 })

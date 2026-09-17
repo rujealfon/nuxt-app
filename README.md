@@ -267,9 +267,11 @@ CORS_ORIGINS=https://web.nuxt-app.com,https://app.nuxt-app.com,https://admin.nux
 
 ### Managed services
 
-- **Postgres: Neon.** Use the **pooled** connection string. `useDb()` detects a
-  `*.neon.tech` host (or `DATABASE_DRIVER=neon`) and uses
-  `drizzle-orm/neon-http` — no TCP pool, serverless-friendly. App code never
+- **Postgres: Neon.** Use the **pooled** connection string. `useDb()` selects
+  `drizzle-orm/neon-http` when `DATABASE_DRIVER` is `neon` or, if unset, when
+  the URL hostname is `*.neon.tech`. An explicit `DATABASE_DRIVER=pg` keeps the
+  TCP driver even on a Neon host. neon-http has no TCP pool and is
+  serverless-friendly. App code never
   sees `.transaction()`; `withTransaction()` fails loudly on this driver. Better
   Auth still receives the raw drizzle handle and creates the user + credential
   account in a transaction on sign-up — use a TCP/`pg` service (or the pooled

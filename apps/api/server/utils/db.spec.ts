@@ -16,6 +16,14 @@ describe('selectDriver', () => {
   it('selects the neon driver when configured explicitly', () => {
     expect(selectDriver({ url: pgUrl, driver: 'neon' })).toBe('neon')
   })
+
+  it('honors an explicit pg driver on a neon host', () => {
+    expect(selectDriver({ url: neonUrl, driver: 'pg' })).toBe('pg')
+  })
+
+  it('does not treat neon.tech in the password as a neon host', () => {
+    expect(selectDriver({ url: 'postgres://user:neon.tech@localhost:5432/db' })).toBe('pg')
+  })
 })
 
 describe('createDb', () => {

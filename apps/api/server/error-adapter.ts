@@ -18,7 +18,6 @@ const errorByStatus: Partial<Record<number, ApiErrorCode>> = {
   401: 'unauthenticated',
   403: 'forbidden',
   404: 'not_found',
-  405: 'invalid_input',
   409: 'conflict',
   429: 'rate_limited',
 }
@@ -56,8 +55,9 @@ function isUnhandled(error: unknown): boolean {
   )
 }
 
-// Framework 4xx (method-not-allowed, missing pages, validation) must stay
-// client errors. Only unhandled/fatal/missing-status failures become 500.
+// Framework 4xx stay client errors. Unknown URL/method on this API-only app
+// is `not_found`, not field validation. Only unhandled/fatal/missing-status
+// failures become 500.
 function errorFromH3(error: unknown): ApiErrorCode | undefined {
   if (isUnhandled(error)) {
     return undefined
@@ -74,7 +74,7 @@ function errorFromH3(error: unknown): ApiErrorCode | undefined {
   }
 
   if (status >= 400 && status < 500) {
-    return 'invalid_input'
+    return 'not_found'
   }
 
   return undefined
@@ -155,8 +155,19 @@ export default defineNitroErrorHandler((error, event) => {
   }
 
   const body = apiErrorBody(bodyError, failure, logger)
+  const status = statusByError[body.error]
 
-  setResponseStatus(event, statusByError[body.error])
+  setResponseStatus(event, status)
+  setResponseHeaders(event, {
+    'content-type': 'application/json',
+    'x-content-type-options': 'nosniff',
+    'x-frame-options': 'DENY',
+    'referrer-policy': 'no-referrer',
+    'content-security-policy': 'script-src \'none\'; frame-ancestors \'none\';',
+    ...((status === 404 || !getResponseHeader(event, 'cache-control'))
+      ? { 'cache-control': 'no-cache' }
+      : {}),
+  })
 
   return send(event, JSON.stringify(body), 'application/json')
 })

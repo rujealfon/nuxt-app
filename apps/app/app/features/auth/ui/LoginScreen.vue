@@ -2,7 +2,7 @@
 import type { AuthFormField } from '@nuxt/ui'
 import { loginSchema } from '@nuxt-app/types'
 
-const { signIn, isPending } = useAuth()
+const { signIn } = useAuth()
 
 const fields: AuthFormField[] = [
   { name: 'email', type: 'email', label: 'Email', placeholder: 'you@example.com', required: true },
@@ -18,7 +18,6 @@ const fields: AuthFormField[] = [
     :schema="loginSchema"
     :fields="fields"
     submit-label="Sign in"
-    :loading="isPending"
     failure-message="Invalid email or password"
     redirect-to="/"
     :submit-action="signIn"

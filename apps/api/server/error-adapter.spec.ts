@@ -3,6 +3,8 @@ import { apiErrorCodes } from '@nuxt-app/types'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const setResponseStatus = vi.fn()
+const setResponseHeaders = vi.fn()
+const getResponseHeader = vi.fn()
 const send = vi.fn((...args: unknown[]) => args)
 const loggerError = vi.fn()
 const loggerWarn = vi.fn()
@@ -10,6 +12,8 @@ const useLogger = vi.fn(() => ({ error: loggerError, warn: loggerWarn }))
 
 vi.stubGlobal('defineNitroErrorHandler', vi.fn((handler: unknown) => handler))
 vi.stubGlobal('setResponseStatus', setResponseStatus)
+vi.stubGlobal('setResponseHeaders', setResponseHeaders)
+vi.stubGlobal('getResponseHeader', getResponseHeader)
 vi.stubGlobal('send', send)
 vi.stubGlobal('useLogger', useLogger)
 
@@ -81,7 +85,7 @@ describe('error adapter', () => {
     [401, 'unauthenticated', 'Sign in is required'],
     [403, 'forbidden', 'You do not have access to this resource'],
     [404, 'not_found', 'The requested resource was not found'],
-    [405, 'invalid_input', 'The request was invalid'],
+    [405, 'not_found', 'The requested resource was not found'],
     [409, 'conflict', 'The request conflicts with the current state'],
     [429, 'rate_limited', 'Too many requests'],
   ] as const)('maps H3 %i onto %s', (status, code, message) => {
@@ -94,17 +98,32 @@ describe('error adapter', () => {
     expect(loggerError).not.toHaveBeenCalled()
   })
 
-  it('maps an unknown 4xx onto invalid_input', () => {
+  it('maps an unknown 4xx onto not_found', () => {
     const event = makeEvent()
 
     handle(h3Error(422), event)
 
-    expect(setResponseStatus).toHaveBeenCalledWith(event, 400)
+    expect(setResponseStatus).toHaveBeenCalledWith(event, 404)
     expect(sentBody(send.mock.calls[0] as unknown[])).toEqual({
-      error: 'invalid_input',
-      message: 'The request was invalid',
+      error: 'not_found',
+      message: 'The requested resource was not found',
     })
     expect(loggerError).not.toHaveBeenCalled()
+  })
+
+  it('sets Nitro hardening headers on the JSON body', () => {
+    const event = makeEvent()
+
+    handle(domainFailure('not_found'), event)
+
+    expect(setResponseHeaders).toHaveBeenCalledWith(event, expect.objectContaining({
+      'content-type': 'application/json',
+      'x-content-type-options': 'nosniff',
+      'x-frame-options': 'DENY',
+      'referrer-policy': 'no-referrer',
+      'content-security-policy': 'script-src \'none\'; frame-ancestors \'none\';',
+      'cache-control': 'no-cache',
+    }))
   })
 
   it('treats unhandled H3 4xx as internal_error', () => {

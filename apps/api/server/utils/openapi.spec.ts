@@ -14,7 +14,7 @@ describe('buildOpenApiDocument', () => {
     const document = buildOpenApiDocument()
 
     expect(document.tags.map(tag => tag.name)).toContain('infra')
-    expect(document.paths['/api/health']?.get.tags).toEqual(['infra'])
+    expect(document.paths['/api/health']?.get?.tags).toEqual(['infra'])
 
     for (const version of apiVersions) {
       expect(document.tags.map(tag => tag.name)).toContain(version)
@@ -27,7 +27,7 @@ describe('buildOpenApiDocument', () => {
 
   it('documents the version advertisement headers on the hello operation', () => {
     const document = buildOpenApiDocument()
-    const response = document.paths['/api/v1/hello']?.get.responses['200']
+    const response = document.paths['/api/v1/hello']?.get?.responses['200']
 
     expect(response?.headers?.['x-api-version']?.schema).toEqual({
       type: 'string',
@@ -44,6 +44,17 @@ describe('buildOpenApiDocument', () => {
     expect(document.components.schemas.HelloResponse).toMatchObject({
       type: 'object',
       properties: { message: { type: 'string' } },
+    })
+    expect(document.paths['/api/health']?.get?.responses['200']?.content?.['application/json']?.schema).toEqual({
+      $ref: '#/components/schemas/HealthResponse',
+    })
+    expect(document.components.schemas.HealthResponse).toMatchObject({
+      type: 'object',
+      properties: {
+        status: { type: 'string' },
+        service: { type: 'string' },
+        timestamp: { type: 'string', format: 'date-time' },
+      },
     })
     expect(document.components.schemas.ApiError).toMatchObject({
       type: 'object',

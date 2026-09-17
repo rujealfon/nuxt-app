@@ -8,34 +8,41 @@ const props = defineProps<{
   schema: FormSchema
   fields: AuthFormField[]
   submitLabel: string
-  loading?: boolean
   failureMessage: string
   redirectTo: string
   submitAction: (data: T) => Promise<void>
 }>()
 
 const errorMessage = ref('')
+const submitting = ref(false)
 
 function inAppPath(path: string): string {
   return path.startsWith('/') && !path.startsWith('//') ? path : '/'
 }
 
 async function onSubmit(event: FormSubmitEvent<T>) {
+  if (submitting.value) {
+    return
+  }
+
+  submitting.value = true
   errorMessage.value = ''
 
   try {
     await props.submitAction(event.data)
+
+    try {
+      await navigateTo(inAppPath(props.redirectTo))
+    }
+    catch {
+      errorMessage.value = 'Unable to continue'
+    }
   }
   catch {
     errorMessage.value = props.failureMessage
-    return
   }
-
-  try {
-    await navigateTo(inAppPath(props.redirectTo))
-  }
-  catch {
-    errorMessage.value = 'Unable to continue'
+  finally {
+    submitting.value = false
   }
 }
 </script>
@@ -49,7 +56,7 @@ async function onSubmit(event: FormSubmitEvent<T>) {
         :title="title"
         :description="description"
         :icon="icon"
-        :submit="{ label: submitLabel, block: true, loading }"
+        :submit="{ label: submitLabel, block: true, loading: submitting }"
         @submit="onSubmit"
       >
         <template #validation>
