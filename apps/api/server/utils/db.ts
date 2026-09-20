@@ -8,10 +8,10 @@ import { useRuntimeConfig } from 'nitropack/runtime'
 import { Pool } from 'pg'
 import * as schema from '../database/schema'
 
-// The honest database interface callers see: the query surface both drivers
-// implement. The neon-http driver declares `.transaction()` but throws at
-// runtime, so transactions stay off this type — `withTransaction` is the only
-// transaction surface, and it fails loudly when the driver cannot support one.
+// The database interface callers see: the query methods both drivers implement.
+// The neon-http driver declares `.transaction()` but throws at runtime, so
+// transactions stay off this type. Use `withTransaction`, which throws when the
+// driver cannot support one.
 export type Database = Omit<
   PgDatabase<NodePgQueryResultHKT | NeonHttpQueryResultHKT, typeof schema>,
   'transaction'
@@ -64,7 +64,7 @@ export function createDb(config: DbConfig): DbHandle {
     }
   }
 
-  // pg driver: TCP pool, interactive transactions supported.
+  // The pg driver uses a TCP pool and supports interactive transactions.
   const db = drizzlePg(new Pool({
     connectionString: config.url,
     max: 10,

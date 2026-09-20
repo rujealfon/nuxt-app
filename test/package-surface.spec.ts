@@ -3,7 +3,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 import { describe, expect, it, vi } from 'vitest'
 
 // The composable modules import Nuxt/Nitro virtuals at module scope; stub them
-// so this node-environment surface check can read the modules' exports.
+// so this node-environment export check can read the modules' exports.
 vi.mock('#imports', () => ({
   $fetch: Object.assign(vi.fn(), { create: vi.fn(() => vi.fn()) }),
   navigateTo: vi.fn(),
@@ -12,9 +12,9 @@ vi.mock('#imports', () => ({
 
 const root = fileURLToPath(new URL('..', import.meta.url))
 
-// The authored public surface of each layer: every composable and component a
-// layer publishes to apps. Compared with exact equality — adding or renaming a
-// public symbol must update this list deliberately, so nothing joins the
+// The authored public exports of each layer: every composable and component a
+// layer publishes to apps. Compared with exact equality, so adding or renaming
+// a public symbol must update this list deliberately, and nothing joins the
 // interface by accident.
 const clientComposables = ['useApi', 'useAuth', 'useAuthForm']
 const uiComposables = ['useSite']
@@ -48,12 +48,12 @@ function componentNames(dir: string): string[] {
     .sort()
 }
 
-describe('package public surface', () => {
+describe('package public exports', () => {
   it('publishes exactly the authored client composables', async () => {
     expect(await exportedSymbols(`${root}/packages/client/app/composables`)).toEqual(clientComposables)
   })
 
-  it('publishes exactly the authored ui surface', async () => {
+  it('publishes exactly the authored ui exports', async () => {
     expect(await exportedSymbols(`${root}/packages/ui/app/composables`)).toEqual(uiComposables)
     expect(componentNames(`${root}/packages/ui/app/components`)).toEqual(uiComponents)
   })

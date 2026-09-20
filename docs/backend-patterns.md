@@ -1,4 +1,4 @@
-# Backend Patterns and Growth Plan
+# Backend patterns and growth plan
 
 ## Status and scope
 
@@ -66,7 +66,7 @@ Preserve this API error contract shape:
 { "error": "not_found", "message": "The requested resource was not found" }
 ```
 
-`invalid_input` may also include `details: { path, message }[]` when at least one input detail is usable. The key is omitted otherwise. Clients branch on `error`, never on message text; they use input details only to recover fields. The error adapter reads domain failures only: a thrown `ZodError` stays `internal_error`. A blank message override keeps `error` and the default safe message; `message` is never joined from details.
+`invalid_input` may also include `details: { path, message }[]` when at least one input detail is usable. The key is omitted otherwise. Clients branch on `error`, never on message text; they use input details only to recover fields. The error adapter reads domain failures only. A thrown `ZodError` stays `internal_error`. A blank message override keeps `error` and the default safe message; `message` is never joined from details.
 Define the shared schema and inferred types in `packages/types`. Keep
 transport-independent business failures private to the server, and translate
 them at the error adapter. The mapping is:
@@ -85,7 +85,7 @@ Log unexpected failures with a correlation ID and return a safe generic message.
 Keep stack traces, SQL details, credentials, and internal provider errors out of
 responses. Preserve existing rate-limit status and retry headers.
 
-The error adapter is implemented: domain code raises a domain failure, and the
+The error adapter is implemented. Domain code raises a domain failure, and the
 error adapter (`server/error-adapter.ts`) renders the contract and normalizes unexpected
 failures to `internal_error`. `useApi().parseApiError` reads a caught
 versioned-route failure through the API error contract; screens that call those
@@ -106,9 +106,9 @@ constraints to enforce uniqueness and relationships; use conditional updates or
 version checks when concurrent edits must be detected. Avoid external network
 calls inside database transactions.
 
-The capability mismatch in `server/utils/db.ts` is resolved: the seam exposes a
-`Database` type without `.transaction()`, and `withTransaction(fn)` is the only
-transaction surface, failing loudly on the neon-http driver. Before implementing
+The capability mismatch in `server/utils/db.ts` is resolved. The `Database` type
+omits `.transaction()`, and `withTransaction(fn)` is the only way to run a
+transaction. It throws on the neon-http driver. Before implementing
 a multi-write workflow, verify rollback against the supported database
 configuration.
 

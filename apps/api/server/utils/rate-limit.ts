@@ -31,9 +31,9 @@ export interface RateLimitStorageOptions {
 }
 
 // Redis-backed `RateLimitStorage` shared by the Nitro middleware and Better
-// Auth. The Nitro limiter is a shield, not the gate, so it fails open (allowed,
-// logged) and a cache failure cannot take the API down with it. Better Auth
-// passes `failClosed` because its stricter limiter guards sign-in.
+// Auth. The Nitro limiter fails open. When the store is unavailable it allows
+// the request and logs the failure, so a cache outage cannot take the API down.
+// Better Auth passes `failClosed` because its stricter limiter guards sign-in.
 export function createRateLimitStorage(options: RateLimitStorageOptions = {}): RateLimitStorage {
   return {
     async consume(key: string, rule: { window: number, max: number }) {

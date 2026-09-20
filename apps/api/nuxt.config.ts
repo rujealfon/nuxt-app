@@ -23,7 +23,7 @@ export default defineNuxtConfig({
   },
   // Embed the Scalar IIFE only in development. Production builds omit the
   // 3.7 MB bundle; the docs guard 404s those routes at compile time via
-  // `import.meta.dev`. Only `standalone.js` is included — the rest of
+  // `import.meta.dev`. Only `standalone.js` is included; the rest of
   // `dist/browser` stays out of the server bundle.
   $development: {
     nitro: {

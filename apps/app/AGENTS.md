@@ -4,7 +4,7 @@
 
 Follow the shared style and PR guidance in [the root guide](../../AGENTS.md). This directory contains the user-facing SPA, running on port 3001 with `ssr: false`. It extends `@nuxt-app/ui` and `@nuxt-app/client`.
 
-Routes live in `app/pages/`: `index.vue` displays session state; login and registration routes compose screens exported by `app/features/auth/index.ts`. Auth UI and submission behavior live in that feature’s `ui/` directory. Keep reusable UI in `packages/ui`, auth/API composables in `packages/client`, and shared validation schemas in `packages/types`.
+Routes live in `app/pages/`: `index.vue` displays session state; login and registration routes compose screens exported by `app/features/auth/index.ts`. Auth UI and submission behavior live in that feature's `ui/` directory. Keep reusable UI in `packages/ui`, auth/API composables in `packages/client`, and shared validation schemas in `packages/types`.
 
 ## Development Commands
 
@@ -27,4 +27,4 @@ Use the shared `useApi()` composable for versioned-route requests. Parse a caugh
 
 Add `*.spec.ts` files under `test/` or `app/`. Existing tests use `mountSuspended`, `mockNuxtImport`, and mocked authentication actions. Cover successful submissions, rejected requests, navigation, and session-dependent rendering. Run the `client` or `unit` project when changing shared client logic or schemas.
 
-Copy `.env.example` to `.env` and configure public API and app URLs for local development. Keep credentials and backend secrets in the API’s server configuration. For manual auth checks, follow the root README’s database setup and migration instructions.
+Copy `.env.example` to `.env` and configure public API and app URLs for local development. Keep credentials and backend secrets in the API's server configuration. For manual auth checks, follow the root README's database setup and migration instructions.

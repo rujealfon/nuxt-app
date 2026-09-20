@@ -1,6 +1,6 @@
 import type { H3Event } from 'h3'
 
-// The docs surface: the Scalar shell, its OpenAPI document, and the
+// The docs endpoints: the Scalar shell, its OpenAPI document, and the
 // self-hosted UI bundle. Kept in one place so the docs guard and the rate-limit
 // exemption cannot drift apart.
 export const DOCS_PATHS = ['/api/docs', '/api/openapi.json']

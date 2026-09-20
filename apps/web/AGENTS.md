@@ -13,7 +13,7 @@ Run from the repository root:
 - `pnpm dev:web`: start this app.
 - `pnpm --filter @nuxt-app/web build`: build with the configured prerendering.
 - `pnpm --filter @nuxt-app/web type-check`: check app types.
-- `pnpm test --project web`: run this app’s tests.
+- `pnpm test --project web`: run this app's tests.
 - `pnpm lint`: check repository style and accessibility rules.
 
 ## Rendering & Navigation

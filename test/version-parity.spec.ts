@@ -44,7 +44,7 @@ function versionedHandlers() {
 }
 
 // The registry declares versions; `@nuxt-app/types` contracts them. Neither
-// may drift without the other — these cross-checks are the seam.
+// may drift without the other, so these cross-checks are the seam.
 describe('version parity', () => {
   it('ships a contract namespace for every registered version', () => {
     for (const version of apiVersions) {

@@ -1,5 +1,5 @@
-// Sites with a browser surface share this port table with the API. Localhost
-// URLs derive from it; each app adds its own `appName` in its Nuxt config.
+// Browser-facing sites share this port table with the API. Localhost URLs
+// derive from it; each app adds its own `appName` in its Nuxt config.
 export const appPorts = {
   web: 3000,
   app: 3001,
@@ -49,7 +49,7 @@ export const currentApiVersion: ApiVersion = 'v1'
 export type DeprecatedApiVersions = Readonly<Partial<Record<ApiVersion, { sunset: string }>>>
 
 // Frozen: the registry is static configuration declared in code, so no
-// consumer — or spec — may mutate it at runtime.
+// consumer, or spec, may mutate it at runtime.
 export const deprecatedApiVersions: DeprecatedApiVersions = Object.freeze({})
 
 export interface VersionMeta {

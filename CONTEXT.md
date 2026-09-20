@@ -17,7 +17,7 @@ The authenticated identity a request acts as: a user id, email, name, and role. 
 _Avoid_: user, account, session user
 
 **Domain failure**:
-A transport-independent failure raised when an operation cannot complete — validation, authentication, authorization, absence, conflict, rate limiting, or an unexpected fault. It names what went wrong, not how to phrase it over HTTP.
+A failure independent of transport. Domain code raises it when an operation cannot complete: validation, authentication, authorization, absence, conflict, rate limiting, or an unexpected fault. It describes what went wrong, not how to phrase it in HTTP.
 _Avoid_: error, exception, API error, product failure, ProductFailure
 
 **API error contract**:
@@ -29,5 +29,5 @@ A request path and a safe, non-empty message naming one part of the request that
 _Avoid_: Zod issue, field error, validation error
 
 **Error adapter**:
-The HTTP-facing translation at the edge of the API: it turns a domain failure into the API error contract, so that translation never lives in domain code.
+The HTTP-facing translation at the edge of the API. It turns a domain failure into the API error contract, so domain code never does that translation.
 _Avoid_: error handler, error middleware, error serializer
