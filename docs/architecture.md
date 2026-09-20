@@ -32,9 +32,11 @@ integration tests can remain in an app's `test/` directory and mount the real
 route. Avoid importing a module's own barrel from production implementation
 files, which can introduce cycles.
 
-Nuxt continues to register pages, middleware, and server utilities.
-Feature folders and API services are explicitly imported, so their private
-exports never become application-wide auto-imports.
+Nuxt registers pages and middleware by convention. Auto-imports are disabled
+repo-wide (`imports.autoImport: false` and `components.dirs: []`), so Vue APIs,
+Nuxt and shared composables, and components are all imported explicitly. Feature
+folders and API services are explicitly imported too, so their private exports
+never become application-wide globals.
 
 ## Dependency rules
 

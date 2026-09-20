@@ -1,3 +1,5 @@
+import { defineNuxtRouteMiddleware, navigateTo, useAuth } from '#imports'
+
 export default defineNuxtRouteMiddleware(async (to) => {
   if (to.path === '/login') {
     return

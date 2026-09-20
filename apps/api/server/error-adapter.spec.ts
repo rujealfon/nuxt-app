@@ -1,23 +1,44 @@
 import { apiErrorCodes } from '@nuxt-app/types'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const setResponseStatus = vi.fn()
-const setResponseHeaders = vi.fn()
-const getResponseHeader = vi.fn()
-const send = vi.fn((...args: unknown[]) => args)
-const loggerError = vi.fn()
-const loggerWarn = vi.fn()
-const useLogger = vi.fn(() => ({ error: loggerError, warn: loggerWarn }))
+const mocks = vi.hoisted(() => {
+  const loggerError = vi.fn()
+  const loggerWarn = vi.fn()
+  return {
+    setResponseStatus: vi.fn(),
+    setResponseHeaders: vi.fn(),
+    getResponseHeader: vi.fn(),
+    send: vi.fn((...args: unknown[]) => args),
+    loggerError,
+    loggerWarn,
+    useLogger: vi.fn(() => ({ error: loggerError, warn: loggerWarn })),
+  }
+})
 
-vi.stubGlobal('defineNitroErrorHandler', vi.fn((handler: unknown) => handler))
-vi.stubGlobal('setResponseStatus', setResponseStatus)
-vi.stubGlobal('setResponseHeaders', setResponseHeaders)
-vi.stubGlobal('getResponseHeader', getResponseHeader)
-vi.stubGlobal('send', send)
-vi.stubGlobal('useLogger', useLogger)
+vi.mock('h3', () => ({
+  setResponseStatus: mocks.setResponseStatus,
+  setResponseHeaders: mocks.setResponseHeaders,
+  getResponseHeader: mocks.getResponseHeader,
+  send: mocks.send,
+}))
+
+vi.mock('nitropack/runtime', () => ({
+  defineNitroErrorHandler: vi.fn((handler: unknown) => handler),
+}))
+
+vi.mock('./utils/logger', () => ({ useLogger: mocks.useLogger }))
 
 const { default: errorHandler, statusByError: statuses } = await import('./error-adapter')
 const { domainFailure } = await import('./utils/domain-failure')
+
+const {
+  setResponseStatus,
+  setResponseHeaders,
+  send,
+  useLogger,
+  loggerError,
+  loggerWarn,
+} = mocks
 
 type ErrorHandler = (error: unknown, event: unknown) => unknown
 

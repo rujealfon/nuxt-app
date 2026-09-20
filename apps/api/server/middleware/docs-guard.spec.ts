@@ -1,21 +1,26 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { DomainFailure } from '../utils/domain-failure'
 
-let docsEnabled = true
-const useRuntimeConfig = vi.fn(() => ({ docsEnabled }))
-const defineEventHandler = vi.fn((handler: unknown) => handler)
+const state = vi.hoisted(() => ({ docsEnabled: true }))
 
-vi.stubGlobal('useRuntimeConfig', useRuntimeConfig)
-vi.stubGlobal('defineEventHandler', defineEventHandler)
-vi.stubGlobal('domainFailure', (error: 'not_found') => {
-  throw new DomainFailure(error)
-})
+const h3 = vi.hoisted(() => ({
+  defineEventHandler: vi.fn((handler: unknown) => handler),
+}))
+
+const nitro = vi.hoisted(() => ({
+  useRuntimeConfig: vi.fn(() => ({ docsEnabled: state.docsEnabled })),
+}))
+
+vi.mock('h3', () => ({ defineEventHandler: h3.defineEventHandler }))
+vi.mock('nitropack/runtime', () => ({ useRuntimeConfig: nitro.useRuntimeConfig }))
 
 const guard = (await import('./docs-guard')).default as (event: { path: string }) => unknown
 
+const { useRuntimeConfig } = nitro
+
 describe('docs-guard', () => {
   beforeEach(() => {
-    docsEnabled = true
+    state.docsEnabled = true
     useRuntimeConfig.mockClear()
   })
 
@@ -32,7 +37,7 @@ describe('docs-guard', () => {
   })
 
   it('answers 404 for docs paths when disabled', () => {
-    docsEnabled = false
+    state.docsEnabled = false
 
     for (const path of ['/api/docs', '/api/openapi.json', '/api/docs-assets/standalone.js', '/api/docs/unknown']) {
       expect(() => guard({ path })).toThrowError(DomainFailure)
@@ -42,7 +47,7 @@ describe('docs-guard', () => {
   })
 
   it('matches docs paths with query strings', () => {
-    docsEnabled = false
+    state.docsEnabled = false
 
     expect(() => guard({ path: '/api/docs?foo=bar' })).toThrowError(DomainFailure)
     expect(guard({ path: '/api/v1/hello?foo=bar' })).toBeUndefined()

@@ -1,3 +1,6 @@
+import { defineEventHandler, setHeader } from 'h3'
+import { buildDocsHtml } from '../utils/api-docs'
+
 // Scalar interactive docs for versioned routes. Development-only behind the
 // docs guard. Serves an HTML shell (not JSON): the error adapter still
 // renders failures as the API error contract. Unversioned infra route, like

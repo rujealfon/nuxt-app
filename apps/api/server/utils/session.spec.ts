@@ -1,13 +1,19 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { DomainFailure } from './domain-failure'
 
-const getSession = vi.fn()
+const mocks = vi.hoisted(() => {
+  const getSession = vi.fn()
+  return {
+    getSession,
+    useAuth: vi.fn(() => ({ api: { getSession } })),
+  }
+})
 
-vi.stubGlobal('useAuth', vi.fn(() => ({ api: { getSession } })))
+vi.mock('./auth', () => ({ useAuth: mocks.useAuth }))
 
-const { DomainFailure, domainFailure } = await import('./domain-failure')
 const { getActor, requireActor } = await import('./session')
 
-vi.stubGlobal('domainFailure', domainFailure)
+const { getSession } = mocks
 
 const event = { headers: new Headers() } as never
 

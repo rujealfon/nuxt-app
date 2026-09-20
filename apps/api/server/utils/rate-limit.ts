@@ -1,3 +1,6 @@
+import { useLogger } from './logger'
+import { useRedis } from './redis'
+
 // Atomically increments the counter and sets the window expiry on first hit,
 // so concurrent requests can't all pass a stale read.
 const CONSUME_SCRIPT = `

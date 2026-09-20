@@ -1,14 +1,22 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const evalMock = vi.fn()
-const loggerError = vi.fn()
-const useRedis = vi.fn(() => ({ eval: evalMock }))
-const useLogger = vi.fn(() => ({ error: loggerError }))
+const mocks = vi.hoisted(() => {
+  const evalMock = vi.fn()
+  const loggerError = vi.fn()
+  return {
+    evalMock,
+    loggerError,
+    useRedis: vi.fn(() => ({ eval: evalMock })),
+    useLogger: vi.fn(() => ({ error: loggerError })),
+  }
+})
 
-vi.stubGlobal('useRedis', useRedis)
-vi.stubGlobal('useLogger', useLogger)
+vi.mock('./redis', () => ({ useRedis: mocks.useRedis }))
+vi.mock('./logger', () => ({ useLogger: mocks.useLogger }))
 
 const { createRateLimitStorage, rateLimitPolicy } = await import('./rate-limit')
+
+const { evalMock, loggerError } = mocks
 
 describe('createRateLimitStorage', () => {
   beforeEach(() => {

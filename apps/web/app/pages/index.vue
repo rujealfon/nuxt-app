@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { navigateTo, useHead, useSite } from '#imports'
+
 const { linkTo } = useSite()
 
 function goToApp() {

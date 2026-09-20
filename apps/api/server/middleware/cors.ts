@@ -1,3 +1,6 @@
+import { defineEventHandler, getHeader, getMethod, setHeader, setResponseStatus } from 'h3'
+import { useRuntimeConfig } from 'nitropack/runtime'
+
 export default defineEventHandler((event) => {
   const config = useRuntimeConfig(event)
   const origin = getHeader(event, 'origin') || ''

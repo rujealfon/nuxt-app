@@ -1,5 +1,8 @@
-import { describe, expect, it } from 'vitest'
-import { createDb, parseDriver, selectDriver } from './db'
+import { describe, expect, it, vi } from 'vitest'
+
+vi.mock('nitropack/runtime', () => ({ useRuntimeConfig: vi.fn() }))
+
+const { createDb, parseDriver, selectDriver } = await import('./db')
 
 const pgUrl = 'postgres://user:pass@localhost:5432/db'
 const neonUrl = 'postgres://user:pass@ep-foo-123456.us-east-2.aws.neon.tech/db'

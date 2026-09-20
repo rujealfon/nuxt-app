@@ -1,5 +1,8 @@
 import { sql } from 'drizzle-orm'
+import { defineEventHandler } from 'h3'
+import { useDb } from '../../utils/db'
 import { readyResponseSchema } from '../../utils/infra'
+import { useRedis } from '../../utils/redis'
 
 export default defineEventHandler(async () => {
   const db = useDb()

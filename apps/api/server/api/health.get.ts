@@ -1,3 +1,4 @@
+import { defineEventHandler } from 'h3'
 import { healthResponseSchema } from '../utils/infra'
 
 export default defineEventHandler(() => {

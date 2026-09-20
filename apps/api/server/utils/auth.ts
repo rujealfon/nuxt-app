@@ -1,4 +1,6 @@
+import { useRuntimeConfig } from 'nitropack/runtime'
 import { createAuth } from '../database/auth'
+import { useDb } from './db'
 import { createRateLimitStorage } from './rate-limit'
 
 let instance: ReturnType<typeof createAuth> | undefined

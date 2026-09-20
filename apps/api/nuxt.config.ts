@@ -11,6 +11,7 @@ export default defineNuxtConfig({
   // API-only: no Vue pages. Unmatched paths are JSON 404s from server/routes.
   pages: false,
   devtools: { enabled: true },
+  imports: { autoImport: false },
   app: {
     head: {
       meta: [{ name: 'robots', content: 'noindex, nofollow' }],

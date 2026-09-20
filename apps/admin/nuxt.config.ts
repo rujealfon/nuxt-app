@@ -5,6 +5,8 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   ssr: false,
   extends: ['@nuxt-app/ui', '@nuxt-app/client'],
+  imports: { autoImport: false },
+  components: { dirs: [] },
   app: {
     head: {
       meta: [{ name: 'robots', content: 'noindex, nofollow' }],

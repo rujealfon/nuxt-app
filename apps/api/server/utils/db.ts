@@ -4,6 +4,7 @@ import type { PgDatabase } from 'drizzle-orm/pg-core'
 import { neon } from '@neondatabase/serverless'
 import { drizzle as drizzleNeon } from 'drizzle-orm/neon-http'
 import { drizzle as drizzlePg } from 'drizzle-orm/node-postgres'
+import { useRuntimeConfig } from 'nitropack/runtime'
 import { Pool } from 'pg'
 import * as schema from '../database/schema'
 

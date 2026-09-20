@@ -1,5 +1,6 @@
 import type { ApiVersion, VersionMeta } from '@nuxt-app/config'
 import { versionMeta } from '@nuxt-app/config'
+import { defineEventHandler, setHeader } from 'h3'
 
 type VersionedHandler = Parameters<typeof defineEventHandler>[0]
 

@@ -152,7 +152,8 @@ host-mapped port via `?port=4984`.)
 The API uses [Drizzle ORM](https://orm.drizzle.team) with
 [Better Auth](https://better-auth.com) tables (`user`, `session`, `account`,
 `verification`). Schema lives in `apps/api/server/database/schema.ts` (re-exported
-from the generated `auth-schema.ts`); server helpers are auto-imported via `useDb()`.
+from the generated `auth-schema.ts`); server helpers such as `useDb()` are
+imported explicitly from `server/utils/`.
 
 ```bash
 pnpm --filter @nuxt-app/api db:generate       # generate SQL migrations
@@ -347,8 +348,8 @@ frontends. `GET /api` reports what's available:
 
 In `apps/api`, version folders are thin versioned-route handlers that call the
 version-agnostic domain logic in `server/services/<domain>/`. Import each
-domain explicitly through its `index.ts` entrypoint; server utilities in
-`server/utils/` remain auto-imported. Wrap routes with `defineVersionedHandler('v1', ...)`: it sets
+domain explicitly through its `index.ts` entrypoint; import server utilities
+from `server/utils/` explicitly. Wrap routes with `defineVersionedHandler('v1', ...)`: it sets
 `X-Api-Version` on every response and adds `Deprecation` + `Sunset` headers once
 the version appears in `deprecatedApiVersions`.
 

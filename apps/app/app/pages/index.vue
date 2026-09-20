@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { ref } from 'vue'
+import { useAuth, useHead } from '#imports'
+
 const { actor, signOut: signOutAction } = useAuth()
 const isSigningOut = ref(false)
 

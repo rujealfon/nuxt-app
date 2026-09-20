@@ -2,6 +2,7 @@ import type { Actor, LoginCredentials, RegisterCredentials } from '@nuxt-app/typ
 import { actorFromSession } from '@nuxt-app/types'
 import { createAuthClient } from 'better-auth/vue'
 import { computed, getCurrentScope } from 'vue'
+import { useRuntimeConfig } from '#imports'
 
 let client: ReturnType<typeof createAuthClient> | undefined
 

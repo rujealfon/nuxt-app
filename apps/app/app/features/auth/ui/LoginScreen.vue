@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import type { AuthFormField } from '@nuxt/ui'
 import { loginSchema } from '@nuxt-app/types'
+import AuthScreen from '@nuxt-app/ui/components/AuthScreen.vue'
+import { useAuth, useAuthForm } from '#imports'
 
 const { signIn } = useAuth()
 const { errorMessage, submitting, onSubmit } = useAuthForm({

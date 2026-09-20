@@ -1,7 +1,10 @@
 import type { Logger } from '@nuxt-app/logger'
 import type { ApiError, ApiErrorCode, InputDetail } from '@nuxt-app/types'
 import { inputDetailSchema } from '@nuxt-app/types'
+import { getResponseHeader, send, setResponseHeaders, setResponseStatus } from 'h3'
+import { defineNitroErrorHandler } from 'nitropack/runtime'
 import { DomainFailure, domainFailureMessages } from './utils/domain-failure'
+import { useLogger } from './utils/logger'
 
 // The one status table. `errorByStatus` is derived from it so the two can
 // never drift; a new code only has to be added here.

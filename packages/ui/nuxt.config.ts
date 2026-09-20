@@ -5,6 +5,7 @@ export default defineNuxtConfig({
     '@nuxt/ui',
     '@vueuse/nuxt',
   ],
+  components: { dirs: [] },
   css: [
     fileURLToPath(new URL('./app/assets/css/main.css', import.meta.url)),
   ],

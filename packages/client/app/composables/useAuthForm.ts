@@ -1,5 +1,6 @@
 import type { MaybeRefOrGetter } from 'vue'
 import { ref, toValue } from 'vue'
+import { navigateTo } from '#imports'
 
 export interface AuthFormOptions<T> {
   submit: (data: T) => Promise<void>

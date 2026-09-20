@@ -1,6 +1,8 @@
 import type { Actor } from '@nuxt-app/types'
 import type { H3Event } from 'h3'
 import { actorFromSession } from '@nuxt-app/types'
+import { useAuth } from './auth'
+import { domainFailure } from './domain-failure'
 
 // The trusted actor context for this request. Unknown roles normalize to
 // `user`, never up; a session that is missing or not an actor is no actor.

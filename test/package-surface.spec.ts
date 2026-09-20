@@ -1,13 +1,21 @@
 import { readdirSync } from 'node:fs'
 import { fileURLToPath, pathToFileURL } from 'node:url'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
+
+// The composable modules import Nuxt/Nitro virtuals at module scope; stub them
+// so this node-environment surface check can read the modules' exports.
+vi.mock('#imports', () => ({
+  $fetch: Object.assign(vi.fn(), { create: vi.fn(() => vi.fn()) }),
+  navigateTo: vi.fn(),
+  useRuntimeConfig: vi.fn(() => ({ public: {} })),
+}))
 
 const root = fileURLToPath(new URL('..', import.meta.url))
 
 // The authored public surface of each layer: every composable and component a
-// layer publishes to apps through Nuxt's auto-imports. Compared with exact
-// equality — adding or renaming a public symbol must update this list
-// deliberately, so nothing joins the interface by accident.
+// layer publishes to apps. Compared with exact equality — adding or renaming a
+// public symbol must update this list deliberately, so nothing joins the
+// interface by accident.
 const clientComposables = ['useApi', 'useAuth', 'useAuthForm']
 const uiComposables = ['useSite']
 const uiComponents = ['AppHeader', 'AppShell', 'AuthScreen']

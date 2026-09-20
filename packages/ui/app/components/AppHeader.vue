@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useSite } from '#imports'
+
 const { linkTo, currentApp } = useSite()
 
 const links = [

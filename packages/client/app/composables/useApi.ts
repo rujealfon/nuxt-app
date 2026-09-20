@@ -1,4 +1,5 @@
 import { parseApiError } from '@nuxt-app/types'
+import { $fetch, useRuntimeConfig } from '#imports'
 
 type ApiClient = typeof $fetch
 
