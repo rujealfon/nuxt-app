@@ -1,17 +1,17 @@
-# Backend Patterns and Growth Plan
+# Backend patterns and growth plan
 
 ## Status and scope
 
 This guide establishes conventions for new backend features. The feature modules,
 service entrypoints, and import rules in [the architecture guide](architecture.md)
-are implemented. The product error contract is implemented; the policies,
-repositories, and job infrastructure described below are implementation guidance,
+are implemented. The API error contract is implemented; the policies,
+repositories, and jobs described below are implementation guidance,
 not existing runtime helpers.
 
-The current product endpoint is a greeting. Better Auth owns authentication and
-its persistence adapter. Introduce the following patterns with real product
-operations, keeping the API one deployable application until there is a concrete
-need for independent deployment.
+The current versioned route is a greeting. Better Auth owns authentication and
+its persistence adapter. Introduce the following patterns as real domain
+operations appear, keeping the API one deployable application until there is a
+concrete need for independent deployment.
 
 ## Adoption order
 
@@ -19,7 +19,7 @@ need for independent deployment.
 | --- | --- | --- |
 | Use-case functions and pure rules | A business action has rules beyond request parsing | The operation is callable without an HTTP event; business-rule tests cover its outcomes. |
 | Authorization policies | An operation reads or changes protected resources | Tests cover anonymous, allowed, and denied actors, including ownership or organization scope where applicable. |
-| Typed errors and HTTP mapping | Product endpoints need consistent failure handling | Shared response schemas and HTTP tests verify codes, statuses, and safe messages. |
+| Domain failures and the error adapter | Versioned routes need consistent failure handling | Shared response schemas and HTTP tests verify codes, statuses, and safe messages. |
 | Repositories and provider adapters | Queries become complex/reused, or external integrations appear | Tests exercise the real adapter; business tests substitute dependencies where useful. |
 | Transactions and concurrency control | Related writes must be atomic or simultaneous edits can conflict | Database integration tests prove rollback, constraints, and conflict behavior. |
 | State machines | A lifecycle has restricted transitions | Tests cover allowed and rejected transitions. |
@@ -58,20 +58,20 @@ Keep frontend access checks for navigation and presentation. Deny unmatched
 permissions and check every protected request, following
 [OWASP authorization guidance](https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Cheat_Sheet.html).
 
-## Product error contract
+## API error contract
 
-For the first implementation, preserve the existing product catch-all shape:
+Preserve this API error contract shape:
 
 ```json
 { "error": "not_found", "message": "The requested resource was not found" }
 ```
 
-Use stable machine-readable codes; clients branch on `error`, not message text.
+`invalid_input` may also include `details: { path, message }[]` when at least one input detail is usable. The key is omitted otherwise. Clients branch on `error`, never on message text; they use input details only to recover fields. The error adapter reads domain failures only. A thrown `ZodError` stays `internal_error`. A blank message override keeps `error` and the default safe message; `message` is never joined from details.
 Define the shared schema and inferred types in `packages/types`. Keep
 transport-independent business failures private to the server, and translate
-them at the HTTP adapter. The mapping is:
+them at the error adapter. The mapping is:
 
-| Code | HTTP status | Meaning |
+| `error` | HTTP status | Meaning |
 | --- | --- | --- |
 | `invalid_input` | 400 | Request data fails validation. |
 | `unauthenticated` | 401 | A valid session is required. |
@@ -85,12 +85,14 @@ Log unexpected failures with a correlation ID and return a safe generic message.
 Keep stack traces, SQL details, credentials, and internal provider errors out of
 responses. Preserve existing rate-limit status and retry headers.
 
-The server mapping and serializer are implemented: product code raises a product
-failure, and the error adapter (`server/error.ts`) renders the contract and
-normalizes unexpected failures to `internal_error`. Client handling lands with
-its first consumer. `X-Api-Version` headers set before a failure survive onto
-error responses; assess compatibility before changing an established version.
-Better Auth and health endpoints retain their own contracts.
+The error adapter is implemented. Domain code raises a domain failure, and the
+error adapter (`server/error-adapter.ts`) renders the contract and normalizes unexpected
+failures to `internal_error`. `useApi().parseApiError` reads a caught
+versioned-route failure through the API error contract; screens that call those
+routes consume `error` and, for `invalid_input`, input details. `X-Api-Version`
+headers set before a failure survive onto the API error contract; assess
+compatibility before changing an established version. Better Auth keeps its
+own contract. Health 200s are custom; health failures use the API error contract.
 
 ## Persistence, transactions, and adapters
 
@@ -104,9 +106,9 @@ constraints to enforce uniqueness and relationships; use conditional updates or
 version checks when concurrent edits must be detected. Avoid external network
 calls inside database transactions.
 
-The capability mismatch in `server/utils/db.ts` is resolved: the seam exposes a
-`Database` type without `.transaction()`, and `withTransaction(fn)` is the only
-transaction surface, failing loudly on the neon-http driver. Before implementing
+The capability mismatch in `server/utils/db.ts` is resolved. The `Database` type
+omits `.transaction()`, and `withTransaction(fn)` is the only way to run a
+transaction. It throws on the neon-http driver. Before implementing
 a multi-write workflow, verify rollback against the supported database
 configuration.
 
@@ -145,7 +147,7 @@ atomic writes, and external effects. Then deliver one complete path:
 
 1. Add request/response contracts and any required schema migration.
 2. Implement the business operation, policy, and persistence code it needs.
-3. Add the HTTP adapter and agreed error mapping.
+3. Add the versioned route; raise domain failures so the error adapter can render the API error contract.
 4. Test business rules, denied access, database constraints/rollback, and the
    versioned HTTP contract. Use a dedicated test database with deterministic
    setup and cleanup for persistence tests; mocks cannot prove SQL semantics.

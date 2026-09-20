@@ -5,6 +5,13 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   ssr: false,
   extends: ['@nuxt-app/ui', '@nuxt-app/client'],
+  imports: { autoImport: false },
+  components: { dirs: [] },
+  typescript: {
+    tsConfig: {
+      include: ['../test/**/*'],
+    },
+  },
   runtimeConfig: {
     public: {
       appName: 'app',

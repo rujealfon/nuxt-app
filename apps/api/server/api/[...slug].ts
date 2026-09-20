@@ -1,7 +1,11 @@
-// Strict 404 for any `/api/*` path without a matching route. Product routes are
-// versioned (`/api/v1/*`); infra routes (`/api/auth`, `/api/health`) match
-// static routes and take precedence over this catch-all. The error adapter
-// renders the thrown failure as the product error contract.
+import { defineEventHandler } from 'h3'
+import { domainFailure } from '../utils/domain-failure'
+
+// Strict 404 for any `/api/*` path without a matching route. Versioned routes
+// live under `/api/v1/*`; infra routes (`/api/auth`, `/api/health`, `/api/docs`,
+// `/api/openapi.json`) match static routes and take precedence over this
+// catch-all. The error adapter renders the thrown failure as the API error
+// contract.
 export default defineEventHandler(() => {
-  throw productFailure('not_found')
+  throw domainFailure('not_found')
 })

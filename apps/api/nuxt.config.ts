@@ -1,18 +1,34 @@
 import { fileURLToPath } from 'node:url'
 
+const scalarDocsAsset = {
+  baseName: 'scalar-docs',
+  dir: fileURLToPath(new URL('./node_modules/@scalar/api-reference/dist/browser', import.meta.url)),
+  pattern: 'standalone.js',
+}
+
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   // API-only: no Vue pages. Unmatched paths are JSON 404s from server/routes.
   pages: false,
   devtools: { enabled: true },
+  imports: { autoImport: false },
   app: {
     head: {
       meta: [{ name: 'robots', content: 'noindex, nofollow' }],
     },
   },
   nitro: {
-    // Renders the product error contract for every thrown failure.
-    errorHandler: fileURLToPath(new URL('./server/error', import.meta.url)),
+    // Error adapter: renders the API error contract for every thrown failure.
+    errorHandler: fileURLToPath(new URL('./server/error-adapter', import.meta.url)),
+  },
+  // Embed the Scalar IIFE only in development. Production builds omit the
+  // 3.7 MB bundle; the docs guard 404s those routes at compile time via
+  // `import.meta.dev`. Only `standalone.js` is included; the rest of
+  // `dist/browser` stays out of the server bundle.
+  $development: {
+    nitro: {
+      serverAssets: [scalarDocsAsset],
+    },
   },
   runtimeConfig: {
     databaseUrl: process.env.DATABASE_URL || '',

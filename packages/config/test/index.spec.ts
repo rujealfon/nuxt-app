@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { apiBaseFor, apiVersions, appPorts, currentApiVersion, deprecatedApiVersions, siteUrls, versionMeta } from '../index'
+import { apiBaseFor, apiVersions, appPorts, currentApiVersion, deprecatedApiVersions, parseOrigins, siteUrls, versionMeta } from '../index'
 
 describe('apiBaseFor', () => {
   it('falls back to the local API port', () => {
@@ -22,6 +22,20 @@ describe('site registry', () => {
       appUrl: 'http://localhost:3001',
       adminUrl: 'http://localhost:3002',
     })
+  })
+})
+
+describe('parseOrigins', () => {
+  it('defaults an empty value to the local site table', () => {
+    expect(parseOrigins('')).toEqual(Object.values(siteUrls))
+    expect(parseOrigins('  ')).toEqual(Object.values(siteUrls))
+  })
+
+  it('splits a configured list', () => {
+    expect(parseOrigins('https://app.example.com, https://admin.example.com')).toEqual([
+      'https://app.example.com',
+      'https://admin.example.com',
+    ])
   })
 })
 

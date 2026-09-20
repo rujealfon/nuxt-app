@@ -1,4 +1,7 @@
 import { randomUUID } from 'node:crypto'
+import { getHeader, setHeader } from 'h3'
+import { defineNitroPlugin } from 'nitropack/runtime'
+import { useLogger } from '../utils/logger'
 
 export default defineNitroPlugin((nitroApp) => {
   nitroApp.hooks.hook('request', (event) => {

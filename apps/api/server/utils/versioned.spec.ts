@@ -1,13 +1,20 @@
 import type { VersionMeta } from '@nuxt-app/config'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const setHeader = vi.fn()
-const defineEventHandler = vi.fn((handler: unknown) => handler)
+const h3 = vi.hoisted(() => ({
+  setHeader: vi.fn(),
+  defineEventHandler: vi.fn((handler: unknown) => handler),
+}))
 
-vi.stubGlobal('setHeader', setHeader)
-vi.stubGlobal('defineEventHandler', defineEventHandler)
+vi.mock('h3', () => ({
+  setHeader: h3.setHeader,
+  defineEventHandler: h3.defineEventHandler,
+}))
 
-const { defineVersionedHandler, deprecationHeaders } = await import('./versioned')
+const { defineVersionedHandler } = await import('./versioned')
+const { deprecationHeaders } = await import('./deprecation')
+
+const { setHeader } = h3
 
 describe('defineVersionedHandler', () => {
   beforeEach(() => {

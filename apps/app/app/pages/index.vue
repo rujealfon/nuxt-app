@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { ref } from 'vue'
+import { useAuth, useHead } from '#imports'
+
 const { actor, signOut: signOutAction } = useAuth()
 const isSigningOut = ref(false)
 
@@ -19,7 +22,7 @@ useHead({ title: 'App · nuxt-app' })
 <template>
   <section class="mx-auto mt-16 max-w-2xl px-6">
     <h1 class="text-2xl font-bold text-highlighted">
-      Product app
+      App
     </h1>
     <p v-if="actor" class="mt-3 text-default">
       Signed in as <strong>{{ actor.email }}</strong>

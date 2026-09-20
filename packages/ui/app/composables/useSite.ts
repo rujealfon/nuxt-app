@@ -1,4 +1,5 @@
 import type { SiteKey } from '@nuxt-app/config'
+import { useRuntimeConfig } from '#imports'
 
 interface SiteRuntimeConfig {
   appName: SiteKey

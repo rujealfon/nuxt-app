@@ -1,5 +1,5 @@
 import { eq } from 'drizzle-orm'
-import { createDb } from '../utils/db'
+import { createDb, parseDriver } from '../utils/db'
 import { createAuth } from './auth'
 import { user } from './schema'
 
@@ -19,7 +19,7 @@ if (!connectionString) {
   throw new Error('DATABASE_URL is required (set it in apps/api/.env)')
 }
 
-const { db } = createDb({ url: connectionString, driver: process.env.DATABASE_DRIVER })
+const { db } = createDb({ url: connectionString, driver: parseDriver(process.env.DATABASE_DRIVER) })
 
 async function main() {
   const auth = createAuth(db, {

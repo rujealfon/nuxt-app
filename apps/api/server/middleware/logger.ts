@@ -1,7 +1,9 @@
 import type { Logger } from '@nuxt-app/logger'
+import { defineEventHandler, getMethod, getResponseStatus } from 'h3'
+import { useLogger } from '../utils/logger'
 
-// Health checks are hit constantly by monitoring; keep routine successes at
-// debug so they don't drown the request log.
+// Monitoring hits health checks constantly, so keep routine successes at debug
+// to avoid filling the request log.
 const HEALTH_PREFIX = '/api/health'
 
 export default defineEventHandler((event) => {

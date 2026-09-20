@@ -1,14 +1,22 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const evalMock = vi.fn()
-const loggerError = vi.fn()
-const useRedis = vi.fn(() => ({ eval: evalMock }))
-const useLogger = vi.fn(() => ({ error: loggerError }))
+const mocks = vi.hoisted(() => {
+  const evalMock = vi.fn()
+  const loggerError = vi.fn()
+  return {
+    evalMock,
+    loggerError,
+    useRedis: vi.fn(() => ({ eval: evalMock })),
+    useLogger: vi.fn(() => ({ error: loggerError })),
+  }
+})
 
-vi.stubGlobal('useRedis', useRedis)
-vi.stubGlobal('useLogger', useLogger)
+vi.mock('./redis', () => ({ useRedis: mocks.useRedis }))
+vi.mock('./logger', () => ({ useLogger: mocks.useLogger }))
 
 const { createRateLimitStorage, rateLimitPolicy } = await import('./rate-limit')
+
+const { evalMock, loggerError } = mocks
 
 describe('createRateLimitStorage', () => {
   beforeEach(() => {
@@ -50,6 +58,16 @@ describe('createRateLimitStorage', () => {
     const result = await storage.consume('k', { window: 60, max: 100 })
 
     expect(result).toEqual({ allowed: true, retryAfter: null })
+    expect(loggerError).toHaveBeenCalled()
+  })
+
+  it('fails closed when the storage opts in, so auth throttling survives an outage', async () => {
+    evalMock.mockRejectedValue(new Error('ECONNREFUSED'))
+    const storage = createRateLimitStorage({ failClosed: true })
+
+    const result = await storage.consume('k', { window: 60, max: 100 })
+
+    expect(result).toEqual({ allowed: false, retryAfter: 60 })
     expect(loggerError).toHaveBeenCalled()
   })
 })

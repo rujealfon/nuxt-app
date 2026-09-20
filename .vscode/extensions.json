@@ -1,0 +1,16 @@
+{
+  "recommendations": [
+    "Vue.volar",
+    "dbaeumer.vscode-eslint",
+    "vitest.explorer",
+    "EditorConfig.EditorConfig",
+    "bradlc.vscode-tailwindcss",
+    "Nuxtr.nuxtr-vscode",
+    "antfu.iconify"
+  ],
+  "unwantedRecommendations": [
+    "esbenp.prettier-vscode",
+    "Vue.vscode-typescript-vue-plugin",
+    "octref.vetur"
+  ]
+}

@@ -1,3 +1,4 @@
+import { defineNitroPlugin, useRuntimeConfig } from 'nitropack/runtime'
 import { z } from 'zod'
 
 const envSchema = z.object({

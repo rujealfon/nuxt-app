@@ -4,32 +4,51 @@ import type { PgDatabase } from 'drizzle-orm/pg-core'
 import { neon } from '@neondatabase/serverless'
 import { drizzle as drizzleNeon } from 'drizzle-orm/neon-http'
 import { drizzle as drizzlePg } from 'drizzle-orm/node-postgres'
+import { useRuntimeConfig } from 'nitropack/runtime'
 import { Pool } from 'pg'
 import * as schema from '../database/schema'
 
-// The honest database interface callers see: the query surface both drivers
-// implement. The neon-http driver declares `.transaction()` but throws at
-// runtime, so transactions stay off this type — `withTransaction` is the only
-// transaction surface, and it fails loudly when the driver cannot support one.
+// The database interface callers see: the query methods both drivers implement.
+// The neon-http driver declares `.transaction()` but throws at runtime, so
+// transactions stay off this type. Use `withTransaction`, which throws when the
+// driver cannot support one.
 export type Database = Omit<
   PgDatabase<NodePgQueryResultHKT | NeonHttpQueryResultHKT, typeof schema>,
   'transaction'
 >
 
+export type DatabaseDriver = 'pg' | 'neon'
+
 export interface DbConfig {
   url: string
-  driver?: string
+  driver?: DatabaseDriver
 }
 
-export type DatabaseDriver = 'pg' | 'neon'
+// Narrows an untrusted driver value (env var, runtime config) to a driver.
+// Anything else defers to host-based detection in `selectDriver`.
+export function parseDriver(value: unknown): DatabaseDriver | undefined {
+  return value === 'pg' || value === 'neon' ? value : undefined
+}
 
 export interface DbHandle {
   db: Database
   withTransaction: <T>(fn: (tx: Database) => Promise<T>) => Promise<T>
 }
 
+function neonHostname(url: string): boolean {
+  try {
+    // Hostnames are case-insensitive; `postgres:` is a non-special URL scheme
+    // so the URL parser preserves the case as written.
+    const host = new URL(url).hostname.toLowerCase()
+    return host === 'neon.tech' || host.endsWith('.neon.tech')
+  }
+  catch {
+    return false
+  }
+}
+
 export function selectDriver(config: DbConfig): DatabaseDriver {
-  return config.driver === 'neon' || config.url.includes('neon.tech') ? 'neon' : 'pg'
+  return config.driver ?? (neonHostname(config.url) ? 'neon' : 'pg')
 }
 
 // Pure factory shared by the runtime (`useDb`) and the CLI scripts
@@ -45,7 +64,7 @@ export function createDb(config: DbConfig): DbHandle {
     }
   }
 
-  // pg driver: TCP pool, interactive transactions supported.
+  // The pg driver uses a TCP pool and supports interactive transactions.
   const db = drizzlePg(new Pool({
     connectionString: config.url,
     max: 10,
@@ -63,7 +82,7 @@ let handle: DbHandle | undefined
 function dbHandle(): DbHandle {
   if (!handle) {
     const config = useRuntimeConfig()
-    handle = createDb({ url: config.databaseUrl, driver: config.databaseDriver })
+    handle = createDb({ url: config.databaseUrl, driver: parseDriver(config.databaseDriver) })
   }
 
   return handle

@@ -32,9 +32,11 @@ integration tests can remain in an app's `test/` directory and mount the real
 route. Avoid importing a module's own barrel from production implementation
 files, which can introduce cycles.
 
-Nuxt continues to register pages, middleware, and infrastructure utilities.
-Feature folders and API services are explicitly imported, so their private
-exports never become application-wide auto-imports.
+Nuxt registers pages and middleware by convention. Auto-imports are disabled
+repo-wide (`imports.autoImport: false` and `components.dirs: []`), so Vue APIs,
+Nuxt and shared composables, and components are all imported explicitly. Feature
+folders and API services are explicitly imported too, so their private exports
+never become application-wide globals.
 
 ## Dependency rules
 
@@ -43,9 +45,9 @@ exports never become application-wide auto-imports.
 - Consumers access feature and service modules through `index.ts`.
 - Features are independent of peer features and application composition code.
   Compose multiple features in pages or app-level workflows.
-- API services are independent of peer domains and HTTP adapters. Put
+- API services are independent of peer domains and versioned-route handlers. Put
   cross-domain orchestration in `server/workflows/` when needed. Services may
-  use server infrastructure and database code.
+  use server utilities and database code.
 - Applications share code through workspace packages, not direct app imports.
 - Shared packages remain independent of applications.
 - Frontend code accesses server operations through HTTP and shared contracts.
@@ -64,7 +66,7 @@ subdirectories as they become useful; avoid empty scaffolding. Keep screen
 behavior in the feature, routing and page metadata in the route, and authoritative
 permissions and business decisions on the server.
 
-Use the existing Better Auth client for authentication state. For product data,
+Use the existing Better Auth client for authentication state. For remote data,
 use the configured Pinia Colada query cache; keep temporary form and dialog
 state local, and use Pinia for client state shared across screens. Add queries,
 mutations, or stores when actual behavior needs them.
@@ -78,7 +80,7 @@ not need their own layer.
 
 ## Backend growth
 
-For protected business operations, product error contracts, persistence,
+For protected business operations, API error contracts, persistence,
 multi-write transactions, and durable external effects, follow
 [Backend Patterns and Growth Plan](backend-patterns.md). It distinguishes current
 runtime behavior from implementation conventions and defines adoption triggers
@@ -88,5 +90,7 @@ and verification requirements for each pattern.
 
 Run `pnpm lint`, `pnpm type-check`, and `pnpm test` before review. Architecture
 tests run in the `unit` project; auth route tests run in `app` and `admin`, and
-API HTTP contracts run in `api`. Run `pnpm build` after changing module exports,
-Nuxt configuration, or routing to verify production bundling.
+API HTTP contracts run in `api`. `pnpm type-check` runs the apps' Nuxt type
+checks and then `tsconfig.test.json`, which covers the root `test/**` and
+`packages/{config,types,logger}` node tests. Run `pnpm build` after changing
+module exports, Nuxt configuration, or routing to verify production bundling.

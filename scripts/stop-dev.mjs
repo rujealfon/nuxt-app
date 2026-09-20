@@ -23,7 +23,7 @@ function listeners(port) {
 
 function signal(pids, name) {
   for (const { pid, port } of pids) {
-    console.log(`Stopping listener on :${port} (pid ${pid}) — ${name}`)
+    console.log(`Sending ${name} to listener on :${port} (pid ${pid})`)
     try {
       process.kill(pid, name)
     }

@@ -1,5 +1,5 @@
 import { createAuth } from './server/database/auth'
-import { createDb } from './server/utils/db'
+import { createDb, parseDriver } from './server/utils/db'
 
 try {
   process.loadEnvFile()
@@ -13,7 +13,7 @@ catch {
 export const auth = createAuth(
   createDb({
     url: process.env.DATABASE_URL ?? '',
-    driver: process.env.DATABASE_DRIVER,
+    driver: parseDriver(process.env.DATABASE_DRIVER),
   }).db,
   {
     secret: process.env.BETTER_AUTH_SECRET ?? '',

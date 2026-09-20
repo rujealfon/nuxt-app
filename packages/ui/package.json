@@ -5,7 +5,8 @@
   "private": true,
   "exports": {
     ".": "./nuxt.config.ts",
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./components/*": "./app/components/*"
   },
   "main": "./nuxt.config.ts",
   "scripts": {

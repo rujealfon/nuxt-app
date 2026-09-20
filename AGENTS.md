@@ -2,29 +2,29 @@
 
 ## Project Structure & Module Organization
 
-This pnpm/Turborepo monorepo contains four Nuxt apps: `apps/web` (public site), `apps/app` (user SPA), `apps/admin` (admin SPA), and `apps/api` (Nitro server). Frontend pages live in each app’s `app/pages/`; static assets live in `public/`.
+This pnpm/Turborepo monorepo contains four Nuxt apps: `apps/web` (public site), `apps/app` (user SPA), `apps/admin` (admin SPA), and `apps/api` (Nitro server). Frontend pages live in each app's `app/pages/`; static assets live in `public/`.
 
-Shared code belongs in `packages/`: `ui` provides components and CSS, `client` provides auth/API composables, `types` provides Zod schemas and types, and `config` and `logger` provide shared utilities. API handlers live in `apps/api/server/api/`, domain logic in `server/services/`, and database schemas/migrations in `server/database/`. Keep versioned handlers thin and reuse services.
+Shared code belongs in `packages/`: `ui` provides components and CSS, `client` provides auth/API composables, `types` provides Zod schemas and types, and `config` and `logger` provide shared utilities. API handlers live in `apps/api/server/api/`, domain logic in `server/services/`, and database schemas/migrations in `server/database/`. Keep versioned-route handlers thin and reuse services.
 
 ## Module Organization
 
 For feature extraction, shared-code placement, or new API domains, follow [the architecture guide](docs/architecture.md). Keep substantial frontend behavior in `app/features/<feature>/`, expose selective `index.ts` exports, and import them explicitly from routes. Group API operations in `server/services/<domain>/` and import the domain entrypoint. Keep small pages local and share code only when multiple consumers need it.
 
-For authorization policies, product error contracts, persistence transactions, or durable jobs, follow [the backend patterns guide](docs/backend-patterns.md), including its adoption triggers and verification requirements.
+For authorization policies, the API error contract, persistence transactions, or durable jobs, follow [the backend patterns guide](docs/backend-patterns.md), including its adoption triggers and verification requirements.
 
 ## Git
 
-Committing and pushing are reserved for the user. Stage changes and describe what you'd commit, then stop — do not run `git commit` or `git push` yourself, even when a skill or background-job flow you're running says to commit by default.
+Committing and pushing are reserved for the user. Stage changes and describe what you'd commit, then stop. Do not run `git commit` or `git push` yourself, even when a skill or background-job flow you're running says to commit by default.
 
 ## Build, Test, and Development Commands
 
 Use Node.js 22 (matching CI) and the pnpm version pinned in `package.json`. Run commands from the repository root:
 
 - `pnpm install`: install dependencies and prepare Nuxt types.
-- `pnpm dev`: start all apps; `pnpm dev:web`, `dev:app`, `dev:admin`, or `dev:api` starts one (ports 3000–3003 respectively).
+- `pnpm dev`: start all apps; `pnpm dev:web`, `dev:app`, `dev:admin`, or `dev:api` starts one (ports 3000 to 3003 respectively).
 - `pnpm build`: build all apps through Turborepo.
 - `pnpm lint` / `pnpm lint:fix`: check/fix repository formatting and lint rules.
-- `pnpm type-check`: check app types.
+- `pnpm type-check`: check app types and node-side tests through Turborepo plus `tsconfig.test.json`.
 - `pnpm test` / `pnpm test:watch`: run all tests once/in watch mode.
 - `pnpm db:up`: start local PostgreSQL, Redis, and Drizzle Studio with Docker.
 
@@ -32,9 +32,13 @@ Use Node.js 22 (matching CI) and the pnpm version pinned in `package.json`. Run 
 
 Follow the root ESLint configuration (`@antfu/eslint-config`): two-space indentation, single quotes, and no semicolons. Use TypeScript and Vue Composition API with `<script setup lang="ts">`. Name components in PascalCase (`AppHeader.vue`), composables `useX.ts`, and API routes with HTTP suffixes (`hello.get.ts`). ESLint also checks Vue accessibility and formats CSS through Prettier. Husky runs lint-staged before commits.
 
+Nuxt auto-imports are disabled (`imports.autoImport: false`, `components.dirs: []`). Import Vue APIs from `vue`, Nuxt and shared composables from `#imports`, shared components from `@nuxt-app/ui/components/*`, and server helpers from `h3`, `nitropack/runtime`, or `server/utils/`. Path aliases (`~`, `@`, `~~`, `@@`, `#imports`) still work.
+
 ## Testing Guidelines
 
 Use Vitest, Nuxt test utilities, and Vue Test Utils. Name tests `*.spec.ts`; place frontend tests under `app/` or `test/`, API unit tests beside server code, and API integration tests in `apps/api/test/e2e/`. Run a subset with `pnpm test --project api` (also `unit`, `ui`, `client`, `web`, `app`, `admin`). Tests require no external services. No coverage threshold is configured; cover changed behavior and regressions.
+
+Nuxt-environment tests run through `defineVitestProject`; the apps include their `test/` directories in the Nuxt TypeScript context via `typescript.tsConfig.include`. Root `test/**` and the `packages/{config,types,logger}` tests are node-environment and are type-checked by `tsconfig.test.json` (run by `pnpm type-check`). Keep tests that exercise internal behavior beside the implementation so they fall inside an app's TypeScript context.
 
 ## Commit & Pull Request Guidelines
 
@@ -42,7 +46,7 @@ History commonly uses `feat: ...`, alongside plain imperative summaries. Prefer 
 
 ## Configuration
 
-Copy each app’s `.env.example` to `.env` for local setup; keep secrets out of Git. Consult `README.md` for migrations and deployment. `pnpm db:reset` deletes local database volumes.
+Copy each app's `.env.example` to `.env` for local setup; keep secrets out of Git. Consult `README.md` for migrations and deployment. `pnpm db:reset` deletes local database volumes.
 
 ## Agent skills
 

@@ -3,8 +3,8 @@ import { flushPromises } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import IndexPage from '../app/pages/index.vue'
 
-// Crosses the real package seam: the real `useAuth` (auto-imported from the
-// layer) with only the network below the vendor client replaced.
+// Crosses the real package seam: the real `useAuth` (from the client layer)
+// with only the network below the vendor client replaced.
 let sessionPayload: unknown = null
 
 const fetchMock = vi.fn(async (input: unknown) => {

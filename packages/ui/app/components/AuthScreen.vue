@@ -8,35 +8,14 @@ const props = defineProps<{
   schema: FormSchema
   fields: AuthFormField[]
   submitLabel: string
+  // The form's data type anchors `T`; the screen only forwards the event.
+  submit: (data: T) => Promise<void> | void
   loading?: boolean
-  failureMessage: string
-  redirectTo: string
-  submitAction: (data: T) => Promise<void>
+  errorMessage?: string
 }>()
 
-const errorMessage = ref('')
-
-function inAppPath(path: string): string {
-  return path.startsWith('/') && !path.startsWith('//') ? path : '/'
-}
-
-async function onSubmit(event: FormSubmitEvent<T>) {
-  errorMessage.value = ''
-
-  try {
-    await props.submitAction(event.data)
-  }
-  catch {
-    errorMessage.value = props.failureMessage
-    return
-  }
-
-  try {
-    await navigateTo(inAppPath(props.redirectTo))
-  }
-  catch {
-    errorMessage.value = 'Unable to continue'
-  }
+function onSubmit(event: FormSubmitEvent<T>) {
+  return props.submit(event.data)
 }
 </script>
 

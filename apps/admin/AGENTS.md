@@ -21,7 +21,7 @@ Run from the repository root:
 
 Keep `/login` accessible without a session. Other routes fetch the actor with `useAuth().getActor()` and require `actor.role === 'admin'`. Preserve the redirect query containing the requested path when sending a user to login, and validate redirect handling when changing the sign-in flow.
 
-Use `useAuth()` and the shared `loginSchema` for login forms. Client route checks control navigation; privileged API operations must also enforce authorization on the server. Use the root README’s seed workflow when a local administrator account is needed.
+Use `useAuth()` and the shared `loginSchema` for login forms. Client route checks control navigation; privileged API operations must also enforce authorization on the server. Use the root README's seed workflow when a local administrator account is needed.
 
 ## Testing & Configuration
 

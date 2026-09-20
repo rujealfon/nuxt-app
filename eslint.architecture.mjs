@@ -61,7 +61,7 @@ export const architecture = {
         {
           from: { element: { type: 'service' } },
           disallow: { to: { element: { type: ['service', 'http', 'frontend', 'feature', 'app'] } } },
-          message: 'Keep services independent of HTTP adapters and peer domains; compose them in server workflows.',
+          message: 'Keep services independent of versioned-route handlers and peer domains; compose them in server workflows.',
         },
       ],
     }],

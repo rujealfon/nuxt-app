@@ -20,7 +20,7 @@ Shared packages:
 | `@nuxt-app/logger` | Shared Pino logger factory |
 
 Layers are extended by package name: `web` extends `@nuxt-app/ui`; `app`/`admin` extend
-`@nuxt-app/ui` + `@nuxt-app/client`. `apps/api` uses no layer — its Better Auth setup lives in
+`@nuxt-app/ui` + `@nuxt-app/client`. `apps/api` uses no layer; its Better Auth setup lives in
 `apps/api/server/database/auth.ts` and `apps/api/server/utils/auth.ts`.
 
 Rendering modes:
@@ -40,7 +40,7 @@ conventions. When changing an app, also read its guide:
 - [Web](apps/web/AGENTS.md): public pages, prerendering, and navigation.
 - [App](apps/app/AGENTS.md): user authentication flows and API clients.
 - [Admin](apps/admin/AGENTS.md): role-based routing and admin interface tests.
-- [API](apps/api/AGENTS.md): versioned endpoints, services, and database changes.
+- [API](apps/api/AGENTS.md): versioned routes, services, and database changes.
 
 The root guide applies throughout the repository; app guides add guidance for
 their directories. Keep contributor rules in these guides and setup, operation,
@@ -78,8 +78,8 @@ cp apps/admin/.env.example apps/admin/.env
 ```
 
 The frontend examples use production URLs. For local development, set the
-`NUXT_PUBLIC_*_URL` values to the corresponding `http://localhost:3000`–`3002`
-origins and `NUXT_PUBLIC_API_BASE` in app/admin to `http://localhost:3003`.
+`NUXT_PUBLIC_*_URL` values to the corresponding `http://localhost:3000` to
+`3002` origins and `NUXT_PUBLIC_API_BASE` in app/admin to `http://localhost:3003`.
 
 ## Development
 
@@ -124,7 +124,7 @@ pnpm clean       # turbo run clean (nuxt cleanup)
 
 Postgres 18 and Redis 8 run in Docker (`docker-compose.yml`), exposed on host
 ports `55432` and `6381` to match `DATABASE_URL` / `REDIS_URL` in
-`apps/api/.env.example`. Redis backs Better Auth and product API rate limiting;
+`apps/api/.env.example`. Redis backs Better Auth and versioned-route rate limiting;
 sessions live in Postgres.
 
 ```bash
@@ -146,13 +146,14 @@ pnpm db:studio   # rebuild + start drizzle-studio
 ```
 
 Open <https://local.drizzle.studio?port=4984> to browse the database. (The
-container logs a `?host=0.0.0.0` URL — ignore it; the browser must target the
+container logs a `?host=0.0.0.0` URL. Ignore it; the browser must target the
 host-mapped port via `?port=4984`.)
 
 The API uses [Drizzle ORM](https://orm.drizzle.team) with
 [Better Auth](https://better-auth.com) tables (`user`, `session`, `account`,
 `verification`). Schema lives in `apps/api/server/database/schema.ts` (re-exported
-from the generated `auth-schema.ts`); server helpers are auto-imported via `useDb()`.
+from the generated `auth-schema.ts`); server helpers such as `useDb()` are
+imported explicitly from `server/utils/`.
 
 ```bash
 pnpm --filter @nuxt-app/api db:generate       # generate SQL migrations
@@ -192,7 +193,7 @@ recommended settings from the config's README.
 ## Testing
 
 Hermetic [Vitest](https://vitest.dev) + [`@nuxt/test-utils`](https://nuxt.com/docs/4.x/getting-started/testing),
-run from a single root config (`vitest.config.ts`) using projects — no Docker or
+run from a single root config (`vitest.config.ts`) using projects, with no Docker or
 external services required.
 
 ```bash
@@ -204,7 +205,7 @@ pnpm test --project api   # one project (unit | api | ui | client | web | app | 
 - `unit` (node env): architecture checks in `test/`, pure logic in
   `packages/{config,types,logger}`, and colocated tests under `apps/api/server/`.
 - `api` (e2e): boots the real Nitro server for `apps/api` and asserts the
-  versioning contract — discovery, `X-Api-Version`, and JSON 404s. The rate
+  versioning contract: discovery, `X-Api-Version`, and JSON 404s. The rate
   limiter is disabled with `RATE_LIMIT_ENABLED=false`.
 - `ui`, `client`, `web`, `app`, `admin` (Nuxt env): composables, components,
   route middleware, and pages via `mockNuxtImport` / `mountSuspended`.
@@ -236,12 +237,12 @@ For every project:
 1. Create a Vercel project and set **Root Directory** to `apps/<name>`.
 2. Enable **Include source files outside of the Root Directory in the Build
    Step** (needed for the `packages/*` workspace layers).
-3. Framework preset: **Nuxt**. Regions default to `iad1` in `vercel.json` — set
+3. Framework preset: **Nuxt**. Regions default to `iad1` in `vercel.json`; set
    them to match your database region.
 
 ### Environment variables
 
-Frontends (`web`, `app`, `admin`) — Production + Preview:
+Frontends (`web`, `app`, `admin`), Production + Preview:
 
 ```
 NUXT_PUBLIC_API_BASE=https://api.nuxt-app.com
@@ -251,10 +252,10 @@ NUXT_PUBLIC_APP_URL=https://app.nuxt-app.com
 NUXT_PUBLIC_ADMIN_URL=https://admin.nuxt-app.com
 ```
 
-Admin additionally needs none — it signs in through the same Better Auth API and
+Admin needs no extra variables. It signs in through the same Better Auth API and
 gates on the `admin` role.
 
-API (`apps/api`) — Production + Preview:
+API (`apps/api`), Production + Preview:
 
 ```
 DATABASE_URL=postgresql://...@ep-xxx-pooler.<region>.aws.neon.tech/neondb?sslmode=require
@@ -267,23 +268,25 @@ CORS_ORIGINS=https://web.nuxt-app.com,https://app.nuxt-app.com,https://admin.nux
 
 ### Managed services
 
-- **Postgres: Neon.** Use the **pooled** connection string. `useDb()` detects a
-  `*.neon.tech` host (or `DATABASE_DRIVER=neon`) and uses
-  `drizzle-orm/neon-http` — no TCP pool, serverless-friendly. App code never
-  sees `.transaction()`; `withTransaction()` fails loudly on this driver. Better
-  Auth still receives the raw drizzle handle and creates the user + credential
-  account in a transaction on sign-up — use a TCP/`pg` service (or the pooled
+- **Postgres: Neon.** Use the **pooled** connection string. `useDb()` selects
+  `drizzle-orm/neon-http` when `DATABASE_DRIVER` is `neon` or, if unset, when
+  the URL hostname is `*.neon.tech`. An explicit `DATABASE_DRIVER=pg` keeps the
+  TCP driver even on a Neon host. neon-http has no TCP pool and is
+  serverless-friendly. App code cannot call `.transaction()` directly;
+  `withTransaction()` throws on this driver. Better Auth still receives the raw
+  drizzle handle and creates the user + credential
+  account in a transaction on sign-up. Use a TCP/`pg` service (or the pooled
   websocket driver) if you rely on sign-up in production.
 - **Redis: rate limiting only.** `useRedis()` (ioredis) backs the Better Auth
   rate limiter through a custom `consume` implementation in
-  `apps/api/server/utils/rate-limit.ts` (atomic `INCR` + `PEXPIRE` via Lua) —
-  sessions are **not** stored in Redis. Point `REDIS_URL` at any TCP Redis;
+  `apps/api/server/utils/rate-limit.ts` (atomic `INCR` + `PEXPIRE` via Lua).
+  Sessions are **not** stored in Redis. Point `REDIS_URL` at any TCP Redis;
   managed providers expose a TLS URL (`rediss://...`).
 
 Local dev is unchanged: `useDb()` uses `pg` and `useRedis()` uses `ioredis`,
 both pointed at the Docker containers from `docker-compose.yml`. The DB seam
 returns a `Database` type without `.transaction()`; use `withTransaction(fn)`
-for atomic writes — it fails loudly when the configured driver cannot transact.
+for atomic writes; it throws when the configured driver cannot transact.
 Better Auth's adapter still calls `.transaction()` on the raw drizzle object.
 
 ### Migrations
@@ -301,16 +304,16 @@ pnpm --filter @nuxt-app/api db:migrate
 [Better Auth](https://better-auth.com) handles email + password authentication.
 Its handler is mounted at `/api/auth/[...all]` on the API
 (`apps/api/server/api/auth/[...all].ts`) with the Drizzle adapter; sessions live
-in Postgres (`session` table) and travel in Better Auth's HttpOnly cookie.
+in Postgres (`session` table), and Better Auth sends the session token in an HttpOnly cookie.
 Config is in `apps/api/server/database/auth.ts` (shared with the CLI and seed),
 and server guards (`getActor`, `requireActor`) are in
 `apps/api/server/utils/session.ts`.
 
 Rate limiting is enabled (60s window / 100 requests, with Better Auth's stricter
 built-in rules for sensitive paths such as `/sign-in/email`) and its counters are
-stored in Redis via the custom `consume` storage — no rate-limit table, and no
-sessions in Redis. The API's own routes get the same Redis-backed limiter
-(`apps/api/server/middleware/rate-limit.ts`): every `/api/*` path except
+stored in Redis via the custom `consume` storage, so there is no rate-limit table
+and no sessions in Redis. The API's own routes get the same Redis-backed limiter
+(`apps/api/server/middleware/rate-limit.ts`). Every `/api/*` path except
 `/api/auth/*` and `/api/health*` is limited per IP + route (health checks are
 exempt so monitoring isn't throttled).
 
@@ -328,24 +331,25 @@ Vercel project's Domains settings and point DNS (`A`/`CNAME`).
 
 ### API versioning
 
-Product endpoints are path-versioned under `/api/<version>/`; infrastructure
-routes are intentionally unversioned — `/api/auth/*` (Better Auth) and
-`/api/health*` (monitoring). An unversioned or unknown product path (e.g.
-`/api/hello`, `/api/v9/hello`) returns a JSON `404`, so clients must be explicit
-about the version.
+Versioned routes are path-versioned under `/api/<version>/`. Infra routes are
+unversioned: `/api/auth/*` (Better Auth), `/api/health*` (monitoring),
+`GET /api` (version registry), and `/api/docs` + `/api/openapi.json` (Scalar
+API docs, development-only, self-hosted from the installed `@scalar/api-reference`
+bundle). A missing or unknown version (e.g. `/api/hello`, `/api/v9/hello`)
+returns a JSON `404`, so clients must be explicit about the version.
 
 The registry lives in `packages/config` (`apiVersions`, `currentApiVersion`,
-`deprecatedApiVersions`) — one source of truth shared by the API and the
+`deprecatedApiVersions`), the single registry shared by the API and the
 frontends. `GET /api` reports what's available:
 
 ```json
 { "current": "v1", "versions": [{ "version": "v1", "deprecated": false }] }
 ```
 
-In `apps/api`, version folders are thin HTTP adapters that call the
+In `apps/api`, version folders are thin versioned-route handlers that call the
 version-agnostic domain logic in `server/services/<domain>/`. Import each
-domain explicitly through its `index.ts` entrypoint; infrastructure helpers in
-`server/utils/` remain auto-imported. Wrap routes with `defineVersionedHandler('v1', ...)`: it sets
+domain explicitly through its `index.ts` entrypoint; import server utilities
+from `server/utils/` explicitly. Wrap routes with `defineVersionedHandler('v1', ...)`. It sets
 `X-Api-Version` on every response and adds `Deprecation` + `Sunset` headers once
 the version appears in `deprecatedApiVersions`.
 
