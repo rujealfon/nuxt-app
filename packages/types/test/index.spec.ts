@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { actorFromSession, actorSchema, apiErrorSchema, loginSchema, parseApiError, registerSchema, v1 } from '../src'
+import { actorFromSession, actorSchema, apiError, apiErrorMessages, apiErrorSchema, loginSchema, parseApiError, registerSchema, v1 } from '../src'
 
 describe('auth schemas', () => {
   it('accepts valid login credentials', () => {
@@ -96,6 +96,38 @@ describe('aPI error contract', () => {
   it('returns null from parseApiError when the body is not the contract', () => {
     expect(parseApiError({ message: 'Invalid credentials' })).toBeNull()
     expect(parseApiError(null)).toBeNull()
+  })
+
+  it('builds a contract body through apiError', () => {
+    expect(apiError('not_found')).toEqual({
+      error: 'not_found',
+      message: apiErrorMessages.not_found,
+    })
+  })
+
+  it('drops input details on a code other than invalid_input', () => {
+    expect(apiError('not_found', undefined, [
+      { path: ['id'], message: 'Missing' },
+    ])).toEqual({
+      error: 'not_found',
+      message: apiErrorMessages.not_found,
+    })
+  })
+
+  it('omits unusable input details', () => {
+    expect(apiError('invalid_input', undefined, [
+      { path: ['email'], message: '' },
+    ])).toEqual({
+      error: 'invalid_input',
+      message: apiErrorMessages.invalid_input,
+    })
+  })
+
+  it('substitutes an empty message with the canned copy', () => {
+    expect(apiError('forbidden', '')).toEqual({
+      error: 'forbidden',
+      message: apiErrorMessages.forbidden,
+    })
   })
 })
 

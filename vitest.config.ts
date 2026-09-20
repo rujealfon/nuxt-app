@@ -61,9 +61,22 @@ export default defineConfig({
             BETTER_AUTH_URL: 'http://localhost:3003',
             BETTER_AUTH_SECRET: 'test-secret-test-secret-test-secret',
             RATE_LIMIT_ENABLED: 'false',
-            // Contract tests run prod builds; the dev-only docs need an
-            // explicit opt-in there.
-            DOCS_ENABLED: 'true',
+          },
+        },
+      },
+      {
+        test: {
+          name: 'api-dev',
+          environment: 'node',
+          include: ['apps/api/test/e2e-dev/**/*.spec.ts'],
+          hookTimeout: 180_000,
+          testTimeout: 60_000,
+          env: {
+            DATABASE_URL: 'postgres://test:test@localhost:5432/test',
+            REDIS_URL: 'redis://localhost:6379',
+            BETTER_AUTH_URL: 'http://localhost:3003',
+            BETTER_AUTH_SECRET: 'test-secret-test-secret-test-secret',
+            RATE_LIMIT_ENABLED: 'false',
           },
         },
       },

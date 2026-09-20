@@ -1,3 +1,4 @@
+import { apiVersions } from '@nuxt-app/config'
 import { z } from 'zod'
 
 // Infra 200 bodies. Versioned-route contracts live in `@nuxt-app/types`;
@@ -5,7 +6,7 @@ import { z } from 'zod'
 // OpenAPI document cannot drift from what the handlers return.
 
 export const healthResponseSchema = z.object({
-  status: z.string(),
+  status: z.literal('ok'),
   service: z.string(),
   timestamp: z.iso.datetime(),
 })
@@ -20,9 +21,9 @@ export const readyResponseSchema = z.object({
 export type ReadyResponse = z.infer<typeof readyResponseSchema>
 
 export const versionRegistrySchema = z.object({
-  current: z.string(),
+  current: z.enum(apiVersions),
   versions: z.array(z.object({
-    version: z.string(),
+    version: z.enum(apiVersions),
     deprecated: z.boolean(),
     sunset: z.string().optional(),
   })),

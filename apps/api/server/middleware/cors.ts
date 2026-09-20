@@ -1,3 +1,4 @@
+import { parseOrigins } from '@nuxt-app/config'
 import { defineEventHandler, getHeader, getMethod, setHeader, setResponseStatus } from 'h3'
 import { useRuntimeConfig } from 'nitropack/runtime'
 
@@ -5,18 +6,7 @@ export default defineEventHandler((event) => {
   const config = useRuntimeConfig(event)
   const origin = getHeader(event, 'origin') || ''
 
-  const configured = (config.corsOrigins || '')
-    .split(',')
-    .map(value => value.trim())
-    .filter(Boolean)
-
-  const defaults = [
-    'http://localhost:3000',
-    'http://localhost:3001',
-    'http://localhost:3002',
-  ]
-
-  const allowed = configured.length ? configured : defaults
+  const allowed = parseOrigins(config.corsOrigins || '')
 
   if (origin && allowed.includes(origin)) {
     setHeader(event, 'access-control-allow-origin', origin)

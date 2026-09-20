@@ -15,7 +15,7 @@ const props = defineProps<{
 }>()
 
 function onSubmit(event: FormSubmitEvent<T>) {
-  props.submit(event.data)
+  return props.submit(event.data)
 }
 </script>
 

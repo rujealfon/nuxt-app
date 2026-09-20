@@ -10,6 +10,14 @@ describe('infra response schemas', () => {
     })).toMatchObject({ status: 'ok' })
   })
 
+  it('rejects a liveness status other than ok', () => {
+    expect(healthResponseSchema.safeParse({
+      status: 'down',
+      service: 'api.nuxt-app.com',
+      timestamp: '2026-01-01T00:00:00.000Z',
+    }).success).toBe(false)
+  })
+
   it('accepts a readiness body', () => {
     expect(readyResponseSchema.parse({ database: true, redis: false })).toEqual({
       database: true,
@@ -25,5 +33,12 @@ describe('infra response schemas', () => {
       current: 'v1',
       versions: [{ version: 'v1', deprecated: false }],
     })
+  })
+
+  it('rejects an unregistered version', () => {
+    expect(versionRegistrySchema.safeParse({
+      current: 'v9',
+      versions: [{ version: 'v9', deprecated: false }],
+    }).success).toBe(false)
   })
 })

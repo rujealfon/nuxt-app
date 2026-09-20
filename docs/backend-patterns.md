@@ -91,8 +91,8 @@ failures to `internal_error`. `useApi().parseApiError` reads a caught
 versioned-route failure through the API error contract; screens that call those
 routes consume `error` and, for `invalid_input`, input details. `X-Api-Version`
 headers set before a failure survive onto the API error contract; assess
-compatibility before changing an established version. Better Auth and health
-keep their own contracts.
+compatibility before changing an established version. Better Auth keeps its
+own contract. Health 200s are custom; health failures use the API error contract.
 
 ## Persistence, transactions, and adapters
 

@@ -1,16 +1,8 @@
 import type { ApiErrorCode, InputDetail } from '@nuxt-app/types'
 import type { ZodError } from 'zod'
-import { inputDetailSchema } from '@nuxt-app/types'
+import { apiErrorMessages, inputDetailSchema } from '@nuxt-app/types'
 
-export const domainFailureMessages: Record<ApiErrorCode, string> = {
-  invalid_input: 'The request was invalid',
-  unauthenticated: 'Sign in is required',
-  forbidden: 'You do not have access to this resource',
-  not_found: 'The requested resource was not found',
-  conflict: 'The request conflicts with the current state',
-  rate_limited: 'Too many requests',
-  internal_error: 'An unexpected error occurred',
-}
+export const domainFailureMessages = apiErrorMessages
 
 // A failure raised by domain code, independent of how it reaches the client.
 // The error adapter maps `error` to an HTTP status and the API error
@@ -25,7 +17,7 @@ export class DomainFailure extends Error {
     super(message?.length ? message : domainFailureMessages[error])
     this.name = 'DomainFailure'
     this.error = error
-    this.details = details
+    this.details = error === 'invalid_input' ? details : undefined
   }
 }
 

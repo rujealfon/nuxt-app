@@ -1,6 +1,6 @@
 import { apiErrorCodes, apiErrorSchema, loginSchema } from '@nuxt-app/types'
 import { describe, expect, it } from 'vitest'
-import { domainFailureMessages, invalidInputFromZod } from './domain-failure'
+import { domainFailure, domainFailureMessages, invalidInputFromZod } from './domain-failure'
 
 describe('invalidInputFromZod', () => {
   it('builds invalid_input with input details from each issue', () => {
@@ -30,5 +30,13 @@ describe('domainFailureMessages', () => {
         message: domainFailureMessages[code],
       })).toMatchObject({ error: code, message: domainFailureMessages[code] })
     }
+  })
+})
+
+describe('domainFailure', () => {
+  it('drops input details on a code other than invalid_input', () => {
+    expect(domainFailure('not_found', undefined, [
+      { path: ['id'], message: 'Missing' },
+    ]).details).toBeUndefined()
   })
 })

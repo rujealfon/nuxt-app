@@ -11,7 +11,8 @@ vi.mock('h3', () => ({
   defineEventHandler: h3.defineEventHandler,
 }))
 
-const { defineVersionedHandler, deprecationHeaders } = await import('./versioned')
+const { defineVersionedHandler } = await import('./versioned')
+const { deprecationHeaders } = await import('./deprecation')
 
 const { setHeader } = h3
 

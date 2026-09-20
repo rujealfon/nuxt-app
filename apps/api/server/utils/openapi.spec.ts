@@ -51,7 +51,7 @@ describe('buildOpenApiDocument', () => {
     expect(document.components.schemas.HealthResponse).toMatchObject({
       type: 'object',
       properties: {
-        status: { type: 'string' },
+        status: { const: 'ok' },
         service: { type: 'string' },
         timestamp: { type: 'string', format: 'date-time' },
       },

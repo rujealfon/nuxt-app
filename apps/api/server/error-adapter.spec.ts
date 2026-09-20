@@ -95,7 +95,7 @@ describe('error adapter', () => {
     [401, 'unauthenticated', 'Sign in is required'],
     [403, 'forbidden', 'You do not have access to this resource'],
     [404, 'not_found', 'The requested resource was not found'],
-    [405, 'invalid_input', 'The request was invalid'],
+    [405, 'not_found', 'The requested resource was not found'],
     [409, 'conflict', 'The request conflicts with the current state'],
     [429, 'rate_limited', 'Too many requests'],
   ] as const)('maps H3 %i onto %s', (status, code, message) => {
@@ -108,15 +108,15 @@ describe('error adapter', () => {
     expect(loggerError).not.toHaveBeenCalled()
   })
 
-  it('maps an unmapped 4xx onto invalid_input, not not_found', () => {
+  it('maps an unmapped 4xx onto not_found, not invalid_input', () => {
     const event = makeEvent()
 
     handle(h3Error(422), event)
 
-    expect(setResponseStatus).toHaveBeenCalledWith(event, 400)
+    expect(setResponseStatus).toHaveBeenCalledWith(event, 404)
     expect(sentBody(send.mock.calls[0] as unknown[])).toEqual({
-      error: 'invalid_input',
-      message: 'The request was invalid',
+      error: 'not_found',
+      message: 'The requested resource was not found',
     })
     expect(loggerError).not.toHaveBeenCalled()
   })

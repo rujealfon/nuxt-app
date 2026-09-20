@@ -22,6 +22,18 @@ export const siteUrls = {
   adminUrl: `http://localhost:${appPorts.admin}`,
 } as const
 
+// CORS and Better Auth share this list. An empty `CORS_ORIGINS` value means
+// the local site table, not "trust nothing" on one side and localhost on the
+// other.
+export function parseOrigins(corsOrigins: string): string[] {
+  const configured = corsOrigins
+    .split(',')
+    .map(origin => origin.trim())
+    .filter(Boolean)
+
+  return configured.length > 0 ? configured : Object.values(siteUrls)
+}
+
 // Versioned-route versions. Versioned routes live under `/api/<version>/`;
 // infra routes (auth, health, docs, version registry) are unversioned. To
 // ship a new version:

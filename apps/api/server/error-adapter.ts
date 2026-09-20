@@ -1,9 +1,9 @@
 import type { Logger } from '@nuxt-app/logger'
-import type { ApiError, ApiErrorCode, InputDetail } from '@nuxt-app/types'
-import { inputDetailSchema } from '@nuxt-app/types'
+import type { ApiError, ApiErrorCode } from '@nuxt-app/types'
+import { apiError } from '@nuxt-app/types'
 import { getResponseHeader, send, setResponseHeaders, setResponseStatus } from 'h3'
 import { defineNitroErrorHandler } from 'nitropack/runtime'
-import { DomainFailure, domainFailureMessages } from './utils/domain-failure'
+import { DomainFailure } from './utils/domain-failure'
 import { useLogger } from './utils/logger'
 
 // The one status table. `errorByStatus` is derived from it so the two can
@@ -56,8 +56,8 @@ function isUnhandled(error: unknown): boolean {
 }
 
 // Framework 4xx stay client errors. Unknown URL/method on this API-only app
-// is `not_found`, not field validation. Only unhandled/fatal/missing-status
-// failures become 500.
+// is `not_found`, not field validation. Only statuses in `statusByError`
+// map onto a dedicated code; leftover 4xx are concealed as `not_found`.
 function errorFromH3(error: unknown): ApiErrorCode | undefined {
   if (isUnhandled(error)) {
     return undefined
@@ -74,25 +74,7 @@ function errorFromH3(error: unknown): ApiErrorCode | undefined {
     return mapped
   }
 
-  // Framework 4xx without a contract code (405/413/415/422) stay client
-  // errors. Only a genuine 404 is `not_found`; the rest are bad requests.
-  return status >= 400 && status < 500 ? 'invalid_input' : undefined
-}
-
-function usableInputDetails(
-  error: ApiErrorCode,
-  details: readonly InputDetail[] | undefined,
-): InputDetail[] | undefined {
-  if (error !== 'invalid_input' || !details?.length) {
-    return undefined
-  }
-
-  const usable = details.flatMap((detail) => {
-    const parsed = inputDetailSchema.safeParse(detail)
-    return parsed.success ? [parsed.data] : []
-  })
-
-  return usable.length > 0 ? usable : undefined
+  return status >= 400 && status < 500 ? 'not_found' : undefined
 }
 
 function apiErrorBody(
@@ -100,20 +82,14 @@ function apiErrorBody(
   failure: DomainFailure | undefined,
   logger: Logger,
 ): ApiError {
-  const details = usableInputDetails(error, failure?.details)
+  const body = apiError(error, failure?.message, failure?.details)
+  const kept = body.error === 'invalid_input' ? body.details?.length ?? 0 : 0
 
-  if (error === 'invalid_input' && failure?.details && details?.length !== failure.details.length) {
+  if (error === 'invalid_input' && failure?.details && kept !== failure.details.length) {
     logger.warn({ error }, 'dropped unusable input details')
   }
 
-  // `DomainFailure` guarantees a non-empty message, so the contract holds by
-  // construction; no defensive re-parse is needed here.
-  const body: ApiError = {
-    error,
-    message: failure?.message ?? domainFailureMessages[error],
-  }
-
-  return details ? { ...body, details } : body
+  return body
 }
 
 // Renders every domain failure as the API error contract. H3 4xx map onto

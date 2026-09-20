@@ -2,6 +2,7 @@ import type { ApiVersion } from '@nuxt-app/config'
 import { apiVersions, currentApiVersion, versionMeta } from '@nuxt-app/config'
 import { apiErrorSchema, v1 } from '@nuxt-app/types'
 import { z } from 'zod'
+import { deprecationHeaders } from './deprecation'
 import { healthResponseSchema, readyResponseSchema, versionRegistrySchema } from './infra'
 
 function toJsonSchema(schema: z.ZodType) {
@@ -36,33 +37,6 @@ function jsonRef(schemaName: string, description: string, headers?: OpenApiRespo
   }
 }
 
-// Every versioned response advertises its version (mirroring
-// `defineVersionedHandler`), plus `Deprecation` + `Sunset` once the registry
-// marks the version deprecated.
-function versionResponseHeaders(version: ApiVersion) {
-  const headers: Record<string, { description: string, schema: ReturnType<typeof toJsonSchema> }> = {
-    'x-api-version': {
-      description: 'API version that served the response.',
-      schema: toJsonSchema(z.enum([version])),
-    },
-  }
-
-  const meta = versionMeta(version)
-
-  if (meta.deprecated && meta.sunset) {
-    headers.deprecation = {
-      description: 'Present and `true` once the version is deprecated.',
-      schema: toJsonSchema(z.enum(['true'])),
-    }
-    headers.sunset = {
-      description: 'Date after which the version may be removed.',
-      schema: { ...toJsonSchema(z.string()), example: meta.sunset },
-    }
-  }
-
-  return headers
-}
-
 interface OpenApiResponse {
   description: string
   headers?: Record<string, { description: string, schema: unknown }>
@@ -78,30 +52,70 @@ interface OpenApiOperation {
 
 type OpenApiPathItem = Partial<Record<'get' | 'put' | 'post' | 'delete' | 'patch' | 'options' | 'head', OpenApiOperation>>
 
-function helloOperation(version: ApiVersion): OpenApiOperation {
-  return {
-    tags: [version],
-    summary: 'Greeting operation',
-    description: 'Example versioned operation. Versioned routes require an explicit version.',
-    responses: {
-      200: jsonRef('HelloResponse', 'Greeting message.', versionResponseHeaders(version)),
-      default: apiErrorResponse(),
+const operationsByVersion = {
+  v1: v1.operations,
+} satisfies Record<ApiVersion, typeof v1.operations>
+
+// Every versioned response advertises its version (mirroring
+// `defineVersionedHandler`). Deprecation headers share `deprecationHeaders`.
+function versionResponseHeaders(version: ApiVersion) {
+  const headers: Record<string, { description: string, schema: ReturnType<typeof toJsonSchema> }> = {
+    'x-api-version': {
+      description: 'API version that served the response.',
+      schema: toJsonSchema(z.enum([version])),
     },
   }
+
+  const meta = versionMeta(version)
+
+  for (const [name] of deprecationHeaders(meta)) {
+    if (name === 'deprecation') {
+      headers.deprecation = {
+        description: 'Present and `true` once the version is deprecated.',
+        schema: toJsonSchema(z.enum(['true'])),
+      }
+    }
+
+    if (name === 'sunset') {
+      headers.sunset = {
+        description: 'Date after which the version may be removed.',
+        schema: { ...toJsonSchema(z.string()), example: meta.sunset },
+      }
+    }
+  }
+
+  return headers
 }
 
-// Versioned-route operations served per API version. Keyed by every registered
-// version so shipping a new registry entry fails type-check until its
-// operations are documented here.
 function versionedPaths(): Record<string, OpenApiPathItem> {
-  const operationsByVersion: Record<ApiVersion, Record<string, OpenApiPathItem>> = {
-    v1: {
-      '/api/v1/hello': { get: helloOperation('v1') },
-    },
-  }
-
   return Object.fromEntries(
-    apiVersions.flatMap(version => Object.entries(operationsByVersion[version])),
+    apiVersions.flatMap(version =>
+      operationsByVersion[version].map(operation => [
+        `/api/${version}${operation.suffix}`,
+        {
+          [operation.method]: {
+            tags: [version],
+            summary: operation.summary,
+            ...(operation.description ? { description: operation.description } : {}),
+            responses: {
+              200: jsonRef(operation.responseName, 'Success.', versionResponseHeaders(version)),
+              default: apiErrorResponse(),
+            },
+          },
+        } satisfies OpenApiPathItem,
+      ]),
+    ),
+  )
+}
+
+function versionedComponentSchemas(): Record<string, ReturnType<typeof toJsonSchema>> {
+  return Object.fromEntries(
+    apiVersions.flatMap(version =>
+      operationsByVersion[version].map(operation => [
+        operation.responseName,
+        toJsonSchema(operation.responseSchema),
+      ]),
+    ),
   )
 }
 
@@ -159,12 +173,20 @@ export function buildOpenApiDocument() {
     },
   }
 
+  const schemas: Record<string, ReturnType<typeof toJsonSchema>> = {
+    ...versionedComponentSchemas(),
+    ApiError: toJsonSchema(apiErrorSchema),
+    HealthResponse: toJsonSchema(healthResponseSchema),
+    ReadyResponse: toJsonSchema(readyResponseSchema),
+    VersionRegistry: toJsonSchema(versionRegistrySchema),
+  }
+
   return {
     openapi: '3.1.0',
     info: {
       title: 'nuxt-app API',
       version: currentApiVersion,
-      description: 'Versioned routes live under `/api/<version>/` and advertise it via `X-Api-Version`. Infra routes (`/api/auth/*`, `/api/health*`, `GET /api`, `/api/docs*`, `/api/openapi.json`) are unversioned. Failures use the API error contract except Better Auth and health, which keep their own.',
+      description: 'Versioned routes live under `/api/<version>/` and advertise it via `X-Api-Version`. Infra routes (`/api/auth/*`, `/api/health*`, `GET /api`, `/api/docs*`, `/api/openapi.json`) are unversioned. Failures use the API error contract except Better Auth, which keeps its own. Health 200s are custom liveness/readiness bodies; health failures use the API error contract.',
     },
     servers: [
       { url: '/', description: 'Same origin: docs, spec, and API share one host.' },
@@ -176,13 +198,7 @@ export function buildOpenApiDocument() {
     ],
     paths,
     components: {
-      schemas: {
-        HelloResponse: toJsonSchema(v1.helloResponseSchema),
-        ApiError: toJsonSchema(apiErrorSchema),
-        HealthResponse: toJsonSchema(healthResponseSchema),
-        ReadyResponse: toJsonSchema(readyResponseSchema),
-        VersionRegistry: toJsonSchema(versionRegistrySchema),
-      },
+      schemas,
     },
   }
 }

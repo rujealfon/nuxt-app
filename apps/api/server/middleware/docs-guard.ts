@@ -1,9 +1,7 @@
 // Development-only API docs. Scalar UI, its OpenAPI document, and the
-// self-hosted UI bundle answer 404 in production builds unless DOCS_ENABLED
-// is set (contract tests run prod builds with it enabled). Runs before routes
-// and static assets so the bundle cannot leak the docs surface on its own.
+// self-hosted UI bundle answer 404 in production builds. `import.meta.dev`
+// is compile-time: there is no runtime env opt-in.
 import { defineEventHandler } from 'h3'
-import { useRuntimeConfig } from 'nitropack/runtime'
 import { isDocsPath, requestPath } from '../utils/api-paths'
 import { domainFailure } from '../utils/domain-failure'
 
@@ -12,9 +10,7 @@ export default defineEventHandler((event) => {
     return
   }
 
-  const config = useRuntimeConfig(event)
-
-  if (!config.docsEnabled) {
+  if (!import.meta.dev) {
     throw domainFailure('not_found')
   }
 })

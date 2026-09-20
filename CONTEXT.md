@@ -21,7 +21,7 @@ A transport-independent failure raised when an operation cannot complete — val
 _Avoid_: error, exception, API error, product failure, ProductFailure
 
 **API error contract**:
-The single failure shape for versioned routes: `error` (a stable code), a safe non-empty message, and optional input details only on `invalid_input`. Clients branch on `error`, never the message; Better Auth and health keep their own contracts, while other infra-route failures still use this shape.
+The single failure shape for versioned routes: `error` (a stable code), a safe non-empty message, and optional input details only on `invalid_input`. Clients branch on `error`, never the message. Better Auth keeps its own contract. Health 200s are custom liveness/readiness bodies; health failures and other infra-route failures use this shape.
 _Avoid_: error response, error format, Zod issue, validation error, ProductError
 
 **Input detail**:

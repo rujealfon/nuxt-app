@@ -15,7 +15,7 @@ export default defineEventHandler(async (event) => {
   }
 
   setHeader(event, 'content-type', 'text/javascript; charset=utf-8')
-  setHeader(event, 'cache-control', 'public, max-age=2592000, immutable')
+  setHeader(event, 'cache-control', 'no-store')
 
   return bundle
 })

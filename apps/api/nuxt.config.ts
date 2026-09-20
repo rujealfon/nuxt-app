@@ -1,10 +1,10 @@
 import { fileURLToPath } from 'node:url'
 
-// Scalar docs are development-only: on for `nuxt dev`, off in production
-// builds unless explicitly enabled (contract tests enable it to exercise the
-// docs routes against prod builds). Resolved once so the Scalar bundle is only
-// embedded when the docs can actually be served.
-const docsEnabled = process.env.DOCS_ENABLED === 'true' || process.env.NODE_ENV === 'development'
+const scalarDocsAsset = {
+  baseName: 'scalar-docs',
+  dir: fileURLToPath(new URL('./node_modules/@scalar/api-reference/dist/browser', import.meta.url)),
+  pattern: 'standalone.js',
+}
 
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
@@ -20,22 +20,15 @@ export default defineNuxtConfig({
   nitro: {
     // Error adapter: renders the API error contract for every thrown failure.
     errorHandler: fileURLToPath(new URL('./server/error-adapter', import.meta.url)),
-    // Embeds only the Scalar IIFE the docs page loads, and only when docs are
-    // enabled at build time — otherwise the 3.7 MB bundle would ship in every
-    // production server for a route that always 404s. The rest of
-    // `dist/browser` (chunks, ESM, source maps) stays out of the server
-    // bundle; HTTP still 404s anything but `standalone.js`.
-    ...(docsEnabled
-      ? {
-          serverAssets: [
-            {
-              baseName: 'scalar-docs',
-              dir: fileURLToPath(new URL('./node_modules/@scalar/api-reference/dist/browser', import.meta.url)),
-              pattern: 'standalone.js',
-            },
-          ],
-        }
-      : {}),
+  },
+  // Embed the Scalar IIFE only in development. Production builds omit the
+  // 3.7 MB bundle; the docs guard 404s those routes at compile time via
+  // `import.meta.dev`. Only `standalone.js` is included — the rest of
+  // `dist/browser` stays out of the server bundle.
+  $development: {
+    nitro: {
+      serverAssets: [scalarDocsAsset],
+    },
   },
   runtimeConfig: {
     databaseUrl: process.env.DATABASE_URL || '',
@@ -45,6 +38,5 @@ export default defineNuxtConfig({
     redisUrl: process.env.REDIS_URL || '',
     corsOrigins: process.env.CORS_ORIGINS || '',
     rateLimitEnabled: process.env.RATE_LIMIT_ENABLED !== 'false',
-    docsEnabled,
   },
 })

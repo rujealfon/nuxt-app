@@ -1,18 +1,9 @@
-import type { ApiVersion, VersionMeta } from '@nuxt-app/config'
+import type { ApiVersion } from '@nuxt-app/config'
 import { versionMeta } from '@nuxt-app/config'
 import { defineEventHandler, setHeader } from 'h3'
+import { deprecationHeaders } from './deprecation'
 
 type VersionedHandler = Parameters<typeof defineEventHandler>[0]
-
-// Derives the `Deprecation` + `Sunset` header pair from version metadata, or
-// nothing for a live version. Pure, so specs never touch shared state.
-export function deprecationHeaders(meta: VersionMeta): [string, string][] {
-  if (!meta.deprecated || !meta.sunset) {
-    return []
-  }
-
-  return [['deprecation', 'true'], ['sunset', new Date(meta.sunset).toUTCString()]]
-}
 
 // Wraps a route handler so every versioned response advertises its version and,
 // once deprecated, a `Deprecation` + `Sunset` pair for clients to react to.
