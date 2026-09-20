@@ -1,6 +1,7 @@
 import type { Actor, LoginCredentials, RegisterCredentials } from '@nuxt-app/types'
 import { actorFromSession } from '@nuxt-app/types'
 import { createAuthClient } from 'better-auth/vue'
+import { computed, getCurrentScope } from 'vue'
 
 let client: ReturnType<typeof createAuthClient> | undefined
 
@@ -20,10 +21,13 @@ function useAuthClient() {
 
 export function useAuth() {
   const client = useAuthClient()
-  const session = client.useSession()
 
-  const actor = computed(() => actorFromSession(session.value.data))
-  const isPending = computed(() => session.value.isPending)
+  // A route guard runs outside a Vue effect scope, so subscribing there would
+  // leak a session listener on every navigation. Only bind the reactive store
+  // where Vue can dispose it; `getActor` works without the subscription.
+  const session = getCurrentScope() ? client.useSession() : undefined
+
+  const actor = computed(() => actorFromSession(session?.value.data))
 
   // Imperative, fresh fetch for navigation guards: the reactive store reflects
   // the last known session, while a gate needs a current answer.
@@ -54,7 +58,6 @@ export function useAuth() {
 
   return {
     actor,
-    isPending,
     getActor,
     signIn,
     signUp,

@@ -13,7 +13,7 @@ function createInstance() {
       .split(',')
       .map(origin => origin.trim())
       .filter(Boolean),
-    rateLimitStorage: createRateLimitStorage(),
+    rateLimitStorage: createRateLimitStorage({ failClosed: true }),
   })
 }
 

@@ -3,6 +3,11 @@ import type { AuthFormField } from '@nuxt/ui'
 import { registerSchema } from '@nuxt-app/types'
 
 const { signUp } = useAuth()
+const { errorMessage, submitting, onSubmit } = useAuthForm({
+  submit: signUp,
+  redirectTo: '/',
+  fallbackMessage: 'Unable to create your account',
+})
 
 const fields: AuthFormField[] = [
   { name: 'name', type: 'text', label: 'Name', placeholder: 'Your name', required: true },
@@ -19,9 +24,9 @@ const fields: AuthFormField[] = [
     :schema="registerSchema"
     :fields="fields"
     submit-label="Create account"
-    failure-message="Unable to create your account"
-    redirect-to="/"
-    :submit-action="signUp"
+    :loading="submitting"
+    :error-message="errorMessage"
+    :submit="onSubmit"
   >
     <template #footer>
       <p class="mt-4 text-center text-sm text-muted">

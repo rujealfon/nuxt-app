@@ -52,4 +52,14 @@ describe('createRateLimitStorage', () => {
     expect(result).toEqual({ allowed: true, retryAfter: null })
     expect(loggerError).toHaveBeenCalled()
   })
+
+  it('fails closed when the storage opts in, so auth throttling survives an outage', async () => {
+    evalMock.mockRejectedValue(new Error('ECONNREFUSED'))
+    const storage = createRateLimitStorage({ failClosed: true })
+
+    const result = await storage.consume('k', { window: 60, max: 100 })
+
+    expect(result).toEqual({ allowed: false, retryAfter: 60 })
+    expect(loggerError).toHaveBeenCalled()
+  })
 })

@@ -1,5 +1,5 @@
-import { readdirSync, readFileSync } from 'node:fs'
-import { fileURLToPath } from 'node:url'
+import { readdirSync } from 'node:fs'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import { describe, expect, it } from 'vitest'
 
 const root = fileURLToPath(new URL('..', import.meta.url))
@@ -8,19 +8,29 @@ const root = fileURLToPath(new URL('..', import.meta.url))
 // layer publishes to apps through Nuxt's auto-imports. Compared with exact
 // equality — adding or renaming a public symbol must update this list
 // deliberately, so nothing joins the interface by accident.
-const clientComposables = ['useApi', 'useAuth']
+const clientComposables = ['useApi', 'useAuth', 'useAuthForm']
 const uiComposables = ['useSite']
-const uiComponents = ['AppHeader', 'AppShell', 'AuthScreen', 'LoadMoreButton', 'PageNumberPagination']
+const uiComponents = ['AppHeader', 'AppShell', 'AuthScreen']
 
-function exportedSymbols(dir: string): string[] {
-  return readdirSync(dir, { withFileTypes: true })
+// Import each module and read its runtime exports, so the check sees every
+// export form (declarations, re-exports) instead of guessing with a regex.
+async function exportedSymbols(dir: string): Promise<string[]> {
+  const files = readdirSync(dir, { withFileTypes: true })
     .filter(entry => entry.isFile() && entry.name.endsWith('.ts') && !entry.name.endsWith('.spec.ts'))
-    .flatMap((entry) => {
-      const source = readFileSync(`${dir}/${entry.name}`, 'utf8')
-      return [...source.matchAll(/export\s+(?:async\s+)?function\s+(\w+)|export\s+const\s+(\w+)\s*=/g)]
-        .map(match => (match[1] ?? match[2]) as string)
-    })
-    .sort()
+
+  const names = new Set<string>()
+
+  for (const file of files) {
+    const module = await import(pathToFileURL(`${dir}/${file.name}`).href)
+
+    for (const [name, value] of Object.entries(module)) {
+      if (name !== 'default' && typeof value === 'function') {
+        names.add(name)
+      }
+    }
+  }
+
+  return [...names].sort()
 }
 
 function componentNames(dir: string): string[] {
@@ -31,12 +41,12 @@ function componentNames(dir: string): string[] {
 }
 
 describe('package public surface', () => {
-  it('publishes exactly the authored client composables', () => {
-    expect(exportedSymbols(`${root}/packages/client/app/composables`)).toEqual(clientComposables)
+  it('publishes exactly the authored client composables', async () => {
+    expect(await exportedSymbols(`${root}/packages/client/app/composables`)).toEqual(clientComposables)
   })
 
-  it('publishes exactly the authored ui surface', () => {
-    expect(exportedSymbols(`${root}/packages/ui/app/composables`)).toEqual(uiComposables)
+  it('publishes exactly the authored ui surface', async () => {
+    expect(await exportedSymbols(`${root}/packages/ui/app/composables`)).toEqual(uiComposables)
     expect(componentNames(`${root}/packages/ui/app/components`)).toEqual(uiComponents)
   })
 })

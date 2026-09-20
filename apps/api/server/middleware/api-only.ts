@@ -2,8 +2,10 @@
 // welcome page when there is no `app.vue`. Reject anything that is not an API
 // path so browsers get the API error contract instead of HTML. Nitro/Vite
 // internals (`/_nuxt`, `/__nuxt_*`, `/@vite`) stay reachable in dev.
+import { requestPath } from '../utils/api-paths'
+
 export default defineEventHandler((event) => {
-  const path = event.path.split('?')[0] ?? '/'
+  const path = requestPath(event)
 
   if (path === '/api' || path.startsWith('/api/')) {
     return

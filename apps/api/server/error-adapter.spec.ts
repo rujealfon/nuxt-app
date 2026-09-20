@@ -1,4 +1,3 @@
-import type { ApiErrorCode } from '@nuxt-app/types'
 import { apiErrorCodes } from '@nuxt-app/types'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -17,22 +16,12 @@ vi.stubGlobal('getResponseHeader', getResponseHeader)
 vi.stubGlobal('send', send)
 vi.stubGlobal('useLogger', useLogger)
 
-const { default: errorHandler } = await import('./error-adapter')
+const { default: errorHandler, statusByError: statuses } = await import('./error-adapter')
 const { domainFailure } = await import('./utils/domain-failure')
 
 type ErrorHandler = (error: unknown, event: unknown) => unknown
 
 const handle = errorHandler as unknown as ErrorHandler
-
-const statuses: Record<ApiErrorCode, number> = {
-  invalid_input: 400,
-  unauthenticated: 401,
-  forbidden: 403,
-  not_found: 404,
-  conflict: 409,
-  rate_limited: 429,
-  internal_error: 500,
-}
 
 function makeEvent(context: Record<string, unknown> = {}) {
   return { handled: false, context }
@@ -85,7 +74,7 @@ describe('error adapter', () => {
     [401, 'unauthenticated', 'Sign in is required'],
     [403, 'forbidden', 'You do not have access to this resource'],
     [404, 'not_found', 'The requested resource was not found'],
-    [405, 'not_found', 'The requested resource was not found'],
+    [405, 'invalid_input', 'The request was invalid'],
     [409, 'conflict', 'The request conflicts with the current state'],
     [429, 'rate_limited', 'Too many requests'],
   ] as const)('maps H3 %i onto %s', (status, code, message) => {
@@ -98,15 +87,15 @@ describe('error adapter', () => {
     expect(loggerError).not.toHaveBeenCalled()
   })
 
-  it('maps an unknown 4xx onto not_found', () => {
+  it('maps an unmapped 4xx onto invalid_input, not not_found', () => {
     const event = makeEvent()
 
     handle(h3Error(422), event)
 
-    expect(setResponseStatus).toHaveBeenCalledWith(event, 404)
+    expect(setResponseStatus).toHaveBeenCalledWith(event, 400)
     expect(sentBody(send.mock.calls[0] as unknown[])).toEqual({
-      error: 'not_found',
-      message: 'The requested resource was not found',
+      error: 'invalid_input',
+      message: 'The request was invalid',
     })
     expect(loggerError).not.toHaveBeenCalled()
   })
@@ -182,15 +171,6 @@ describe('error adapter', () => {
     })
   })
 
-  it('warns when an override message is dropped, without the override text', () => {
-    const event = makeEvent()
-
-    handle(domainFailure('not_found', ''), event)
-
-    expect(loggerWarn).toHaveBeenCalledWith({ error: 'not_found' }, expect.any(String))
-    expect(loggerWarn.mock.calls[0]?.[0]).toEqual({ error: 'not_found' })
-  })
-
   it('includes input details on invalid_input', () => {
     const event = makeEvent()
 
@@ -237,7 +217,7 @@ describe('error adapter', () => {
     expect(loggerWarn).toHaveBeenCalledWith({ error: 'invalid_input' }, expect.any(String))
   })
 
-  it('warns about dropped details when the message override is also unusable', () => {
+  it('falls back to the canned message when the override is empty and details are unusable', () => {
     const event = makeEvent()
 
     handle(domainFailure('invalid_input', '', [
@@ -248,10 +228,7 @@ describe('error adapter', () => {
       error: 'invalid_input',
       message: 'The request was invalid',
     })
-    expect(loggerWarn.mock.calls).toEqual(expect.arrayContaining([
-      [{ error: 'invalid_input' }, expect.any(String)],
-    ]))
-    expect(loggerWarn.mock.calls.length).toBeGreaterThanOrEqual(2)
+    expect(loggerWarn).toHaveBeenCalledWith({ error: 'invalid_input' }, expect.any(String))
   })
 
   it('keeps usable input details and drops the rest', () => {

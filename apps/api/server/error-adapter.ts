@@ -1,9 +1,11 @@
 import type { Logger } from '@nuxt-app/logger'
 import type { ApiError, ApiErrorCode, InputDetail } from '@nuxt-app/types'
-import { apiErrorSchema, inputDetailSchema } from '@nuxt-app/types'
+import { inputDetailSchema } from '@nuxt-app/types'
 import { DomainFailure, domainFailureMessages } from './utils/domain-failure'
 
-const statusByError: Record<ApiErrorCode, number> = {
+// The one status table. `errorByStatus` is derived from it so the two can
+// never drift; a new code only has to be added here.
+export const statusByError: Record<ApiErrorCode, number> = {
   invalid_input: 400,
   unauthenticated: 401,
   forbidden: 403,
@@ -13,14 +15,9 @@ const statusByError: Record<ApiErrorCode, number> = {
   internal_error: 500,
 }
 
-const errorByStatus: Partial<Record<number, ApiErrorCode>> = {
-  400: 'invalid_input',
-  401: 'unauthenticated',
-  403: 'forbidden',
-  404: 'not_found',
-  409: 'conflict',
-  429: 'rate_limited',
-}
+const errorByStatus = Object.fromEntries(
+  Object.entries(statusByError).map(([error, status]) => [status, error] as const),
+) as Partial<Record<number, ApiErrorCode>>
 
 // h3 wraps a thrown non-H3 error in a new H3Error, keeping the original as
 // `cause`; recognise a domain failure at either level.
@@ -69,20 +66,14 @@ function errorFromH3(error: unknown): ApiErrorCode | undefined {
     return undefined
   }
 
-  if (errorByStatus[status]) {
-    return errorByStatus[status]
+  const mapped = errorByStatus[status]
+  if (mapped) {
+    return mapped
   }
 
-  if (status >= 400 && status < 500) {
-    return 'not_found'
-  }
-
-  return undefined
-}
-
-const cannedInternalError: ApiError = {
-  error: 'internal_error',
-  message: domainFailureMessages.internal_error,
+  // Framework 4xx without a contract code (405/413/415/422) stay client
+  // errors. Only a genuine 404 is `not_found`; the rest are bad requests.
+  return status >= 400 && status < 500 ? 'invalid_input' : undefined
 }
 
 function usableInputDetails(
@@ -106,35 +97,20 @@ function apiErrorBody(
   failure: DomainFailure | undefined,
   logger: Logger,
 ): ApiError {
-  const fallbackMessage = domainFailureMessages[error]
   const details = usableInputDetails(error, failure?.details)
-  const candidate: ApiError = details
-    ? { error, message: failure?.message ?? fallbackMessage, details }
-    : { error, message: failure?.message ?? fallbackMessage }
-
-  const parsed = apiErrorSchema.safeParse(candidate)
 
   if (error === 'invalid_input' && failure?.details && details?.length !== failure.details.length) {
     logger.warn({ error }, 'dropped unusable input details')
   }
 
-  if (parsed.success) {
-    return parsed.data
+  // `DomainFailure` guarantees a non-empty message, so the contract holds by
+  // construction; no defensive re-parse is needed here.
+  const body: ApiError = {
+    error,
+    message: failure?.message ?? domainFailureMessages[error],
   }
 
-  logger.warn({ error }, 'dropped unusable API error message override')
-
-  const fallbackCandidate: ApiError = details
-    ? { error, message: fallbackMessage, details }
-    : { error, message: fallbackMessage }
-  const fallback = apiErrorSchema.safeParse(fallbackCandidate)
-
-  if (fallback.success) {
-    return fallback.data
-  }
-
-  logger.error({ error }, 'API error contract unusable')
-  return cannedInternalError
+  return details ? { ...body, details } : body
 }
 
 // Renders every domain failure as the API error contract. H3 4xx map onto

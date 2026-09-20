@@ -1,13 +1,8 @@
 import type { FormSchema } from '@nuxt/ui'
-import { mockNuxtImport, mountSuspended } from '@nuxt/test-utils/runtime'
+import { mountSuspended } from '@nuxt/test-utils/runtime'
 import { flushPromises } from '@vue/test-utils'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { nextTick } from 'vue'
+import { describe, expect, it, vi } from 'vitest'
 import AuthScreen from './AuthScreen.vue'
-
-const navigateTo = vi.hoisted(() => vi.fn())
-
-mockNuxtImport('navigateTo', () => navigateTo)
 
 const schema = { safeParse: (value: unknown) => ({ success: true, data: value }) } as FormSchema
 
@@ -24,87 +19,50 @@ async function mountScreen(props: Record<string, unknown> = {}) {
       schema,
       fields,
       submitLabel: 'Go',
-      failureMessage: 'Invalid email or password',
-      redirectTo: '/',
-      submitAction: vi.fn().mockResolvedValue(undefined),
+      submit: vi.fn(),
       ...props,
     },
   })
 }
 
-async function submit(wrapper: Awaited<ReturnType<typeof mountScreen>>) {
-  await wrapper.getComponent({ name: 'UAuthForm' }).vm.$emit('submit', { data: { email: 'user@example.com' } })
-  await flushPromises()
-}
-
 describe('authScreen', () => {
-  beforeEach(() => {
-    navigateTo.mockReset()
-    navigateTo.mockResolvedValue(undefined)
-  })
-
-  it('navigates to an in-app path after a successful submit', async () => {
-    const wrapper = await mountScreen({ redirectTo: '/settings' })
-
-    await submit(wrapper)
-
-    expect(navigateTo).toHaveBeenCalledWith('/settings')
-  })
-
-  it('rejects external redirects', async () => {
-    const wrapper = await mountScreen({ redirectTo: 'https://evil.com' })
-
-    await submit(wrapper)
-
-    expect(navigateTo).toHaveBeenCalledWith('/')
-  })
-
-  it('rejects protocol-relative redirects', async () => {
-    const wrapper = await mountScreen({ redirectTo: '//evil.com' })
-
-    await submit(wrapper)
-
-    expect(navigateTo).toHaveBeenCalledWith('/')
-  })
-
-  it('shows the auth failure message without navigating', async () => {
-    const wrapper = await mountScreen({
-      submitAction: vi.fn().mockRejectedValue(new Error('nope')),
+  it('renders the title and footer slot', async () => {
+    const wrapper = await mountSuspended(AuthScreen, {
+      props: {
+        title: 'Sign in',
+        description: 'Hello',
+        icon: 'i-lucide-lock',
+        schema,
+        fields,
+        submitLabel: 'Go',
+        submit: vi.fn(),
+      },
+      slots: { footer: '<p>New here?</p>' },
     })
 
-    await submit(wrapper)
-
-    expect(wrapper.text()).toContain('Invalid email or password')
-    expect(navigateTo).not.toHaveBeenCalled()
+    expect(wrapper.text()).toContain('Sign in')
+    expect(wrapper.text()).toContain('New here?')
   })
 
-  it('does not report a navigation failure as bad credentials', async () => {
-    navigateTo.mockRejectedValue(new Error('external'))
-    const wrapper = await mountScreen()
+  it('forwards the submitted data to the submit prop', async () => {
+    const submit = vi.fn()
+    const wrapper = await mountScreen({ submit })
 
-    await submit(wrapper)
-
-    expect(wrapper.text()).toContain('Unable to continue')
-    expect(wrapper.text()).not.toContain('Invalid email or password')
-  })
-
-  it('ignores a second submit while the first is in flight', async () => {
-    let finish: (() => void) | undefined
-    const submitAction = vi.fn(() => new Promise<void>((resolve) => {
-      finish = resolve
-    }))
-    const wrapper = await mountScreen({ submitAction })
-
-    await wrapper.getComponent({ name: 'UAuthForm' }).vm.$emit('submit', { data: { email: 'user@example.com' } })
-    await nextTick()
-    await wrapper.getComponent({ name: 'UAuthForm' }).vm.$emit('submit', { data: { email: 'user@example.com' } })
-
-    expect(submitAction).toHaveBeenCalledTimes(1)
-    expect(wrapper.getComponent({ name: 'UAuthForm' }).props('submit')).toMatchObject({ loading: true })
-
-    finish?.()
+    wrapper.getComponent({ name: 'UAuthForm' }).vm.$emit('submit', { data: { email: 'user@example.com' } })
     await flushPromises()
 
-    expect(wrapper.getComponent({ name: 'UAuthForm' }).props('submit')).toMatchObject({ loading: false })
+    expect(submit).toHaveBeenCalledWith({ email: 'user@example.com' })
+  })
+
+  it('shows the error message in the validation slot', async () => {
+    const wrapper = await mountScreen({ errorMessage: 'Invalid email or password' })
+
+    expect(wrapper.text()).toContain('Invalid email or password')
+  })
+
+  it('passes the loading state to the form', async () => {
+    const wrapper = await mountScreen({ loading: true })
+
+    expect(wrapper.getComponent({ name: 'UAuthForm' }).props('submit')).toMatchObject({ loading: true })
   })
 })

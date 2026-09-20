@@ -20,7 +20,9 @@ export class DomainFailure extends Error {
   readonly details: readonly InputDetail[] | undefined
 
   constructor(error: ApiErrorCode, message?: string, details?: readonly InputDetail[]) {
-    super(message ?? domainFailureMessages[error])
+    // An empty override is treated as absent so the API error contract's
+    // non-empty message invariant holds by construction.
+    super(message?.length ? message : domainFailureMessages[error])
     this.name = 'DomainFailure'
     this.error = error
     this.details = details

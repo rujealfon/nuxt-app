@@ -31,11 +31,3 @@ _Avoid_: Zod issue, field error, validation error
 **Error adapter**:
 The HTTP-facing translation at the edge of the API: it turns a domain failure into the API error contract, so that translation never lives in domain code.
 _Avoid_: error handler, error middleware, error serializer
-
-**Cursor pagination**:
-Forward-only traversal of a list with an opaque cursor and a fixed page size; each response states whether more results exist.
-_Avoid_: infinite scroll, load more, offset pagination
-
-**Page-number pagination**:
-Direct access to numbered pages of a list with a known total count and a fixed page size.
-_Avoid_: cursor pagination, infinite scroll

@@ -38,15 +38,30 @@ export const inputDetailSchema = z.object({
 
 export type InputDetail = z.infer<typeof inputDetailSchema>
 
-export const apiErrorSchema = z.object({
-  error: z.enum(apiErrorCodes),
-  message: z.string().min(1),
-  details: z.array(inputDetailSchema).min(1).optional(),
-}).refine(
-  body => body.error === 'invalid_input' || body.details === undefined,
-)
+// A union rather than a refined object so the "details only on invalid_input"
+// rule is expressible as JSON Schema for the OpenAPI document instead of being
+// a runtime-only refinement. The hand-written `ApiError` keeps a single,
+// easy-to-construct object shape for callers.
+export const apiErrorSchema = z.union([
+  z.object({
+    error: z.literal('invalid_input'),
+    message: z.string().min(1),
+    details: z.array(inputDetailSchema).min(1).optional(),
+  }),
+  z.object({
+    error: z.enum(apiErrorCodes).exclude(['invalid_input']),
+    message: z.string().min(1),
+    // Declared so a body carrying `details` on a non-`invalid_input` code is
+    // rejected, and so the OpenAPI schema forbids it too.
+    details: z.never().optional(),
+  }),
+])
 
-export type ApiError = z.infer<typeof apiErrorSchema>
+export interface ApiError {
+  error: ApiErrorCode
+  message: string
+  details?: InputDetail[]
+}
 
 export function parseApiError(data: unknown): ApiError | null {
   const parsed = apiErrorSchema.safeParse(data)
@@ -75,18 +90,10 @@ export const actorSessionSchema = z.object({
   user: actorSchema,
 })
 
-export function parseActor(user: unknown): Actor | null {
-  const parsed = actorSchema.safeParse(user)
-  return parsed.success ? parsed.data : null
-}
-
 export function actorFromSession(data: unknown): Actor | null {
   const parsed = actorSessionSchema.safeParse(data)
   return parsed.success ? parsed.data.user : null
 }
-
-export { createPageNumberResponseSchema, createPaginationResponseSchema, pageNumberQuerySchema, paginationQuerySchema } from './pagination'
-export type { PageNumberQuery, PageNumberResponse, PaginationQuery, PaginationResponse } from './pagination'
 
 // Versioned API contracts, namespaced by version (`v1.helloResponseSchema`).
 export * as v1 from './v1'

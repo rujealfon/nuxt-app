@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { createDb, selectDriver } from './db'
+import { createDb, parseDriver, selectDriver } from './db'
 
 const pgUrl = 'postgres://user:pass@localhost:5432/db'
 const neonUrl = 'postgres://user:pass@ep-foo-123456.us-east-2.aws.neon.tech/db'
@@ -23,6 +23,20 @@ describe('selectDriver', () => {
 
   it('does not treat neon.tech in the password as a neon host', () => {
     expect(selectDriver({ url: 'postgres://user:neon.tech@localhost:5432/db' })).toBe('pg')
+  })
+
+  it('detects a neon host regardless of case', () => {
+    expect(selectDriver({ url: 'postgres://user:pass@EP-FOO.AWS.NEON.TECH/db' })).toBe('neon')
+  })
+})
+
+describe('parseDriver', () => {
+  it('accepts known drivers and ignores anything else', () => {
+    expect(parseDriver('neon')).toBe('neon')
+    expect(parseDriver('pg')).toBe('pg')
+    expect(parseDriver('')).toBeUndefined()
+    expect(parseDriver(undefined)).toBeUndefined()
+    expect(parseDriver('mysql')).toBeUndefined()
   })
 })
 

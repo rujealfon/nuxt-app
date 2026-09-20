@@ -16,12 +16,18 @@ export type Database = Omit<
   'transaction'
 >
 
+export type DatabaseDriver = 'pg' | 'neon'
+
 export interface DbConfig {
   url: string
-  driver?: string
+  driver?: DatabaseDriver
 }
 
-export type DatabaseDriver = 'pg' | 'neon'
+// Narrows an untrusted driver value (env var, runtime config) to a driver.
+// Anything else defers to host-based detection in `selectDriver`.
+export function parseDriver(value: unknown): DatabaseDriver | undefined {
+  return value === 'pg' || value === 'neon' ? value : undefined
+}
 
 export interface DbHandle {
   db: Database
@@ -30,7 +36,9 @@ export interface DbHandle {
 
 function neonHostname(url: string): boolean {
   try {
-    const host = new URL(url).hostname
+    // Hostnames are case-insensitive; `postgres:` is a non-special URL scheme
+    // so the URL parser preserves the case as written.
+    const host = new URL(url).hostname.toLowerCase()
     return host === 'neon.tech' || host.endsWith('.neon.tech')
   }
   catch {
@@ -39,11 +47,7 @@ function neonHostname(url: string): boolean {
 }
 
 export function selectDriver(config: DbConfig): DatabaseDriver {
-  if (config.driver === 'pg' || config.driver === 'neon') {
-    return config.driver
-  }
-
-  return neonHostname(config.url) ? 'neon' : 'pg'
+  return config.driver ?? (neonHostname(config.url) ? 'neon' : 'pg')
 }
 
 // Pure factory shared by the runtime (`useDb`) and the CLI scripts
@@ -77,7 +81,7 @@ let handle: DbHandle | undefined
 function dbHandle(): DbHandle {
   if (!handle) {
     const config = useRuntimeConfig()
-    handle = createDb({ url: config.databaseUrl, driver: config.databaseDriver })
+    handle = createDb({ url: config.databaseUrl, driver: parseDriver(config.databaseDriver) })
   }
 
   return handle

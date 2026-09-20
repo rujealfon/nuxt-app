@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { effectScope } from 'vue'
 import { useAuth } from '../app/composables/useAuth'
 
 const signInEmail = vi.fn()
@@ -6,7 +7,7 @@ const signUpEmail = vi.fn()
 const signOut = vi.fn()
 const getSession = vi.fn()
 const useSession = vi.fn(() => ({
-  value: { data: null, isPending: false },
+  value: { data: null },
 }))
 
 vi.mock('better-auth/vue', () => ({
@@ -19,13 +20,19 @@ vi.mock('better-auth/vue', () => ({
   }),
 }))
 
+// The reactive store is only bound inside an effect scope (as in a component
+// setup); route guards call `useAuth()` outside one on purpose.
+function inScope<T>(fn: () => T): T {
+  return effectScope().run(fn) as T
+}
+
 beforeEach(() => {
   signInEmail.mockReset()
   signUpEmail.mockReset()
   signOut.mockReset()
   getSession.mockReset()
   useSession.mockClear()
-  useSession.mockReturnValue({ value: { data: null, isPending: false } })
+  useSession.mockReturnValue({ value: { data: null } })
 })
 
 describe('useAuth', () => {
@@ -33,11 +40,10 @@ describe('useAuth', () => {
     useSession.mockReturnValue({
       value: {
         data: { user: { id: 'user-1', email: 'user@example.com', name: null, role: 'admin' } },
-        isPending: false,
       },
     })
 
-    expect(useAuth().actor.value).toEqual({
+    expect(inScope(() => useAuth().actor.value)).toEqual({
       id: 'user-1',
       email: 'user@example.com',
       name: null,
@@ -47,14 +53,20 @@ describe('useAuth', () => {
 
   it('defaults an unknown role to user', () => {
     useSession.mockReturnValue({
-      value: { data: { user: { id: 'u', email: 'user@example.com', name: null, role: 'owner' } }, isPending: false },
+      value: { data: { user: { id: 'u', email: 'user@example.com', name: null, role: 'owner' } } },
     })
 
-    expect(useAuth().actor.value).toMatchObject({ role: 'user' })
+    expect(inScope(() => useAuth().actor.value)).toMatchObject({ role: 'user' })
   })
 
   it('returns null without a session', () => {
-    expect(useAuth().actor.value).toBeNull()
+    expect(inScope(() => useAuth().actor.value)).toBeNull()
+  })
+
+  it('does not subscribe to the session store outside an effect scope', () => {
+    useAuth()
+
+    expect(useSession).not.toHaveBeenCalled()
   })
 
   it('fetches the actor imperatively through getActor', async () => {

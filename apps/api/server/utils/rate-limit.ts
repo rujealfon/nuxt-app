@@ -20,10 +20,18 @@ export interface RateLimitStorage {
 // window and maximum from here instead of restating them.
 export const rateLimitPolicy = { window: 60, max: 100 } as const
 
+export interface RateLimitStorageOptions {
+  // When true, a store outage denies the request instead of allowing it.
+  // Better Auth's per-endpoint brute-force limiter opts in so a Redis outage
+  // cannot silently disable auth throttling.
+  failClosed?: boolean
+}
+
 // Redis-backed `RateLimitStorage` shared by the Nitro middleware and Better
-// Auth. A Redis outage fails open (allowed, logged): the limiter is a shield,
-// not the gate, so a cache failure must not take the API down with it.
-export function createRateLimitStorage(): RateLimitStorage {
+// Auth. The Nitro limiter is a shield, not the gate, so it fails open (allowed,
+// logged) and a cache failure cannot take the API down with it. Better Auth
+// passes `failClosed` because its stricter limiter guards sign-in.
+export function createRateLimitStorage(options: RateLimitStorageOptions = {}): RateLimitStorage {
   return {
     async consume(key: string, rule: { window: number, max: number }) {
       try {
@@ -45,6 +53,11 @@ export function createRateLimitStorage(): RateLimitStorage {
         }
       }
       catch (error) {
+        if (options.failClosed) {
+          useLogger().error({ err: error }, 'rate limit store unreachable; denying request')
+          return { allowed: false, retryAfter: Math.max(1, Math.ceil(rule.window)) }
+        }
+
         useLogger().error({ err: error }, 'rate limit store unreachable; allowing request')
         return { allowed: true, retryAfter: null }
       }

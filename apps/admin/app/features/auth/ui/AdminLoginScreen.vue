@@ -13,6 +13,12 @@ const fields: AuthFormField[] = [
 const redirectTo = computed(() =>
   typeof route.query.redirect === 'string' ? route.query.redirect : '/',
 )
+
+const { errorMessage, submitting, onSubmit } = useAuthForm({
+  submit: signIn,
+  redirectTo,
+  fallbackMessage: 'Invalid email or password',
+})
 </script>
 
 <template>
@@ -23,8 +29,8 @@ const redirectTo = computed(() =>
     :schema="loginSchema"
     :fields="fields"
     submit-label="Sign in"
-    failure-message="Invalid email or password"
-    :redirect-to="redirectTo"
-    :submit-action="signIn"
+    :loading="submitting"
+    :error-message="errorMessage"
+    :submit="onSubmit"
   />
 </template>

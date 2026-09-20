@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import LoginPage from '../app/pages/login.vue'
 
 const auth = vi.hoisted(() => ({ signIn: vi.fn(), navigateTo: vi.fn() }))
-mockNuxtImport('useAuth', () => () => ({ signIn: auth.signIn, isPending: false }))
+mockNuxtImport('useAuth', () => () => ({ signIn: auth.signIn }))
 mockNuxtImport('navigateTo', () => auth.navigateTo)
 
 beforeEach(() => {
@@ -33,8 +33,8 @@ describe('app login page', () => {
     expect(auth.navigateTo).toHaveBeenCalledWith('/')
   })
 
-  it('shows an error when sign in fails', async () => {
-    auth.signIn.mockRejectedValue(new Error('bad credentials'))
+  it('surfaces the failure message when sign in fails', async () => {
+    auth.signIn.mockRejectedValue(new Error('Invalid email or password'))
     const wrapper = await mountSuspended(LoginPage)
 
     wrapper.findComponent({ name: 'UAuthForm' }).vm.$emit('submit', {

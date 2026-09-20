@@ -56,14 +56,23 @@ describe('buildOpenApiDocument', () => {
         timestamp: { type: 'string', format: 'date-time' },
       },
     })
-    expect(document.components.schemas.ApiError).toMatchObject({
-      type: 'object',
-    })
-    expect(JSON.stringify(document.components.schemas.ApiError)).toContain('not_found')
-    expect(document.components.schemas.ApiError).toMatchObject({
+    const apiError = document.components.schemas.ApiError as {
+      anyOf?: unknown[]
+    }
+
+    expect(JSON.stringify(apiError)).toContain('not_found')
+    expect(apiError.anyOf).toHaveLength(2)
+    expect(apiError.anyOf?.[0]).toMatchObject({
       properties: {
+        error: { const: 'invalid_input' },
         message: { minLength: 1 },
         details: { type: 'array', minItems: 1 },
+      },
+    })
+    expect(apiError.anyOf?.[1]).toMatchObject({
+      properties: {
+        message: { minLength: 1 },
+        details: { not: {} },
       },
     })
   })

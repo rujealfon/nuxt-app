@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import RegisterPage from '../app/pages/register.vue'
 
 const auth = vi.hoisted(() => ({ signUp: vi.fn(), navigateTo: vi.fn() }))
-mockNuxtImport('useAuth', () => () => ({ signUp: auth.signUp, isPending: false }))
+mockNuxtImport('useAuth', () => () => ({ signUp: auth.signUp }))
 mockNuxtImport('navigateTo', () => auth.navigateTo)
 
 beforeEach(() => {
@@ -33,7 +33,7 @@ describe('app register page', () => {
     expect(auth.navigateTo).toHaveBeenCalledWith('/')
   })
 
-  it('shows a safe error when sign up fails', async () => {
+  it('surfaces the reason when sign up fails', async () => {
     auth.signUp.mockRejectedValue(new Error('Email already in use'))
     const wrapper = await mountSuspended(RegisterPage)
 
@@ -42,7 +42,6 @@ describe('app register page', () => {
     })
     await flushPromises()
 
-    expect(wrapper.text()).toContain('Unable to create your account')
-    expect(wrapper.text()).not.toContain('Email already in use')
+    expect(wrapper.text()).toContain('Email already in use')
   })
 })
