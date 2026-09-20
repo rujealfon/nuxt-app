@@ -24,7 +24,7 @@ Use Node.js 22 (matching CI) and the pnpm version pinned in `package.json`. Run 
 - `pnpm dev`: start all apps; `pnpm dev:web`, `dev:app`, `dev:admin`, or `dev:api` starts one (ports 3000–3003 respectively).
 - `pnpm build`: build all apps through Turborepo.
 - `pnpm lint` / `pnpm lint:fix`: check/fix repository formatting and lint rules.
-- `pnpm type-check`: check app types.
+- `pnpm type-check`: check app types and node-side tests through Turborepo plus `tsconfig.test.json`.
 - `pnpm test` / `pnpm test:watch`: run all tests once/in watch mode.
 - `pnpm db:up`: start local PostgreSQL, Redis, and Drizzle Studio with Docker.
 
@@ -37,6 +37,8 @@ Nuxt auto-imports are disabled (`imports.autoImport: false`, `components.dirs: [
 ## Testing Guidelines
 
 Use Vitest, Nuxt test utilities, and Vue Test Utils. Name tests `*.spec.ts`; place frontend tests under `app/` or `test/`, API unit tests beside server code, and API integration tests in `apps/api/test/e2e/`. Run a subset with `pnpm test --project api` (also `unit`, `ui`, `client`, `web`, `app`, `admin`). Tests require no external services. No coverage threshold is configured; cover changed behavior and regressions.
+
+Nuxt-environment tests run through `defineVitestProject`; the apps include their `test/` directories in the Nuxt TypeScript context via `typescript.tsConfig.include`. Root `test/**` and the `packages/{config,types,logger}` tests are node-environment and are type-checked by `tsconfig.test.json` (run by `pnpm type-check`). Keep tests that exercise internal behavior beside the implementation so they fall inside an app's TypeScript context.
 
 ## Commit & Pull Request Guidelines
 

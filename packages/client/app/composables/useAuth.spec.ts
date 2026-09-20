@@ -1,14 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { effectScope } from 'vue'
-import { useAuth } from '../app/composables/useAuth'
+import { useAuth } from './useAuth'
 
 const signInEmail = vi.fn()
 const signUpEmail = vi.fn()
 const signOut = vi.fn()
 const getSession = vi.fn()
-const useSession = vi.fn(() => ({
-  value: { data: null },
-}))
+const useSession = vi.fn()
 
 vi.mock('better-auth/vue', () => ({
   createAuthClient: () => ({

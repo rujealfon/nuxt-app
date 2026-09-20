@@ -2,8 +2,8 @@ import { mockNuxtImport } from '@nuxt/test-utils/runtime'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import authMiddleware from '../app/middleware/auth.global'
 
-// Crosses the real package seam: the real `useAuth` (auto-imported from the
-// layer) with only the network below the vendor client replaced.
+// Crosses the real package seam: the real `useAuth` (from the client layer)
+// with only the network below the vendor client replaced.
 let sessionPayload: unknown = null
 
 const fetchMock = vi.fn(async (input: unknown) => {
@@ -38,14 +38,14 @@ beforeEach(() => {
 
 describe('admin auth middleware', () => {
   it('skips the login route', async () => {
-    await authMiddleware({ path: '/login', fullPath: '/login' } as never)
+    await authMiddleware({ path: '/login', fullPath: '/login' } as never, {} as never)
 
     expect(fetchMock).not.toHaveBeenCalled()
     expect(state.navigateTo).not.toHaveBeenCalled()
   })
 
   it('redirects when there is no actor', async () => {
-    await authMiddleware({ path: '/', fullPath: '/' } as never)
+    await authMiddleware({ path: '/', fullPath: '/' } as never, {} as never)
 
     expect(state.navigateTo).toHaveBeenCalledWith({ path: '/login', query: { redirect: '/' } })
   })
@@ -53,7 +53,7 @@ describe('admin auth middleware', () => {
   it('redirects non-admin actors', async () => {
     sessionPayload = actorSession('user')
 
-    await authMiddleware({ path: '/', fullPath: '/' } as never)
+    await authMiddleware({ path: '/', fullPath: '/' } as never, {} as never)
 
     expect(state.navigateTo).toHaveBeenCalled()
   })
@@ -61,7 +61,7 @@ describe('admin auth middleware', () => {
   it('allows admins through', async () => {
     sessionPayload = actorSession('admin')
 
-    await authMiddleware({ path: '/', fullPath: '/' } as never)
+    await authMiddleware({ path: '/', fullPath: '/' } as never, {} as never)
 
     expect(state.navigateTo).not.toHaveBeenCalled()
   })

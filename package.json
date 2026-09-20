@@ -3,6 +3,9 @@
   "type": "module",
   "private": true,
   "packageManager": "pnpm@12.4.2",
+  "engines": {
+    "node": ">=22.23.2 <25"
+  },
   "scripts": {
     "dev:web": "pnpm --filter @nuxt-app/web dev",
     "dev:app": "pnpm --filter @nuxt-app/app dev",
@@ -20,7 +23,7 @@
     "lint:fix": "eslint --fix",
     "test": "vitest run",
     "test:watch": "vitest",
-    "type-check": "turbo run type-check",
+    "type-check": "turbo run type-check && tsc -p tsconfig.test.json",
     "clean": "turbo run clean",
     "postinstall": "turbo run nuxt:prepare",
     "prepare": "husky"
@@ -28,6 +31,7 @@
   "devDependencies": {
     "@antfu/eslint-config": "^9.5.1",
     "@nuxt/test-utils": "^4.3.2",
+    "@types/node": "^22",
     "@vue/test-utils": "^2.5.0",
     "eslint": "^10.10.0",
     "eslint-import-resolver-typescript": "^4.4.5",
@@ -41,6 +45,7 @@
     "prettier": "^3.9.6",
     "prettier-plugin-css-order": "^2.2.0",
     "turbo": "^2.10.13",
+    "typescript": "^5.9.3",
     "vitest": "^5.0.1",
     "vue": "^3.5.42",
     "vue-router": "^5.3.1"

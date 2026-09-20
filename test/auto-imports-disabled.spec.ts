@@ -4,11 +4,18 @@ import { describe, expect, it, vi } from 'vitest'
 // modules can be imported in a plain node environment and inspected.
 vi.stubGlobal('defineNuxtConfig', (config: unknown) => config)
 
-const web = (await import('../apps/web/nuxt.config')).default
-const app = (await import('../apps/app/nuxt.config')).default
-const admin = (await import('../apps/admin/nuxt.config')).default
-const api = (await import('../apps/api/nuxt.config')).default
-const ui = (await import('../packages/ui/nuxt.config')).default
+// Loaded through a runtime path so the root TypeScript project does not pull the
+// app configs (and the Nuxt module augmentations they rely on) into its program;
+// each app type-checks its own `nuxt.config.ts`.
+async function loadConfig(path: string) {
+  return (await import(/* @vite-ignore */ path)).default
+}
+
+const web = await loadConfig('../apps/web/nuxt.config')
+const app = await loadConfig('../apps/app/nuxt.config')
+const admin = await loadConfig('../apps/admin/nuxt.config')
+const api = await loadConfig('../apps/api/nuxt.config')
+const ui = await loadConfig('../packages/ui/nuxt.config')
 
 describe('auto-imports disabled', () => {
   it('disables Nuxt auto-imports in every app', () => {

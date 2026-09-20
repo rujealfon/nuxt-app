@@ -1,0 +1,38 @@
+{
+  "js/ts.tsdk.path": "node_modules/typescript/lib",
+  "explorer.fileNesting.enabled": true,
+  "explorer.fileNesting.patterns": {
+    "package.json": "pnpm-lock.yaml, pnpm-workspace.yaml, turbo.json, skills-lock.json",
+    "tsconfig.json": "tsconfig.*.json",
+    "eslint.config.mjs": "eslint.architecture.mjs",
+    "vitest.config.ts": "vitest.config.*"
+  },
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "always",
+    "source.organizeImports": "never"
+  },
+  "eslint.format.enable": true,
+  "eslint.validate": [
+    "javascript",
+    "typescript",
+    "vue"
+  ],
+  "prettier.singleQuote": true,
+  "prettier.jsxSingleQuote": true,
+  "[javascript]": {
+    "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+  },
+  "[vue]": {
+    "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+  },
+  "[css]": {
+    "editor.formatOnSave": false
+  },
+  "[postcss]": {
+    "editor.formatOnSave": false
+  }
+}

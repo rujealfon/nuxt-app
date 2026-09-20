@@ -1,6 +1,6 @@
 import { mockNuxtImport } from '@nuxt/test-utils/runtime'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { useAuthForm } from '../app/composables/useAuthForm'
+import { useAuthForm } from './useAuthForm'
 
 const navigateTo = vi.hoisted(() => vi.fn())
 

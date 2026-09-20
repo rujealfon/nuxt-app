@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { useSite } from '../app/composables/useSite'
+import { useSite } from './useSite'
 
 describe('useSite', () => {
   it('reports the current app', () => {

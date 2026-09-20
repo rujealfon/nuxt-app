@@ -90,5 +90,7 @@ and verification requirements for each pattern.
 
 Run `pnpm lint`, `pnpm type-check`, and `pnpm test` before review. Architecture
 tests run in the `unit` project; auth route tests run in `app` and `admin`, and
-API HTTP contracts run in `api`. Run `pnpm build` after changing module exports,
-Nuxt configuration, or routing to verify production bundling.
+API HTTP contracts run in `api`. `pnpm type-check` runs the apps' Nuxt type
+checks and then `tsconfig.test.json`, which covers the root `test/**` and
+`packages/{config,types,logger}` node tests. Run `pnpm build` after changing
+module exports, Nuxt configuration, or routing to verify production bundling.

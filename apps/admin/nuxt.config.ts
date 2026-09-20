@@ -7,6 +7,11 @@ export default defineNuxtConfig({
   extends: ['@nuxt-app/ui', '@nuxt-app/client'],
   imports: { autoImport: false },
   components: { dirs: [] },
+  typescript: {
+    tsConfig: {
+      include: ['../test/**/*'],
+    },
+  },
   app: {
     head: {
       meta: [{ name: 'robots', content: 'noindex, nofollow' }],

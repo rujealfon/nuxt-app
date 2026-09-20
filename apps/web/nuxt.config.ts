@@ -6,6 +6,11 @@ export default defineNuxtConfig({
   extends: ['@nuxt-app/ui'],
   imports: { autoImport: false },
   components: { dirs: [] },
+  typescript: {
+    tsConfig: {
+      include: ['../test/**/*'],
+    },
+  },
   routeRules: {
     '/': { prerender: true },
   },

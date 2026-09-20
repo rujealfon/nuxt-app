@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { useApi } from '../app/composables/useApi'
+import { useApi } from './useApi'
 
 describe('useApi', () => {
   it('scopes urls to the configured API version', () => {
