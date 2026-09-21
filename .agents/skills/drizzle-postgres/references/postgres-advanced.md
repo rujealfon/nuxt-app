@@ -38,7 +38,7 @@ foreignKey({
 }).onDelete('cascade')
 ```
 
-Advanced index options: `.using('gist' | 'gin' | 'hnsw' | ...)`, `.concurrently()` (avoids locking the table during creation — use for migrations on live tables), `.where(sql\`...\`)` for partial indexes, column modifiers like `.asc()`/`.desc()`/`.nullsFirst()`/`.nullsLast()`.
+Advanced index options: `.using('gist' | 'gin' | 'hnsw' | ...)`, `.concurrently()` (avoids locking the table during creation, so use it for migrations on live tables), `.where(sql\`...\`)` for partial indexes, column modifiers like `.asc()`/`.desc()`/`.nullsFirst()`/`.nullsLast()`.
 
 ## Views
 
@@ -111,11 +111,11 @@ export const documents = pgTable('documents', {
 ]);
 ```
 
-Adding a policy enables RLS on the table automatically. Enable `entities: { roles: true }` in `drizzle.config.ts` so Drizzle Kit manages role DDL alongside tables. On 1.0, `pgTable(...).enableRLS()` is deprecated in favour of `pgTable.withRLS(...)` — see [migration-0.45-to-1.0.md](migration-0.45-to-1.0.md).
+Adding a policy enables RLS on the table automatically. Enable `entities: { roles: true }` in `drizzle.config.ts` so Drizzle Kit manages role DDL alongside tables. On 1.0, `pgTable(...).enableRLS()` is deprecated in favour of `pgTable.withRLS(...)`. See [migration-0.45-to-1.0.md](migration-0.45-to-1.0.md).
 
-**Neon**: `import { crudPolicy, authenticatedRole, authUid } from 'drizzle-orm/neon'` — `crudPolicy({ role: authenticatedRole, read: true, modify: false })` generates the CRUD policies for you.
+**Neon**: `import { crudPolicy, authenticatedRole, authUid } from 'drizzle-orm/neon'`. `crudPolicy({ role: authenticatedRole, read: true, modify: false })` generates the CRUD policies for you.
 
-**Supabase**: `import { authenticatedRole, authUsers, authUid } from 'drizzle-orm/supabase'` — `authUsers` lets you `.references()` Supabase's built-in `auth.users` table; `authUid()` is the Postgres-side helper for `auth.uid()` checks.
+**Supabase**: `import { authenticatedRole, authUsers, authUid } from 'drizzle-orm/supabase'`. `authUsers` lets you `.references()` Supabase's built-in `auth.users` table; `authUid()` is the Postgres-side helper for `auth.uid()` checks.
 
 ## Sequences
 
@@ -127,11 +127,11 @@ export const orderNumberSeq = pgSequence('order_number_seq', {
 });
 ```
 
-Reach for a standalone sequence when a value needs to be unique/sequential but isn't a table's primary key (e.g. a human-facing order number); for primary keys, prefer `.generatedAlwaysAsIdentity()` (see [schema.md](schema.md)), which manages its own sequence implicitly.
+Use a standalone sequence when a value needs to be unique/sequential but isn't a table's primary key (e.g. a human-facing order number); for primary keys, prefer `.generatedAlwaysAsIdentity()` (see [schema.md](schema.md)), which creates its own sequence.
 
 ## Extensions: pgvector and PostGIS
 
-Both require the extension already installed on the database (`CREATE EXTENSION vector;` / `CREATE EXTENSION postgis;` — Drizzle Kit doesn't do this for you).
+Both require the extension already installed on the database (`CREATE EXTENSION vector;` / `CREATE EXTENSION postgis;`). Drizzle Kit doesn't do this for you.
 
 ```typescript
 import { vector, index } from 'drizzle-orm/pg-core';
@@ -174,13 +174,13 @@ Official topic: [Cache](https://orm.drizzle.team/docs/cache).
 
 ## Batch API and read replicas
 
-Some serverless drivers (e.g. Neon HTTP) expose `db.batch([...queries])` to send multiple independent queries in one round trip — check whether the connected driver supports it before relying on it; it's not universal across all Postgres drivers the way `db.transaction()` is.
+Some serverless drivers (e.g. Neon HTTP) expose `db.batch([...queries])` to send multiple independent queries in one round trip. Check whether the connected driver supports it before relying on it; it's not universal across all Postgres drivers the way `db.transaction()` is.
 
-`drizzle-orm` supports routing reads to replicas via `withReplicas(primaryDb, [replicaDb1, replicaDb2])` from `drizzle-orm/pg-core`, giving you `.$primary` for writes and automatic replica selection for reads — useful once a project has actual read-replica infrastructure, not something to introduce speculatively.
+`drizzle-orm` supports routing reads to replicas via `withReplicas(primaryDb, [replicaDb1, replicaDb2])` from `drizzle-orm/pg-core`, and gives you `.$primary` for writes and automatic replica selection for reads. Use it once a project has read-replica infrastructure, not before.
 
 ## Validation integration (Zod)
 
-On **0.45.x** the helpers live in the standalone `drizzle-zod` package (`npm i drizzle-zod`). On **1.0** they moved into `drizzle-orm/zod` (and `drizzle-orm/valibot`, `drizzle-orm/typebox`, etc.) — see [migration-0.45-to-1.0.md](migration-0.45-to-1.0.md).
+On **0.45.x** the helpers live in the standalone `drizzle-zod` package (`npm i drizzle-zod`). On **1.0** they moved into `drizzle-orm/zod` (and `drizzle-orm/valibot`, `drizzle-orm/typebox`, etc.). See [migration-0.45-to-1.0.md](migration-0.45-to-1.0.md).
 
 ```typescript
 // 0.45.x

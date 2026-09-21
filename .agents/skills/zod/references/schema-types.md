@@ -95,7 +95,7 @@ z.string().length(2).parse("e\u0301");  // "é" — e + combining acute
 
 ## String formats
 
-Top-level format functions (preferred in v4 — see [migration-v3-to-v4.md](migration-v3-to-v4.md)):
+Top-level format functions (preferred in v4, see [migration-v3-to-v4.md](migration-v3-to-v4.md)):
 
 ```typescript
 z.email();
@@ -119,6 +119,8 @@ z.mac();
 z.cidrv4();
 z.cidrv6();
 z.creditCard(); // 12–19 digits, optional single spaces/hyphens, Luhn checksum (4.5+)
+z.iban();         // electronic format, ISO 7064 MOD 97-10 checksum (4.6+)
+z.currencyCode(); // ISO 4217 code, e.g. "USD" (4.6.4+)
 z.hash("sha256"); // or "sha1" | "sha384" | "sha512" | "md5"
 z.iso.date();
 z.iso.time();
@@ -126,7 +128,7 @@ z.iso.datetime();
 z.iso.duration();
 ```
 
-**Emails**: default regex is comparatively strict (roughly matches Gmail's rules). Customize with `pattern`:
+**Emails.** The default regex is strict (roughly matches Gmail's rules). Customize with `pattern`:
 
 ```typescript
 z.email({ pattern: z.regexes.html5Email });    // browser input[type=email] behavior
@@ -134,9 +136,9 @@ z.email({ pattern: z.regexes.rfc5322Email });  // classic RFC 5322 regex
 z.email({ pattern: z.regexes.unicodeEmail });  // permissive, allows Unicode
 ```
 
-**UUIDs**: `z.uuid()` is RFC 9562/4122-strict (requires the variant bits). For any UUID-shaped string, use `z.guid()`. Version-specific shorthands: `z.uuidv4()`, `z.uuidv6()`, `z.uuidv7()`, or `z.uuid({ version: "v4" })`.
+**UUIDs.** `z.uuid()` is RFC 9562/4122-strict (requires the variant bits). For any UUID-shaped string, use `z.guid()`. Version-specific shorthands: `z.uuidv4()`, `z.uuidv6()`, `z.uuidv7()`, or `z.uuid({ version: "v4" })`.
 
-**URLs**: `z.url()` uses `new URL()` internally, so it's permissive (accepts `mailto:`, `http://localhost`, etc). Constrain with `hostname`/`protocol` regexes:
+**URLs.** `z.url()` uses `new URL()` internally, so it's permissive (accepts `mailto:`, `http://localhost`, etc). Constrain with `hostname`/`protocol` regexes:
 
 ```typescript
 const httpUrl = z.url({
@@ -147,9 +149,9 @@ const httpUrl = z.url({
 
 Use `{ normalize: true }` to overwrite the input with `new URL().href`'s normalized form. `z.httpUrl()` also enforces the RFC 1035 host length limits that `z.hostname()` uses.
 
-**Phone numbers**: `z.e164()` validates leading `+`, non-zero country code, 7–15 digits total. Zod does not provide fuzzier phone validation — layer a `.refine()` on top if you need it.
+**Phone numbers.** `z.e164()` validates leading `+`, non-zero country code, 7-15 digits total. Zod does not provide fuzzier phone validation. Layer a `.refine()` on top if you need it.
 
-**ISO datetimes**: regex-based, not a full date library. A `Z` or offset requires seconds (RFC 3339); `2020-01-01T06:15Z` is rejected unless you opt into minute precision.
+**ISO datetimes.** These are regex-based, not a full date library. A `Z` or offset requires seconds (RFC 3339); `2020-01-01T06:15Z` is rejected unless you opt into minute precision.
 
 ```typescript
 z.iso.datetime();                     // no offset, no local; seconds required (2020-01-01T06:15:00Z)
@@ -179,11 +181,19 @@ z.mac().parse("00:1A:2B:3C:4D:5E");       // colon-delimited by default
 z.mac({ delimiter: "-" }).parse("00-1A-2B-3C-4D-5E");
 ```
 
-**Credit cards** (4.5+): 12–19 digits with a valid Luhn checksum. Issuer is not identified. Single spaces or hyphens between groups are allowed; repeated separators, surrounding whitespace, and dots are not.
+**Credit cards** (4.5+). 12-19 digits with a valid Luhn checksum. Issuer is not identified. Single spaces or hyphens between groups are allowed; repeated separators, surrounding whitespace, and dots are not.
 
 ```typescript
 z.creditCard().parse("4111 1111 1111 1111"); // ✅
 z.creditCard().parse("4111111111111112");    // ❌ checksum
+```
+
+**IBAN and currency.** `z.iban()` (4.6+) takes an electronic-format IBAN with a valid ISO 7064 MOD 97-10 checksum (no grouping or spaces). `z.currencyCode()` (4.6.4+) takes an ISO 4217 code; the list is vendored and refreshed by CI, so it moves between patch releases.
+
+```typescript
+z.iban().parse("DE89370400440532013000"); // ✅
+z.iban().parse("DE89370400440532013001"); // ❌ checksum
+z.currencyCode().parse("USD");            // ✅
 ```
 
 **JWTs and hashes**:
@@ -197,7 +207,7 @@ z.hash("sha256", { enc: "base64" });
 z.hash("sha256", { enc: "base64url" });
 ```
 
-**Custom formats**: `z.stringFormat()` produces a more descriptive `"invalid_format"` issue than a `.refine()`/`z.custom()` would.
+**Custom formats.** `z.stringFormat()` produces a more descriptive `"invalid_format"` issue than a `.refine()`/`z.custom()` would.
 
 ```typescript
 const coolId = z.stringFormat("cool-id", (val) => {
@@ -264,14 +274,14 @@ const FishEnum = z.enum(["Salmon", "Tuna", "Trout"]);
 FishEnum.parse("Salmon"); // => "Salmon"
 ```
 
-Pass the array literal directly (or use `as const`) — assigning it to a variable first widens the inferred type to `string`.
+Pass the array literal directly (or use `as const`). Assigning it to a variable first widens the inferred type to `string`.
 
 ```typescript
 const fish = ["Salmon", "Tuna", "Trout"] as const;
 const FishEnum = z.enum(fish);
 ```
 
-`z.enum()` also accepts enum-like object literals and TypeScript's `enum` — prefer `z.enum()` over the deprecated `z.nativeEnum()`.
+`z.enum()` also accepts enum-like object literals and TypeScript's `enum`. Prefer `z.enum()` over the deprecated `z.nativeEnum()`.
 
 ```typescript
 enum Fish { Salmon = 0, Tuna = 1 }
@@ -332,7 +342,7 @@ const Dog = z.object({
 });
 ```
 
-Unknown keys are stripped by default. Use the top-level variants to change that behavior — prefer these over the deprecated `.strict()`/`.passthrough()` methods:
+Unknown keys are stripped by default. Use the top-level variants to change that behavior. Prefer these over the deprecated `.strict()`/`.passthrough()` methods:
 
 ```typescript
 z.strictObject({ name: z.string() }); // throws on unknown keys
@@ -344,9 +354,9 @@ z.object({ name: z.string(), age: z.number().optional() }).catchall(z.string());
 // validates any unrecognized key's *value* against z.string()
 ```
 
-**Introspection**: `.shape` (access inner schemas), `.keyof()` (build a `ZodEnum` from the keys).
+**Introspection.** `.shape` accesses inner schemas, and `.keyof()` builds a `ZodEnum` from the keys.
 
-**Extending**: `.extend()` can overwrite existing keys and gets quadratically more expensive when chained. Prefer spread syntax for merges — it works identically in Zod and Zod Mini and is `tsc`-cheaper:
+**Extending.** `.extend()` can overwrite existing keys and gets quadratically more expensive when chained. Prefer spread syntax for merges, which works identically in Zod and Zod Mini and is cheaper for `tsc`:
 
 ```typescript
 const DogWithBreed = z.object({
@@ -356,7 +366,7 @@ const DogWithBreed = z.object({
 });
 ```
 
-`.safeExtend()` refuses to overwrite a field with a non-assignable schema (type-checked), and — unlike `.extend()` — works on schemas that already carry a `.refine()`:
+`.safeExtend()` refuses to overwrite a field with a non-assignable schema (type-checked), and, unlike `.extend()`, works on schemas that already carry a `.refine()`:
 
 ```typescript
 const Base = z.object({ a: z.string(), b: z.string() }).refine(u => u.a === u.b);
@@ -420,7 +430,7 @@ result.subcategories[0] === result; // true
 
 Zod Mini needs `z.config({ memoizer: z.memoizer() })` **before** schemas are defined.
 
-**Circularity errors**: some recursive getters trigger `ts(7023)` ("implicitly has return type 'any'"). Fix with an explicit return type annotation on the getter:
+**Circularity errors.** Some recursive getters trigger `ts(7023)` ("implicitly has return type 'any'"). Fix with an explicit return type annotation on the getter:
 
 ```typescript
 const Activity = z.object({
@@ -464,7 +474,7 @@ const stringOrNumber = z.union([z.string(), z.number()]);
 stringOrNumber.options; // [ZodString, ZodNumber]
 ```
 
-`z.xor()` requires *exactly one* option to match — it fails on zero matches AND on multiple matches (useful for mutually-exclusive payload shapes). Default `z.object()` strips unknown keys, so two object branches can both match; use `z.strictObject()` on the narrower branch:
+`z.xor()` requires *exactly one* option to match. It fails on zero matches and on multiple matches (useful for mutually-exclusive payload shapes). Default `z.object()` strips unknown keys, so two object branches can both match; use `z.strictObject()` on the narrower branch:
 
 ```typescript
 const payment = z.xor([
@@ -473,7 +483,7 @@ const payment = z.xor([
 ]);
 ```
 
-Discriminated unions are faster than regular unions for large object unions that share a literal "tag" key — Zod uses the discriminator to pick the right branch instead of trying each in order:
+Discriminated unions are faster than regular unions for large object unions that share a literal "tag" key. Zod uses the discriminator to pick the right branch instead of trying each in order:
 
 ```typescript
 const MyResult = z.discriminatedUnion("status", [
@@ -484,7 +494,7 @@ const MyResult = z.discriminatedUnion("status", [
 
 Each branch's discriminator should be a `z.literal()`, `z.enum()`, `z.null()`, or `z.undefined()`. `z.getDiscriminatedOption(union, tag)` (4.5+) returns that branch as-is (`.shape` still works); a tag the union does not declare is a TypeScript error.
 
-Intersections (`A & B`) are a logical AND. For merging two *object* schemas, prefer `A.extend(B.shape)` (or spread) over `z.intersection()` — the result stays a full object schema with `.pick()`/`.omit()`/etc, whereas `z.intersection()` returns a bare `ZodIntersection`.
+Intersections (`A & B`) are a logical AND. For merging two *object* schemas, prefer `A.extend(B.shape)` (or spread) over `z.intersection()`. The result stays a full object schema with `.pick()`/`.omit()`/etc, whereas `z.intersection()` returns a bare `ZodIntersection`.
 
 ## Records
 
@@ -503,7 +513,7 @@ const Person = z.partialRecord(Keys, z.string()); // { id?: string; name?: strin
 
 As of 4.5 a record's key schema governs only the keys that match it (like a TypeScript index signature), so intersecting an object with a pattern-keyed `z.record()` no longer rejects the object's own keys.
 
-`z.looseRecord()` still passes through keys that don't match the key schema — use it when unmatched extras should survive rather than error:
+`z.looseRecord()` still passes through keys that don't match the key schema. Use it when unmatched extras should survive rather than error:
 
 ```typescript
 const schema = z.object({ name: z.string() })
@@ -531,7 +541,7 @@ fileSchema.mime("image/png");
 fileSchema.mime(["image/png", "image/jpeg"]);
 ```
 
-`z.promise()` is deprecated — `await` the value before parsing it instead.
+`z.promise()` is deprecated. Instead, `await` the value before parsing it.
 
 ## Instanceof and property
 
@@ -541,7 +551,7 @@ const TestSchema = z.instanceof(Test);
 TestSchema.parse(new Test()); // ✅
 ```
 
-`z.property()` checks a specific property of any value against a schema — most useful combined with `z.instanceof()`:
+`z.property()` checks a specific property of any value against a schema, which is most useful combined with `z.instanceof()`:
 
 ```typescript
 const httpsOnly = z.instanceof(URL).check(
@@ -549,18 +559,21 @@ const httpsOnly = z.instanceof(URL).check(
 );
 ```
 
-`.properties({...})` (4.5+) checks several properties at once and narrows the inferred type. The underlying `z.properties()` is a standalone schema: it asserts in place and returns the same instance (no clone, prototypes survive). Transforms/defaults inside the shape are validated then discarded. Spreading into `.check()` works too: `z.instanceof(Response).check(...z.properties({ status: z.number().min(200) }))`.
+`.properties({...})` (4.6+) checks several properties at once and narrows the inferred type. It is a method on `z.instanceof()`. The input is returned untouched (no clone, so prototypes and methods survive); transforms/defaults inside the shape are validated then discarded. `z.properties({...})` itself is a **check** (4.5+). Spread it into `.check()` when you don't need the narrowed type:
 
 ```typescript
 const okResponse = z.instanceof(Response).properties({
   status: z.number().min(200).max(299),
   redirected: z.literal(false),
 });
+
+// check form (4.5+), e.g. in Zod Mini
+z.instanceof(Response).check(...z.properties({ status: z.number().min(200) }));
 ```
 
 ## Matching an existing type
 
-When a handwritten or generated type is already the source of truth, `z.toZod<T>()` (4.5+) checks that the schema's output type is **exactly** `T` and returns the schema unchanged. `satisfies z.ZodType<T>` only checks assignability — extra keys and `z.any()` slip through.
+When a handwritten or generated type is already the source of truth, `z.toZod<T>()` (4.5+) checks that the schema's output type is **exactly** `T` and returns the schema unchanged. `satisfies z.ZodType<T>` only checks assignability. Extra keys and `z.any()` slip through.
 
 ```typescript
 type Player = { username: string; xp: number };

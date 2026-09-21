@@ -1,6 +1,6 @@
 # Codecs
 
-Every Zod schema already processes data in two directions: forward (`Input → Output`, via `.parse()`/`.decode()`) and backward (`Output → Input`, via `.encode()`). For most schemas input and output types are identical, so the distinction doesn't matter. `z.codec()` is for the cases where they diverge on purpose — a genuine bidirectional transformation between two different types.
+Every Zod schema already processes data in two directions: forward (`Input → Output`, via `.parse()`/`.decode()`) and backward (`Output → Input`, via `.encode()`). For most schemas input and output types are identical, so the distinction doesn't matter. `z.codec()` is for the cases where they diverge on purpose, a genuine bidirectional transformation between two different types.
 
 ```typescript
 const stringToDate = z.codec(
@@ -20,11 +20,11 @@ z.decode(stringToDate, "2024-01-15T10:30:00.000Z");
 z.encode(stringToDate, new Date("2024-01-15"));
 ```
 
-Reach for a codec instead of `.transform()` whenever the same schema needs to serialize data back to its original shape — a network boundary shared between client and server, or a form that needs to round-trip. A plain `.transform()` is one-directional; calling `.encode()` on a schema containing one throws a runtime error.
+Use a codec instead of `.transform()` whenever the same schema needs to serialize data back to its original shape, as at a network boundary shared between client and server or in a form that needs to round-trip. A plain `.transform()` is one-directional; calling `.encode()` on a schema containing one throws a runtime error.
 
 ## Runtime `z.input()` / `z.output()` (4.5+)
 
-Distinct from the type helpers `z.input<typeof schema>` / `z.output<typeof schema>`. The functions project a schema onto its input or output side — useful for validating the two halves of a codec nested inside an object, where `.in` / `.out` cannot reach.
+Distinct from the type helpers `z.input<typeof schema>` / `z.output<typeof schema>`. The functions project a schema onto its input or output side, which is useful for validating the two halves of a codec nested inside an object, where `.in` / `.out` cannot reach.
 
 ```typescript
 const Event = z.object({ name: z.string(), at: stringToDate });
@@ -43,7 +43,7 @@ dateToString.decode(new Date("2024-01-15T10:30:00.000Z")); // => string
 dateToString.encode("2024-01-15T10:30:00.000Z");             // => Date
 ```
 
-`z.invertCodec()` only inverts the codec passed to it directly — it doesn't recursively invert codecs nested inside another schema.
+`z.invertCodec()` only inverts the codec passed to it directly. It doesn't recursively invert codecs nested inside another schema.
 
 ## Composability
 
@@ -56,7 +56,7 @@ payloadSchema.decode({ startDate: "2024-01-15T10:30:00.000Z" }); // => { startDa
 
 ## Type-safe inputs
 
-`.parse()` accepts `unknown` and returns the inferred output — type errors only show up at runtime. `z.decode()`/`z.encode()` are strongly typed, catching mismatches at compile time:
+`.parse()` accepts `unknown` and returns the inferred output. Type errors only show up at runtime. `z.decode()`/`z.encode()` are strongly typed, catching mismatches at compile time:
 
 ```typescript
 stringToDate.parse(12345);  // no TS complaint (fails at runtime)
@@ -73,16 +73,16 @@ stringToDate.safeDecodeAsync("...");  // Promise<...>
 
 ## How encoding interacts with other schema features
 
-- **Pipes** — encoding reverses the pipe direction (encode with the second schema, then the first).
-- **Refinements** (`.refine()`, `.min()`, etc.) — run in *both* directions. Zod does a type-check pass before running refinement logic during `encode()`, so mutating transforms like `.trim()`/`.toLowerCase()` behave consistently either way.
-- **Defaults / prefaults** — only applied on the *forward* (decode) direction. `undefined` is not a valid `encode()` input once a default is attached.
-- **Catch** — only applied on the forward direction; `encode()` on invalid data still throws.
-- **`z.stringbool()`** — internally a codec; encoding a boolean produces the *first* string in the matching `truthy`/`falsy` array.
-- **`.transform()`** — one-directional. `encode()` on a schema containing one throws `Error: Encountered unidirectional transform during encode`.
+- **Pipes.** Encoding reverses the pipe direction (encode with the second schema, then the first).
+- **Refinements.** `.refine()`, `.min()`, and similar checks run in *both* directions. Zod does a type-check pass before running refinement logic during `encode()`, so mutating transforms like `.trim()`/`.toLowerCase()` behave consistently either way.
+- **Defaults / prefaults.** These apply only on the *forward* (decode) direction. `undefined` is not a valid `encode()` input once a default is attached.
+- **Catch.** This applies only on the forward direction; `encode()` on invalid data still throws.
+- **`z.stringbool()`.** Internally this is a codec; encoding a boolean produces the *first* string in the matching `truthy`/`falsy` array.
+- **`.transform()`.** This is one-directional. `encode()` on a schema containing one throws `Error: Encountered unidirectional transform during encode`.
 
 ## Useful codecs (copy/paste)
 
-These aren't first-class Zod APIs — copy them into your project and adjust as needed.
+These aren't first-class Zod APIs. Copy them into your project and adjust as needed.
 
 ```typescript
 // string ↔ number
@@ -130,4 +130,4 @@ const base64ToBytes = z.codec(z.base64(), z.instanceof(Uint8Array), {
 });
 ```
 
-Other implementations documented upstream, following the same pattern: `stringToBigInt`, `numberToBigInt`, `epochMillisToDate`, `utf8ToBytes`, `bytesToUtf8`, `base64urlToBytes`, `hexToBytes`, `stringToURL`, `stringToHttpURL`, `uriComponent` (encode/decode via `encodeURIComponent`/`decodeURIComponent`).
+Other implementations documented upstream use the same pattern: `stringToBigInt`, `numberToBigInt`, `epochMillisToDate`, `utf8ToBytes`, `bytesToUtf8`, `base64urlToBytes`, `hexToBytes`, `stringToURL`, `stringToHttpURL`, `uriComponent` (encode/decode via `encodeURIComponent`/`decodeURIComponent`).

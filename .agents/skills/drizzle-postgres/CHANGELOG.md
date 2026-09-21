@@ -1,6 +1,6 @@
 # Changelog
 
-Versions here track this skill's own content (instructions and references), not the `drizzle-orm`/`drizzle-kit` package versions — see the [README](README.md#version) for which lines this skill was last verified against.
+Versions here track this skill's own content (instructions and references), not the `drizzle-orm`/`drizzle-kit` package versions. See the [README](README.md#version) for which lines this skill was last verified against.
 
 ## 1.1.0 - 2026-08-23
 

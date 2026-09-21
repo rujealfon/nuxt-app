@@ -22,9 +22,9 @@ await db.select({ role: users.role, total: count() })
   .groupBy(users.role);
 ```
 
-`db.select()` with no argument returns every column. That's fine for narrow tables, but for anything with large `text`/`jsonb` columns or many columns, prefer the partial-select form (`db.select({ id: users.id, name: users.name })`) when the caller doesn't need the rest — Postgres still reads the full row internally, but you avoid deserializing and shipping unused bytes over the wire, which matters at scale or on large payload columns.
+`db.select()` with no argument returns every column. That's fine for narrow tables, but for anything with large `text`/`jsonb` columns or many columns, prefer the partial-select form (`db.select({ id: users.id, name: users.name })`) when the caller doesn't need the rest. Postgres still reads the full row internally, but you avoid deserializing and shipping unused bytes over the wire, which matters at scale or on large payload columns.
 
-`and()`/`or()` compose explicitly — a common bug is passing multiple conditions straight to `.where()` expecting implicit AND; `.where()` only takes one expression, so nest `and(...)`/`or(...)` yourself when combining more than one condition.
+`and()`/`or()` compose explicitly. A common bug is passing multiple conditions straight to `.where()` expecting implicit AND; `.where()` only takes one expression, so nest `and(...)`/`or(...)` yourself when combining more than one condition.
 
 ## Operators (`import { ... } from 'drizzle-orm'`)
 
@@ -36,7 +36,7 @@ await db.select({ role: users.role, total: count() })
 - Range: `between`, `notBetween`
 - Logic: `and`, `or`, `not`
 - Subquery existence: `exists`, `notExists`
-- Raw escape hatch: `sql\`...\`` for anything not covered (all interpolated `${}` values are parameterized automatically)
+- Raw SQL: `sql\`...\`` for anything not covered (all interpolated `${}` values are parameterized automatically)
 
 ## Insert
 
@@ -83,7 +83,7 @@ const [updated] = await db.update(users)
   .returning({ id: users.id });
 ```
 
-`.set()` ignores `undefined` values (they're skipped, not set to NULL) and sets `null` explicitly when you pass `null` — this matters when building a `.set()` object from optional caller input.
+`.set()` ignores `undefined` values (they're skipped, not set to NULL) and sets `null` explicitly when you pass `null`. This matters when building a `.set()` object from optional caller input.
 
 ## Delete
 
@@ -95,7 +95,7 @@ const [deleted] = await db.delete(users)
   .returning({ id: users.id });
 ```
 
-`db.delete(users)` with no `.where()` deletes every row — always double check a `.where()` is present unless truncation is actually intended.
+`db.delete(users)` with no `.where()` deletes every row. Always double check a `.where()` is present unless truncation is actually intended.
 
 ## Joins
 
@@ -106,7 +106,7 @@ await db.select()
 // innerJoin, rightJoin, fullJoin also available
 ```
 
-A plain `db.select().from(a).leftJoin(b, ...)` returns `{ users: {...}, posts: {...} | null }` — nested per-table objects, not a flattened row. Use [aliases](https://orm.drizzle.team/docs/joins) (`alias(table, 'name')`) when joining the same table to itself (self-joins, e.g. manager/employee).
+A plain `db.select().from(a).leftJoin(b, ...)` returns `{ users: {...}, posts: {...} | null }`, which is nested per-table objects, not a flattened row. Use [aliases](https://orm.drizzle.team/docs/joins) (`alias(table, 'name')`) when joining the same table to itself (self-joins, e.g. manager/employee).
 
 ## Transactions
 
@@ -117,8 +117,8 @@ await db.transaction(async (tx) => {
 });
 ```
 
-- Use `tx`, not the outer `db`, for every statement inside the callback — using `db` bypasses the transaction.
-- Keep the callback to database calls only. Any row a transaction touches stays locked until it commits or rolls back — an `await fetch(...)` or other slow external call inside `db.transaction()` holds those locks for the whole request, which can stall or deadlock unrelated queries hitting the same rows. Do slow/external work before or after the transaction, not inside it.
+- Use `tx`, not the outer `db`, for every statement inside the callback. Using `db` bypasses the transaction.
+- Keep the callback to database calls only. Any row a transaction touches stays locked until it commits or rolls back. An `await fetch(...)` or other slow external call inside `db.transaction()` holds those locks for the whole request, which can stall or deadlock unrelated queries hitting the same rows. Do slow/external work before or after the transaction, not inside it.
 - Explicit rollback: call `tx.rollback()` inside the callback (this throws internally; don't wrap it in a try/catch that swallows it).
 - Nested transactions use savepoints automatically: `await tx.transaction(async (tx2) => { ... })`.
 - Postgres isolation options: `db.transaction(cb, { isolationLevel: 'read committed' | 'repeatable read' | 'serializable' | 'read uncommitted', accessMode: 'read write' | 'read only', deferrable: true })`.
@@ -142,7 +142,7 @@ All of `union`/`unionAll`/`intersect`/`except` require the combined queries to s
 
 ## Dynamic query building
 
-Query builders can only call `.where()`/`.orderBy()`/etc. once by default (matches SQL's one-clause-per-query shape) — call `.$dynamic()` first to build a query conditionally across multiple statements, e.g. inside a shared filtering helper:
+Query builders can only call `.where()`/`.orderBy()`/etc. once by default, as in SQL. Call `.$dynamic()` first to build a query conditionally across multiple statements, e.g. inside a shared filtering helper:
 
 ```typescript
 function withPagination<T extends PgSelect>(qb: T, page: number, pageSize = 10) {

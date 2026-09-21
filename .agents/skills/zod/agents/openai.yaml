@@ -1,6 +1,6 @@
 interface:
   display_name: "Zod"
-  short_description: "Build reliable Zod validation schemas"
+  short_description: "Define and validate data with Zod schemas"
   default_prompt: "Use $zod to validate this API request body and infer its TypeScript type."
 policy:
   allow_implicit_invocation: true

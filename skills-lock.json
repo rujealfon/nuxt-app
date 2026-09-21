@@ -5,7 +5,7 @@
       "source": "rujealfon/skills",
       "sourceType": "github",
       "skillPath": "skills/drizzle-postgres/SKILL.md",
-      "computedHash": "a8bf695463f58ccd4f3f9845fdd19392bc846bcb7602ae06ab165561b7774db4"
+      "computedHash": "5aff2c4f658b404184474eda554524692ea53258da559546bd1f942b27475ba0"
     },
     "nuxt": {
       "source": "antfu/skills",
@@ -17,25 +17,25 @@
       "source": "nuxt/ui",
       "sourceType": "github",
       "skillPath": "skills/nuxt-ui/SKILL.md",
-      "computedHash": "f6235ff66b930f4fe3809a55167096c9626ebb806f767fe363f19384e0d84c87"
+      "computedHash": "9724d09a8196e9c991f7afe29a38837b52b9fff80e9c31c04920b5f520e9cf2b"
     },
     "pinia-colada": {
       "source": "rujealfon/skills",
       "sourceType": "github",
       "skillPath": "skills/pinia-colada/SKILL.md",
-      "computedHash": "6a87b32feb22e4454b967043d756add3d5f27e0af390d061f29565c94683b4cb"
+      "computedHash": "a5cb722b58786ac5afac4d2fddb5ec831cef83f72362b5379c2c8510e67852c5"
     },
-    "vue": {
+    "vue-best-practices": {
       "source": "antfu/skills",
       "sourceType": "github",
-      "skillPath": "skills/vue/SKILL.md",
-      "computedHash": "9c241141e07e836e4f0537c63e8f929fba3767c2997250be38e699f19b75e3f2"
+      "skillPath": "skills/vue-best-practices/SKILL.md",
+      "computedHash": "d7d22c8cb343583c3904692c4d1d7b50382945e433e4f6e053f4aabb9846cbc3"
     },
     "zod": {
       "source": "rujealfon/skills",
       "sourceType": "github",
       "skillPath": "skills/zod/SKILL.md",
-      "computedHash": "011a0b2967fe2439c1f5ed63513ffd59e67b204a9d8a6afa1503dab3c7c3ab9b"
+      "computedHash": "b467d399b86e53345f41b50a9f479a7067350eb04ffaa1cb2d006d2a317e1e47"
     }
   }
 }

@@ -1,6 +1,6 @@
 # Metadata and registries
 
-Useful for attaching documentation, code-gen hints, AI structured-output examples, or form-validation metadata to schemas.
+Use this to attach documentation, code-gen hints, AI structured-output examples, or form-validation metadata to schemas.
 
 ## Registries
 
@@ -17,7 +17,7 @@ myRegistry.remove(mySchema);
 myRegistry.clear();
 ```
 
-TypeScript enforces that added metadata matches the registry's declared shape. The `id` field is special: registering two schemas with the same `id` in the same registry throws — this applies to `z.globalRegistry` too.
+TypeScript enforces that added metadata matches the registry's declared shape. The `id` field is special. Registering two schemas with the same `id` in the same registry throws, and this applies to `z.globalRegistry` too.
 
 A registry declared without a metadata type works as a plain collection:
 
@@ -28,7 +28,7 @@ myRegistry.add(z.string());
 
 ### `.register()`
 
-The one Zod method that does **not** return a new schema — it returns the original instance, letting you register metadata inline without breaking a chain:
+The one Zod method that does **not** return a new schema. It returns the original instance, letting you register metadata inline without breaking a chain:
 
 ```typescript
 const mySchema = z.object({
@@ -86,7 +86,7 @@ Attach `.meta()` *after* the schema is otherwise finished, or re-register on the
 
 ## `.describe()`
 
-Shorthand for registering just a `description` in `z.globalRegistry` — kept for convenience, `.meta()` is the recommended general-purpose API:
+Shorthand for registering just a `description` in `z.globalRegistry`. It is kept for convenience, but `.meta()` is the recommended general-purpose API:
 
 ```typescript
 z.email().describe("An email address");
@@ -97,7 +97,7 @@ z.email().describe("An email address");
 
 ### Referencing inferred types
 
-Metadata can reference a schema's own inferred type via the special `z.$output`/`z.$input` symbols — handy for typed `examples` fields:
+Metadata can reference a schema's own inferred type via the special `z.$output`/`z.$input` symbols, which is handy for typed `examples` fields:
 
 ```typescript
 type MyMeta = { examples: z.$output[] };

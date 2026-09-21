@@ -60,7 +60,7 @@ Check, in order:
 
 `fetch()` resolves for HTTP error status codes. Check `response.ok` and throw an error, or deliberately return a typed response union and render it as data. Also check whether a retry plugin delays the final error.
 
-Use `state.status` rather than independent refs when TypeScript narrowing matters. Distinguish an initial pending state from a background request via `asyncStatus`.
+Use `state.status` rather than independent refs when TypeScript narrowing matters. Distinguish an initial pending state from a background request with `asyncStatus`.
 
 ## Cache repair
 
