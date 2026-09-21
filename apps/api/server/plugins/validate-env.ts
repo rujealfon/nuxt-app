@@ -10,11 +10,11 @@ export const envSchema = z.object({
   corsOrigins: z.string().default(''),
 })
 
-// Boot-time validation of a fixed, small shape. AOT compilation is a cheap
-// demonstration of the fast path; `strict` is the part that earns its keep
-// here: if a future edit makes this schema uncompilable (async refinement,
-// `z.coerce.*`, a recursive shape, ...) startup fails loudly instead of the
-// parser silently ejecting to the runtime implementation.
+// Validated once at boot. AOT compilation wins on large or hot schemas, not a
+// six-key object; it is here as a working example. `strict` is the useful part:
+// if a later edit adds something Zod cannot compile (async refinement,
+// `z.coerce.*`, a recursive shape, ...), startup throws instead of the parser
+// falling back silently.
 export const compiledEnvSchema = z.compile(envSchema, { strict: true })
 
 export default defineNitroPlugin(() => {

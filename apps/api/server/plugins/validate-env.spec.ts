@@ -54,10 +54,10 @@ describe('validate-env plugin', () => {
   })
 })
 
-// `z.compile(..., { strict: true })` throws if the schema ejects, so the module
-// importing cleanly is itself the assertion that it compiled. These tests pin
-// the fidelity guarantee: the compiled fast path must accept and reject exactly
-// what the runtime parser does, issues included.
+// `z.compile(..., { strict: true })` throws when it cannot compile a schema, so
+// the import above succeeding already proves this one compiled. These tests
+// check that the compiled schema accepts and rejects exactly what `envSchema`
+// does, including the issues.
 type ParseResult = ReturnType<typeof envSchema.safeParse>
 
 function summarize(result: ParseResult) {
@@ -74,7 +74,7 @@ function summarize(result: ParseResult) {
 }
 
 describe('compiled env schema', () => {
-  it('compiles to a copy rather than ejecting to the original', () => {
+  it('returns a compiled copy, not the original schema', () => {
     expect(compiledEnvSchema).not.toBe(envSchema)
   })
 
@@ -94,7 +94,7 @@ describe('compiled env schema', () => {
     expect(summarize(compiledEnvSchema.safeParse(input))).toEqual(summarize(envSchema.safeParse(input)))
   })
 
-  it('answers validity as a type guard via .validate()', () => {
+  it('checks validity with .validate()', () => {
     expect(compiledEnvSchema.validate(valid)).toBe(true)
     expect(compiledEnvSchema.validate({ ...valid, redisUrl: '' })).toBe(false)
   })
