@@ -1,6 +1,6 @@
 # JSON Schema conversion
 
-Zod converts natively to/from JSON Schema — useful for OpenAPI definitions and LLM structured-output schemas.
+Zod converts natively to/from JSON Schema, which is useful for OpenAPI definitions and LLM structured-output schemas.
 
 ## `z.toJSONSchema()`
 
@@ -39,7 +39,7 @@ z.toJSONSchema(mySchema, { io: "input" }); // => { type: "string" }
 
 ### `unrepresentable`
 
-These have no JSON Schema equivalent and **throw by default**: `z.bigint()`, `z.int64()`, `z.symbol()`, `z.undefined()`, `z.void()`, `z.date()`, `z.map()`, `z.set()`, `z.transform()`, `z.nan()`, `z.custom()`. Set `unrepresentable: "any"` to convert them to `{}` (JSON Schema's `unknown`) instead of throwing. Or pass a **function** that returns a JSON Schema, `"any"`, or `"throw"` — prefer that over `"any"` + `override` when only some types need a substitute.
+These have no JSON Schema equivalent and **throw by default**: `z.bigint()`, `z.int64()`, `z.symbol()`, `z.undefined()`, `z.void()`, `z.date()`, `z.map()`, `z.set()`, `z.transform()`, `z.nan()`, `z.custom()`. Set `unrepresentable: "any"` to convert them to `{}` (JSON Schema's `unknown`) instead of throwing. Or pass a **function** that returns a JSON Schema, `"any"`, or `"throw"`. Prefer that over `"any"` + `override` when only some types need a substitute.
 
 ```typescript
 z.toJSONSchema(z.object({ createdAt: z.date(), id: z.bigint() }), {
@@ -62,7 +62,7 @@ Fields registered via `.meta()`/`z.globalRegistry` (title, description, examples
 
 ### `override`
 
-Full escape hatch — runs after conversion, with access to both the source Zod schema and the generated JSON Schema:
+This hook runs after conversion and has access to both the source Zod schema and the generated JSON Schema:
 
 ```typescript
 // represent z.date() as an ISO datetime string instead of throwing
@@ -81,19 +81,19 @@ Unrepresentable types throw *before* `override` runs. Substitute a single type w
 
 ## Conversion reference
 
-**String formats** — via `format`: `z.email()` → `email`, `z.iso.datetime()` → `date-time`, `z.iso.date()` → `date`, `z.iso.duration()` → `duration`, `z.ipv4()`/`z.ipv6()` → `ipv4`/`ipv6`, `z.uuid()`/`z.guid()` → `uuid`, `z.url()` → `uri`. Via `contentEncoding`: `z.base64()`. Via `pattern` (no native JSON Schema format exists): `z.iso.time()`, `z.base64url()`, `z.cuid()`, `z.emoji()`, `z.nanoid()`, `z.cuid2()`, `z.ulid()`, `z.cidrv4()`, `z.cidrv6()`, `z.mac()`.
+**String formats.** These convert via `format`: `z.email()` → `email`, `z.iso.datetime()` → `date-time`, `z.iso.date()` → `date`, `z.iso.duration()` → `duration`, `z.ipv4()`/`z.ipv6()` → `ipv4`/`ipv6`, `z.uuid()`/`z.guid()` → `uuid`, `z.url()` → `uri`. Via `contentEncoding`: `z.base64()`. Via `pattern` (no native JSON Schema format exists): `z.iso.time()`, `z.base64url()`, `z.cuid()`, `z.emoji()`, `z.nanoid()`, `z.cuid2()`, `z.ulid()`, `z.cidrv4()`, `z.cidrv6()`, `z.mac()`.
 
-**Numeric types** — `z.number()` → `{ type: "number" }`; `z.float32()`/`z.float64()` add `exclusiveMinimum`/`exclusiveMaximum`; `z.int()`/`z.int32()` → `{ type: "integer" }` (int32 additionally bounded).
+**Numeric types.** `z.number()` → `{ type: "number" }`; `z.float32()`/`z.float64()` add `exclusiveMinimum`/`exclusiveMaximum`; `z.int()`/`z.int32()` → `{ type: "integer" }` (int32 with 32-bit bounds).
 
-**Objects** — plain `z.object()` sets `additionalProperties: false` (accurately reflecting Zod's default stripping behavior); in `io: "input"` mode `additionalProperties` is omitted entirely. `z.looseObject()` never sets it; `z.strictObject()` always sets it.
+**Objects.** Plain `z.object()` sets `additionalProperties: false` (accurately reflecting Zod's default stripping behavior); in `io: "input"` mode `additionalProperties` is omitted entirely. `z.looseObject()` never sets it; `z.strictObject()` always sets it.
 
-**Files** — `z.file()` → `{ type: "string", format: "binary", contentEncoding: "binary" }`, plus `contentMediaType` from `.mime()` and `minLength`/`maxLength` from `.min()`/`.max()`.
+**Files.** `z.file()` → `{ type: "string", format: "binary", contentEncoding: "binary" }`, plus `contentMediaType` from `.mime()` and `minLength`/`maxLength` from `.min()`/`.max()`.
 
-**Nullability** — `z.null()` → `{ type: "null" }`. `z.nullable(x)` → `{ oneOf: [x, { type: "null" }] }`. `z.optional(x)` is represented as `x` with an `optional` annotation (JSON Schema has no native concept of an optional property outside of `required`).
+**Nullability.** `z.null()` → `{ type: "null" }`. `z.nullable(x)` → `{ oneOf: [x, { type: "null" }] }`. `z.optional(x)` is represented as `x` with an `optional` annotation (JSON Schema has no native concept of an optional property outside of `required`).
 
 ## `z.fromJSONSchema()`
 
-Experimental — not considered stable API, may change shape in future releases.
+Experimental. It is not considered stable API and may change shape in future releases.
 
 ```typescript
 const jsonSchema = {
@@ -103,6 +103,8 @@ const jsonSchema = {
 };
 const zodSchema = z.fromJSONSchema(jsonSchema);
 ```
+
+As of 4.6 it also enforces `minProperties`/`maxProperties`, `uniqueItems`, and `contains`/`minContains`/`maxContains`. Property bounds count the input's own keys; array uniqueness is structural, so `[{ a: 1 }, { a: 1 }]` is a duplicate.
 
 ## Registries: multi-schema output
 

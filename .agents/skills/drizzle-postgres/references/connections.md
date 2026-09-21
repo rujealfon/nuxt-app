@@ -1,19 +1,19 @@
 # Connecting to Postgres
 
-Pick the driver that matches how the target actually runs — TCP-capable server vs. serverless/edge with no persistent TCP socket — rather than defaulting to whichever is most familiar. If a driver is already installed in the project, use that one.
+Pick the driver that matches how the target runs: a TCP-capable server, or a serverless/edge runtime with no persistent TCP socket. Don't default to whichever driver is most familiar. If a driver is already installed in the project, use that one.
 
 ## Don't exhaust `max_connections` in serverless/edge deployments
 
-Postgres has a hard cap on concurrent connections (`max_connections`, often in the low hundreds). A long-running server opens one pool at startup and reuses it for the process lifetime, which is fine. A serverless function is different: if each invocation (or each cold start) creates a *new* `Pool`/`postgres()` client instead of reusing one, concurrent invocations under load can open far more connections than Postgres allows, and requests start failing with connection errors — this is one of the most common production incidents in serverless-Postgres setups, not a theoretical concern.
+Postgres has a hard cap on concurrent connections (`max_connections`, often in the low hundreds). A long-running server opens one pool at startup and reuses it for the process lifetime. A serverless function behaves differently. If each invocation (or each cold start) creates a *new* `Pool`/`postgres()` client instead of reusing one, concurrent invocations under load can open far more connections than Postgres allows, and requests start failing with connection errors. This is one of the most common production incidents in serverless-Postgres setups, not a theoretical concern.
 
 Two ways to avoid it:
 
-1. **Reuse a module-level client.** Create the `Pool`/`postgres()` client once at module scope (outside the request handler) so warm invocations reuse it; only cold starts open a new connection. Pair with a small pool size (e.g. `max: 1`–`5` per function instance) since many function instances can run concurrently.
-2. **Use an HTTP-based driver** that doesn't hold a persistent TCP connection at all — Neon's `neon-http` driver or `@vercel/postgres` issue each query as its own HTTP request, sidestepping the connection-limit problem entirely (at the cost of not supporting interactive `db.transaction()`; see the Neon section below). Prefer this for edge runtimes or Lambda functions with many concurrent instances, and fall back to a pooled TCP driver only when the workload needs real transactions.
+1. **Reuse a module-level client.** Create the `Pool`/`postgres()` client once at module scope (outside the request handler) so warm invocations reuse it; only cold starts open a new connection. Pair with a small pool size (e.g. `max: 1`-`5` per function instance) since many function instances can run concurrently.
+2. **Use an HTTP-based driver** that doesn't hold a persistent TCP connection at all. Neon's `neon-http` driver and `@vercel/postgres` issue each query as its own HTTP request, so they avoid the connection-limit problem entirely (at the cost of not supporting interactive `db.transaction()`; see the Neon section below). Prefer this for edge runtimes or Lambda functions with many concurrent instances, and fall back to a pooled TCP driver only when the workload needs real transactions.
 
-If the target is a traditional long-running server or container, this isn't a concern — a single `Pool` created at startup and reused for the process lifetime is correct as shown below.
+If the target is a traditional long-running server or container, this isn't a concern. A single `Pool` created at startup and reused for the process lifetime is correct as shown below.
 
-## node-postgres (`pg`) — traditional server/container deployments
+## node-postgres (`pg`) for traditional server/container deployments
 
 ```bash
 npm i drizzle-orm pg
@@ -36,7 +36,7 @@ const pool = new Pool({ connectionString: process.env.DATABASE_URL, ssl: true })
 const db = drizzle({ client: pool });
 ```
 
-## postgres.js — traditional server/container deployments, alternative driver
+## postgres.js for traditional server/container deployments (alternative driver)
 
 ```bash
 npm i drizzle-orm postgres
@@ -57,7 +57,7 @@ const client = postgres(process.env.DATABASE_URL!, { prepare: false });
 const db = drizzle({ client });
 ```
 
-## Neon — serverless Postgres
+## Neon (serverless Postgres)
 
 ```bash
 npm i drizzle-orm @neondatabase/serverless
@@ -81,11 +81,11 @@ const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const db = drizzle({ client: pool });
 ```
 
-`neon-http` cannot run multi-statement interactive transactions (each call is its own HTTP request) — reach for `neon-serverless` if the code needs `db.transaction()`. In Node, `neon-serverless` also needs the `ws` package (`neonConfig.webSocketConstructor = ws`). In a traditional long-running server talking to Neon, plain `pg`/`postgres.js` also work over Neon's regular TCP endpoint.
+`neon-http` cannot run multi-statement interactive transactions (each call is its own HTTP request). Use `neon-serverless` if the code needs `db.transaction()`. In Node, `neon-serverless` also needs the `ws` package (`neonConfig.webSocketConstructor = ws`). In a traditional long-running server talking to Neon, plain `pg`/`postgres.js` also work over Neon's regular TCP endpoint.
 
 ## Supabase
 
-Supabase is plain Postgres underneath, so any driver works, but its pooler mode matters:
+Supabase is Postgres, so any driver works, but its pooler mode matters:
 
 ```bash
 npm i drizzle-orm postgres
@@ -97,9 +97,9 @@ import { drizzle } from 'drizzle-orm/postgres-js';
 const db = drizzle(process.env.DATABASE_URL!);
 ```
 
-- **Direct connection** — for long-running servers.
-- **Connection pooler, transaction mode** — for serverless; requires `postgres(url, { prepare: false })` since prepared statements aren't supported in that mode.
-- Supabase-specific RLS helpers (`authenticatedRole`, `authUsers`, `authUid()`) live in `drizzle-orm/supabase` — see [postgres-advanced.md](postgres-advanced.md).
+- **Direct connection.** For long-running servers.
+- **Connection pooler, transaction mode.** For serverless; requires `postgres(url, { prepare: false })` since prepared statements aren't supported in that mode.
+- Supabase-specific RLS helpers (`authenticatedRole`, `authUsers`, `authUid()`) live in `drizzle-orm/supabase`. See [postgres-advanced.md](postgres-advanced.md).
 
 ## Vercel Postgres
 
@@ -113,9 +113,9 @@ import { drizzle } from 'drizzle-orm/vercel-postgres';
 const db = drizzle(); // reads POSTGRES_URL from env automatically
 ```
 
-Built on `@vercel/postgres`'s serverless (WebSocket-based) driver — suitable for edge/serverless functions without TCP access.
+Built on `@vercel/postgres`'s serverless (WebSocket-based) driver, which suits edge/serverless functions without TCP access.
 
-## PGlite — embedded/in-memory Postgres (tests, local-first apps)
+## PGlite for embedded/in-memory Postgres (tests, local-first apps)
 
 ```bash
 npm i drizzle-orm @electric-sql/pglite
@@ -130,11 +130,11 @@ const client = new PGlite(); // or new PGlite('./local.db') for on-disk
 const db = drizzle({ client });
 ```
 
-Runs Postgres compiled to WASM with no separate server process — useful for unit/integration tests that want real Postgres semantics without a Docker container, or local-first apps.
+Runs Postgres compiled to WASM with no separate server process. It is useful for unit/integration tests that want real Postgres semantics without a Docker container, or for local-first apps.
 
 ## PlanetScale Postgres
 
-PlanetScale Postgres is Postgres, not PlanetScale MySQL (`drizzle-orm/planetscale-serverless` is the MySQL driver — do not use it here).
+PlanetScale Postgres is Postgres, not PlanetScale MySQL (`drizzle-orm/planetscale-serverless` is the MySQL driver, so do not use it here).
 
 Server/container: `drizzle-orm/node-postgres` with `pg`, same as above. Prefer port `6432` (PgBouncer) when many concurrent clients will share the cluster; `5432` is a direct connection counted against `max_connections`.
 
@@ -174,7 +174,7 @@ import { drizzle } from 'drizzle-orm/bun-sql';
 const db = drizzle(process.env.DATABASE_URL);
 ```
 
-Or pass an existing `SQL` client: `drizzle({ client: new SQL(process.env.DATABASE_URL!) })`. Bun-only — do not import `drizzle-orm/bun-sql` from Node.
+Or pass an existing `SQL` client: `drizzle({ client: new SQL(process.env.DATABASE_URL!) })`. Bun-only, so do not import `drizzle-orm/bun-sql` from Node.
 
 ## Drizzle HTTP proxy
 
@@ -194,10 +194,10 @@ const db = drizzle(async (sql, params, method) => {
 
 Return `{ rows: string[][] }` for `method === 'all'`, `{ rows: string[] }` for `execute`. Official topic: [Drizzle HTTP proxy](https://orm.drizzle.team/docs/connect-drizzle-proxy).
 
-## Other providers (same shape, different package)
+## Other providers
 
-Xata and Nile follow the same `drizzle(...)` / `drizzle({ client })` shape as above. AWS Data API is `drizzle-orm/aws-data-api/pg` and takes `resourceArn` / `secretArn` / `database` instead of a URL. Netlify DB (`drizzle-orm/netlify-db`) and Effect Postgres (`drizzle-orm/effect-postgres`) are 1.0-line drivers — see [migration-0.45-to-1.0.md](migration-0.45-to-1.0.md).
+Xata and Nile follow the same `drizzle(...)` / `drizzle({ client })` calls as above. AWS Data API is `drizzle-orm/aws-data-api/pg` and takes `resourceArn` / `secretArn` / `database` instead of a URL. Netlify DB (`drizzle-orm/netlify-db`) and Effect Postgres (`drizzle-orm/effect-postgres`) are 1.0-line drivers; see [migration-0.45-to-1.0.md](migration-0.45-to-1.0.md).
 
 ## `db.execute` for anything outside the query builder
 
-Every driver's `db` exposes `db.execute(sql\`...\`)` (or a plain string) for raw SQL that doesn't fit the builder — useful for one-off diagnostics or Postgres features not yet modeled by Drizzle.
+Every driver's `db` exposes `db.execute(sql\`...\`)` (or a plain string) for raw SQL that doesn't fit the builder. This is useful for one-off diagnostics or Postgres features not yet modeled by Drizzle.

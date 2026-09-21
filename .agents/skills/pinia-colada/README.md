@@ -1,12 +1,12 @@
-# Pinia Colada Skill
+# Pinia Colada skill
 
 Build, review, migrate, test, and troubleshoot asynchronous data workflows
 with Pinia Colada in Vue and Nuxt applications.
 
 ## Version
 
-- Skill version: **1.0.1** — see [CHANGELOG.md](CHANGELOG.md)
-- Tracks: `@pinia/colada` 1.x — verified against 1.4.2 on 2026-08-23
+- Skill version: **1.0.2**. See [CHANGELOG.md](CHANGELOG.md).
+- Tracks: `@pinia/colada` 1.x — verified against 1.4.5 on 2026-09-21
 - Docs: https://pinia-colada.esm.dev/llms.txt
 
 ## Installation

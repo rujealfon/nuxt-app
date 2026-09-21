@@ -1,6 +1,18 @@
 # Changelog
 
-Versions here track this skill's own content (instructions and references), not the `zod` package version — see the [README](README.md#version) for which `zod` line this skill was last verified against.
+Versions here track this skill's own content (instructions and references), not the `zod` package version. See the [README](README.md#version) for which `zod` line this skill was last verified against.
+
+## 1.3.0 - 2026-09-21
+
+Docs-backed refresh against `zod` 4.6.5 and https://zod.dev/llms.txt.
+
+- String formats: `z.iban()` (electronic format, ISO 7064 MOD 97-10 checksum) and `z.currencyCode()` (ISO 4217).
+- `z.withParser(schema, parser)` installs a parser generated elsewhere (build-time or native) for CSP-blocked environments.
+- Schema-level `.validate()` / `.validateAsync()` methods (4.6+) alongside the `z.validate(schema, input)` function (4.5+).
+- Correct the `.properties()` note. It is a 4.6+ method on `z.instanceof()`, while `z.properties()` itself is a 4.5+ check (it is not a standalone schema, as we previously wrote).
+- `z.fromJSONSchema()` now enforces `minProperties`/`maxProperties`, `uniqueItems`, and `contains`/`minContains`/`maxContains`.
+
+Won't add: the transient 4.6.0-4.6.2 standalone `z.properties()` schema (reverted in 4.6.3).
 
 ## 1.2.0 - 2026-09-01
 

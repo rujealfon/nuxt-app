@@ -81,7 +81,7 @@ Verify callback argument order against installed types. Use query `meta` to keep
 
 When using `true`, set a meaningful `staleTime`. The plugin is timer-based and effectively client-only; verify server behavior before enabling it in custom SSR. Pause queries with `enabled` when polling is not appropriate.
 
-Focus/reconnect/mount refetching is **core**, not this plugin: `refetchOnMount`, `refetchOnWindowFocus`, and `refetchOnReconnect` default to `true` and also accept `'always'`. Use the auto-refetch plugin only for interval polling.
+Refetching on focus, reconnect, and mount is **core**, not this plugin. `refetchOnMount`, `refetchOnWindowFocus`, and `refetchOnReconnect` default to `true` and also accept `'always'`. Use the auto-refetch plugin only for interval polling.
 
 ## Retry
 
@@ -139,9 +139,9 @@ Supported concepts in the current plugin include:
 - `filter`: key or predicate-based query selection;
 - `stringify` and `parse`: cache codec.
 
-Only successful results are persisted. Garbage collection still removes entries from persisted data, so align `gcTime` with desired retention. Persistence is best-effort: storage or codec failures should not become application failures.
+The persister writes only successful results. Garbage collection still removes entries from persisted data, so align `gcTime` with desired retention. Persistence is best-effort. Storage or codec failures should not become application failures.
 
-For asynchronous storage in a plain Vue app, wait for `isCacheReady()` before mounting to avoid requests racing restoration. In Nuxt, do not transplant this bootstrap sequence blindly: inspect the installed Nuxt module and persister integration points, then define whether restoration happens before hydration, after hydration, or only on client-only routes. Test unavailable, corrupt, outdated, and quota-exhausted storage.
+For asynchronous storage in a plain Vue app, wait for `isCacheReady()` before mounting to avoid requests racing restoration. In Nuxt, do not copy this bootstrap sequence unchanged. Inspect the installed Nuxt module and persister integration points, then define whether restoration happens before hydration, after hydration, or only on client-only routes. Test unavailable, corrupt, outdated, and quota-exhausted storage.
 
 The official plugin page and async-storage cookbook have differed on whether `removeItem` is required. Implement it when the backing store supports deletion, and treat the installed `PiniaColadaStorage` declaration as authoritative.
 
@@ -171,7 +171,7 @@ The persister has no general application-schema or identity policy. Implement it
 
 Treat an IndexedDB/local-storage record as untrusted same-origin data, not a secret store. For multi-tab applications, prevent a stale tab or debounced write from recreating an old identity's cache after logout; use an identity epoch plus `BroadcastChannel`/storage events or force an application reload. If the installed persister has no verified runtime key-change, flush, or disposal API, recreate the app/Pinia/Colada instance rather than changing identity in place.
 
-Define whether maximum age applies to the whole persisted snapshot or each entry. A snapshot envelope with immutable `createdAt`/`expiresAt` is a safe conservative policy; do not refresh its deadline on every debounced write. Per-entry age requires supported timestamps or an application-owned data format—never rewrite undocumented serialized cache internals.
+Define whether maximum age applies to the whole persisted snapshot or each entry. A snapshot envelope with immutable `createdAt`/`expiresAt` is a safe conservative policy; do not refresh its deadline on every debounced write. Per-entry age requires supported timestamps or an application-owned data format. Never rewrite undocumented serialized cache internals.
 
 When SSR hydration and browser persistence coexist, choose and test precedence explicitly: fresh SSR wins, persistence fills only absent entries, or persistence is skipped for SSR-rendered routes. Do not enable both without a deterministic merge policy.
 
@@ -230,7 +230,7 @@ Follow these invariants:
 - Do not depend on undocumented action arguments without installed-type and source verification.
 - Avoid re-entering the same cache action recursively.
 
-The mutation lifecycle is create → extend → ensure per invocation → mutate → state updates → remove. Each mutation invocation needs a fresh ensured entry.
+The mutation lifecycle runs in order: create, extend, ensure per invocation, mutate, state updates, then remove. Each mutation invocation needs a fresh ensured entry.
 
 Options belong to a shared cache entry, not an individual observer. Components using the same key must not pass conflicting plugin options unless the plugin explicitly defines and tests precedence. Decide whether measurement or retry duration includes downstream plugin work; installation order changes what an intercepted action observes.
 

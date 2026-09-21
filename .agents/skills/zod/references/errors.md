@@ -24,7 +24,7 @@ z.string().min(5, {
 });
 ```
 
-Return `undefined` from an error map to decline to customize that particular issue and fall through to the next map in the precedence chain — useful for overriding only specific error codes:
+Return `undefined` from an error map to decline to customize that particular issue and fall through to the next map in the precedence chain, which is useful for overriding only specific error codes:
 
 ```typescript
 z.int64({
@@ -54,7 +54,7 @@ schema.safeParse(12, {
 });
 ```
 
-**Including input in issues**: by default Zod omits the raw input from issues (to avoid unintentionally logging sensitive data). Opt in per-parse with `reportInput`:
+**Including input in issues.** By default Zod omits the raw input from issues (to avoid unintentionally logging sensitive data). Opt in per-parse with `reportInput`:
 
 ```typescript
 z.string().parse(12, { reportInput: true });
@@ -91,18 +91,18 @@ async function loadLocale(locale: string) {
 z.config(z.locales.en());
 ```
 
-40+ locales are available, including `ar`, `de`, `es`, `fr`, `frCA`, `he`, `id`, `it`, `ja`, `ko`, `pl`, `pt`, `ru`, `th`, `tr`, `uk`, `vi`, `zhCN`, `zhTW`, among others.
+40+ locales are available, including `ar`, `de`, `es`, `fr`, `frCA`, `he`, `id`, `it`, `ja`, `ko`, `pl`, `pt`, `ru`, `th`, `tr`, `uk`, `vi`, `zhCN`, `zhTW`.
 
 ## Error precedence
 
 Highest to lowest priority when multiple customizations could apply to the same issue:
 
-1. **Schema-level** — `z.string("Not a string!")`
-2. **Per-parse** — `schema.parse(12, { error: (iss) => "..." })`
-3. **Global error map** — `z.config({ customError: (iss) => "..." })`
-4. **Locale error map** — `z.config(z.locales.en())`
+1. **Schema-level**: `z.string("Not a string!")`
+2. **Per-parse**: `schema.parse(12, { error: (iss) => "..." })`
+3. **Global error map**: `z.config({ customError: (iss) => "..." })`
+4. **Locale error map**: `z.config(z.locales.en())`
 
-> In Zod 3, per-parse error maps outranked schema-level ones. Zod 4 flipped this — see [migration-v3-to-v4.md](migration-v3-to-v4.md).
+> In Zod 3, per-parse error maps outranked schema-level ones. Zod 4 flipped this. See [migration-v3-to-v4.md](migration-v3-to-v4.md).
 
 ## Formatting a `ZodError`
 
@@ -125,7 +125,7 @@ const result = schema.safeParse({
 
 ### `z.treeifyError()`
 
-Nests the errors into a structure mirroring the schema — best when you need to walk a deep/nested schema's errors programmatically.
+This nests the errors into a structure that mirrors the schema. Use it when you need to walk a deep/nested schema's errors programmatically.
 
 ```typescript
 const tree = z.treeifyError(result.error);
@@ -135,11 +135,11 @@ tree.properties?.favoriteNumbers?.items?.[1]?.errors;
 // => ["Invalid input: expected number, received string"]
 ```
 
-Use optional chaining (`?.`) throughout — paths that had no error are simply absent.
+Use optional chaining (`?.`) throughout. Paths that had no error are absent.
 
 ### `z.prettifyError()`
 
-Human-readable string, useful for logs or CLI output:
+Produces a human-readable string, useful for logs or CLI output:
 
 ```typescript
 z.prettifyError(result.error);
@@ -164,4 +164,4 @@ flattened.fieldErrors.username;   // ["Invalid input: expected string, received 
 
 ### `z.formatError()`
 
-Deprecated — use `z.treeifyError()` instead.
+Deprecated. Use `z.treeifyError()` instead.

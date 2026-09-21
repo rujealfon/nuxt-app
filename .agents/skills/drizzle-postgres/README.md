@@ -1,11 +1,11 @@
-# Drizzle Postgres Skill
+# Drizzle Postgres skill
 
 Build, migrate, query, and troubleshoot PostgreSQL data layers with Drizzle
 ORM and Drizzle Kit.
 
 ## Version
 
-- Skill version: **1.1.0** — see [CHANGELOG.md](CHANGELOG.md)
+- Skill version: **1.1.0**. See [CHANGELOG.md](CHANGELOG.md).
 - Tracks: `drizzle-orm` 0.45.x — verified against 0.45.2 on 2026-08-23
 - Tracks: `drizzle-kit` 0.31.x — verified against 0.31.10 on 2026-08-23
 - Docs: https://orm.drizzle.team/llms.txt

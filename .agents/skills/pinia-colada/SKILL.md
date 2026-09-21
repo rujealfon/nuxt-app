@@ -32,8 +32,8 @@ These references are intentionally curated rather than copies of upstream docume
 - Install `PiniaColada` after Pinia at the existing bootstrap point.
 - Model query keys as serializable hierarchical arrays and put every reactive input the query function reads into the key.
 - Pass the query context `signal: AbortSignal` into `fetch` (or the client's abort option). Cancellation discards the result either way; without `signal`, the HTTP work keeps running.
-- Throw or reject from the query/mutation function for HTTP failures — native `fetch()` does not. Previous `data` is kept when a refetch fails; render stale data plus the new `error`.
-- `mutate()` swallows the error (state + `onError` only). `mutateAsync()` rethrows after hooks — wrap it in `try/catch`.
+- Throw or reject from the query/mutation function for HTTP failures. Native `fetch()` does not. Pinia Colada keeps the previous `data` when a refetch fails; render stale data plus the new `error`.
+- `mutate()` swallows the error (state + `onError` only). `mutateAsync()` rethrows after hooks. Wrap it in `try/catch`.
 - Prefer reusable query definitions and key factories once the project repeats queries or cache operations.
 - Use `refresh()` for freshness-aware work and `refetch()` to force a request. Invalidate by key prefix; use `exact: true` for one entry. Make optimistic updates snapshot, cancel, write, and roll back only if the optimistic value is still current.
 - Treat SSR, Nuxt, persistence, retry, and auto-refetch as opt-in; read their reference before changing them.

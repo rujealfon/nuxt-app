@@ -41,7 +41,7 @@ const {
 - `refetch()` forces a new request regardless of freshness.
 - Use the grouped `state` discriminated union when TypeScript must narrow `data` or `error`.
 
-Throw or reject from the query function for Pinia Colada to enter an error state. Native `fetch()` does not reject on HTTP 4xx/5xx, so check `response.ok` unless non-success responses intentionally belong in `data`. When a refetch fails, `error` is set **and previous `data` is kept** — show stale data plus an error banner rather than blanking the UI.
+Throw or reject from the query function for Pinia Colada to enter an error state. Native `fetch()` does not reject on HTTP 4xx/5xx, so check `response.ok` unless non-success responses intentionally belong in `data`. When a refetch fails, Pinia Colada sets `error` and keeps the previous `data`. Show stale data plus an error banner rather than blanking the UI.
 
 The query function is called as `query({ signal, entry })`. `signal` is an `AbortSignal` aborted when a newer request for the same key starts or when the cache cancels the entry. Pass it through:
 
@@ -94,7 +94,7 @@ Consume dynamic options through a getter when their inputs are reactive:
 const result = useQuery(() => contactQuery(route.params.id as string))
 ```
 
-Do not mechanically refactor a small project solely to introduce factories. Preserve an established key convention when it is already consistent and safe.
+Do not refactor a small project just to introduce factories. Preserve an established key convention when it is already consistent and safe.
 
 ## Query metadata
 
@@ -127,7 +127,7 @@ declare module '@pinia/colada' {
 }
 ```
 
-Prefer `unknown` when callers must narrow every thrown value, or use the application's shared error base type. Use the grouped `state` discriminated union to narrow `data` and `error` from `status`. Errors cannot be made reliable merely through a TypeScript assertion; ensure API clients actually throw the modeled values.
+Prefer `unknown` when callers must narrow every thrown value, or use the application's shared error base type. Use the grouped `state` discriminated union to narrow `data` and `error` from `status`. A TypeScript assertion cannot make errors reliable. Ensure API clients actually throw the modeled values.
 
 ## Freshness and lifetime
 

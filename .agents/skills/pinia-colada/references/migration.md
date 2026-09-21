@@ -98,7 +98,7 @@ Do not assume TanStack `buster`, `maxAge`, dehydration filters, or persister con
 
 `@pinia/colada-plugin-tanstack-compat` adds common TanStack-style result properties through module augmentation. Current documented query extensions include success/error/fetching/refetching/stale flags, timestamps, and a TanStack-style `fetchStatus`; mutation extensions include idle/pending/success/error flags and timestamps.
 
-Use it to reduce migration breadth or support a temporary shared abstraction. It does not cover every TanStack feature. Record every consumer of compatibility-only properties and remove the plugin after native state usage replaces them.
+Use it to reduce the scope of the migration or support a temporary shared abstraction. It does not cover every TanStack feature. Record every consumer of compatibility-only properties and remove the plugin after native state usage replaces them.
 
 ## Missing utilities
 

@@ -23,7 +23,7 @@ export default defineConfig({
 });
 ```
 
-`dbCredentials` also accepts discrete `host`/`port`/`user`/`password`/`database`/`ssl` fields instead of a single `url` — use whichever the project's secret management already provides.
+`dbCredentials` also accepts discrete `host`/`port`/`user`/`password`/`database`/`ssl` fields instead of a single `url`. Use whichever the project's secret management already provides.
 
 ## Commands and when to use each
 
@@ -31,16 +31,16 @@ export default defineConfig({
 |---|---|
 | `drizzle-kit generate` | Diffs the schema file against the last migration snapshot and writes a new SQL migration file under `out`. |
 | `drizzle-kit migrate` | Applies pending SQL migration files to the database in order, recording each in the migrations table. |
-| `drizzle-kit push` | Diffs the schema file against the live database and applies changes directly — no migration file produced. |
+| `drizzle-kit push` | Diffs the schema file against the live database and applies changes directly, with no migration file produced. |
 | `drizzle-kit pull` | Introspects an existing database and generates a Drizzle schema file from it (for onboarding onto an existing DB). |
 | `drizzle-kit check` | Validates that migration files don't have colliding/out-of-order changes (e.g. after a branch merge). |
 | `drizzle-kit up` | Upgrades old migration snapshot files to the current snapshot format after a Drizzle Kit version bump. |
 | `drizzle-kit studio` | Opens Drizzle Studio, a local GUI for browsing/editing the connected database. |
 | `drizzle-kit export` | Prints the schema's DDL as raw SQL without writing a migration file. |
 
-**`push` vs `generate` + `migrate`:** `push` is fast and convenient for local development or early prototyping where there's no need to track history. For anything shared across a team, deployed to production, or that needs an audit trail / rollback path, use `generate` then `migrate` (or apply the generated SQL through whatever migration runner the deployment pipeline uses) — versioned SQL files are reviewable in a PR the way a direct `push` is not.
+**`push` vs `generate` + `migrate`:** `push` is quicker for local development or early prototyping where there's no need to track history. For anything shared across a team, deployed to production, or that needs an audit trail or rollback path, use `generate` then `migrate` (or apply the generated SQL through whatever migration runner the deployment pipeline uses). Versioned SQL files are reviewable in a PR; a direct `push` is not.
 
-## Applying migrations at runtime (not via CLI)
+## Applying migrations at runtime (without the CLI)
 
 ```typescript
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
@@ -48,7 +48,7 @@ import { migrate } from 'drizzle-orm/node-postgres/migrator';
 await migrate(db, { migrationsFolder: './drizzle' });
 ```
 
-Every `drizzle-orm/<driver>` package ships a matching `.../migrator` entry point — use the one matching the driver already in use (e.g. `drizzle-orm/postgres-js/migrator`, `drizzle-orm/neon-http/migrator`).
+Every `drizzle-orm/<driver>` package ships a matching `.../migrator` entry point. Use the one matching the driver already in use (e.g. `drizzle-orm/postgres-js/migrator`, `drizzle-orm/neon-http/migrator`).
 
 ## Custom (hand-written) migrations
 
@@ -58,7 +58,7 @@ For DDL Drizzle Kit can't express yet, or for data migrations/seed inserts that 
 drizzle-kit generate --custom --name=seed-initial-roles
 ```
 
-This creates an empty SQL file in `out` — write the SQL by hand, then apply it the same way as generated migrations (`drizzle-kit migrate`, or the runtime `migrate()` call). It gets tracked in the journal like any other migration.
+This creates an empty SQL file in `out`. Write the SQL by hand, then apply it the same way as generated migrations (`drizzle-kit migrate`, or the runtime `migrate()` call). It gets tracked in the journal like any other migration.
 
 ## Seeding with `drizzle-seed`
 
@@ -73,4 +73,4 @@ const db = drizzle(process.env.DATABASE_URL!);
 await seed(db, { users, posts }); // 10 rows per table by default
 ```
 
-`seed()` accepts a `count` option per call and a `seed` number for reproducible-but-different datasets; `.refine()` on a per-table basis customizes column-level generation (e.g. realistic emails) and can wire up related row counts for foreign keys. Install with `npm i drizzle-seed`. This is meant for dev/test fixtures, not production seed data that must exactly match business rules — use a custom migration for that instead.
+`seed()` accepts a `count` option per call and a `seed` number for reproducible-but-different datasets; `.refine()` on a per-table basis customizes column-level generation (e.g. realistic emails) and can wire up related row counts for foreign keys. Install with `npm i drizzle-seed`. This is meant for dev/test fixtures, not production seed data that must exactly match business rules. Use a custom migration for that instead.

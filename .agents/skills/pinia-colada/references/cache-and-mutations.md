@@ -24,7 +24,7 @@ const createTodo = useMutation({
 })
 ```
 
-- `mutate(variables)` starts the operation and **swallows** the error: it is written to mutation state and passed to `onError`, but not rethrown. Do not wrap `mutate()` in `try/catch` expecting a throw.
+- `mutate(variables)` starts the operation and **swallows** the error. It writes the error to mutation state and passes it to `onError`, but does not rethrow. Do not wrap `mutate()` in `try/catch` expecting a throw.
 - `mutateAsync(variables)` rethrows after hooks. Wrap it in `try/catch` when surrounding control flow must handle failure.
 - Keep mutation inputs explicit so `variables` and hook arguments remain useful and typed.
 - Use `state.status` for result state and `asyncStatus` for active work.

@@ -63,7 +63,7 @@ Use Nuxt-native `useFetch`/`useAsyncData` for simple page-local requests when th
 
 ## Custom SSR
 
-Follow Pinia SSR setup first. A custom renderer must additionally serialize and hydrate Pinia Colada's query-cache tree with the installed helpers such as `isQueryCache`, `serializeQueryCache`, and `hydrateQueryCache`.
+Follow Pinia SSR setup first. A custom renderer must also serialize and hydrate Pinia Colada's query-cache tree with the installed helpers such as `isQueryCache`, `serializeQueryCache`, and `hydrateQueryCache`.
 
 Install Pinia and Pinia Colada before hydrating. Treat custom errors as custom serialized types.
 
