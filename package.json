@@ -25,8 +25,8 @@
     "db:seed": "pnpm --filter @nuxt-app/api db:seed",
     "db:auth:generate": "pnpm --filter @nuxt-app/api db:auth:generate",
     "build": "turbo run build",
-    "lint": "eslint",
-    "lint:fix": "eslint --fix",
+    "lint": "node scripts/lint.mjs",
+    "lint:fix": "node scripts/lint.mjs --fix",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
@@ -60,6 +60,6 @@
     "vue-router": "^5.3.1"
   },
   "lint-staged": {
-    "*": "eslint --fix --no-warn-ignored"
+    "*": "node --max-old-space-size=6144 node_modules/eslint/bin/eslint.js --fix --no-warn-ignored"
   }
 }

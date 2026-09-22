@@ -197,6 +197,15 @@ APIs. It requires the generated Nuxt types from `pnpm install`. Vue files, Nuxt
 layer packages (`client` and `ui`), and configuration files are not yet covered
 by this type-aware rule.
 
+Type-aware linting loads each app's generated Nuxt TypeScript project; every
+project binds ~2,000 declaration files and costs roughly 0.5 GB of heap, so
+linting the whole repository in one process peaks near 3.7 GB, above Node's
+default ~2 GB on CI. `pnpm lint` and `pnpm lint:fix` therefore run ESLint once per
+workspace through `scripts/lint.mjs`, keeping each process to a single project.
+The lint-staged hook still lints arbitrary staged files in one process, so it
+keeps a `--max-old-space-size=6144` cap. Add new lint entrypoints through the
+runner rather than a bare `eslint`.
+
 For auto-fix on save, install the VS Code ESLint extension and add the
 recommended settings from the config's README.
 
