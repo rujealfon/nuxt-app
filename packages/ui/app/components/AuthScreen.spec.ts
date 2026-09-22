@@ -44,56 +44,30 @@ describe('authScreen', () => {
     expect(wrapper.text()).toContain('New here?')
   })
 
-  it('forwards the submitted data to the submit prop', async () => {
-    const submit = vi.fn()
-    const wrapper = await mountScreen({ submit })
-
-    wrapper.getComponent({ name: 'UAuthForm' }).vm.$emit('submit', { data: { email: 'user@example.com' } })
-    await flushPromises()
-
-    expect(submit).toHaveBeenCalledWith({ email: 'user@example.com' })
-  })
-
   it('shows the error message in the validation slot', async () => {
     const wrapper = await mountScreen({ errorMessage: 'Invalid email or password' })
 
     expect(wrapper.text()).toContain('Invalid email or password')
   })
 
-  it('applies server field errors to the form', async () => {
+  it('renders server field errors and clears them when the prop is removed', async () => {
     const wrapper = await mountScreen()
-
-    await wrapper.setProps({
-      fieldErrors: [{ name: 'email', message: 'Enter a valid email address' }],
-    })
     await flushPromises()
 
-    const form = wrapper.getComponent({ name: 'UForm' }).vm as unknown as {
-      getErrors: (name: string) => Array<{ message: string }>
-    }
-
-    expect(form.getErrors('email')).toEqual([
-      expect.objectContaining({ message: 'Enter a valid email address' }),
-    ])
-  })
-
-  it('passes the loading state to the form', async () => {
-    const wrapper = await mountScreen({ loading: true })
-
-    expect(wrapper.getComponent({ name: 'UAuthForm' }).props('submit')).toMatchObject({ loading: true })
-  })
-
-  it('clears field errors when the prop is removed', async () => {
-    const wrapper = await mountScreen({ fieldErrors: [{ name: 'email', message: 'bad' }] })
+    await wrapper.setProps({ fieldErrors: [{ name: 'email', message: 'Already taken' }] })
     await flushPromises()
+
+    expect(wrapper.text()).toContain('Already taken')
 
     await wrapper.setProps({ fieldErrors: undefined })
     await flushPromises()
 
-    const form = wrapper.getComponent({ name: 'UForm' }).vm as unknown as {
-      getErrors: (name: string) => unknown[]
-    }
+    expect(wrapper.text()).not.toContain('Already taken')
+  })
 
-    expect(form.getErrors('email')).toEqual([])
+  it('disables the submit button while loading', async () => {
+    const wrapper = await mountScreen({ loading: true })
+
+    expect(wrapper.find('button[type="submit"]').attributes('disabled')).toBeDefined()
   })
 })

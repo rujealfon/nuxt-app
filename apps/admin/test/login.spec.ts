@@ -14,6 +14,13 @@ beforeEach(() => {
   auth.redirect = '/'
 })
 
+async function signIn(wrapper: Awaited<ReturnType<typeof mountSuspended>>) {
+  await wrapper.find('input[name="email"]').setValue('admin@example.com')
+  await wrapper.find('input[name="password"]').setValue('secret')
+  await wrapper.find('form').trigger('submit')
+  await flushPromises()
+}
+
 describe('admin login page', () => {
   it('renders the admin sign-in form', async () => {
     const wrapper = await mountSuspended(LoginPage)
@@ -26,10 +33,7 @@ describe('admin login page', () => {
     auth.signIn.mockResolvedValue(undefined)
     const wrapper = await mountSuspended(LoginPage)
 
-    wrapper.findComponent({ name: 'UAuthForm' }).vm.$emit('submit', {
-      data: { email: 'admin@example.com', password: 'secret' },
-    })
-    await flushPromises()
+    await signIn(wrapper)
 
     expect(auth.navigateTo).toHaveBeenCalledWith('/users')
   })
@@ -38,10 +42,7 @@ describe('admin login page', () => {
     auth.signIn.mockRejectedValue(new Error('Invalid email or password'))
     const wrapper = await mountSuspended(LoginPage)
 
-    wrapper.findComponent({ name: 'UAuthForm' }).vm.$emit('submit', {
-      data: { email: 'admin@example.com', password: 'nope' },
-    })
-    await flushPromises()
+    await signIn(wrapper)
 
     expect(wrapper.text()).toContain('Invalid email or password')
   })
@@ -51,10 +52,7 @@ describe('admin login page', () => {
     auth.signIn.mockResolvedValue(undefined)
     const wrapper = await mountSuspended(LoginPage)
 
-    wrapper.findComponent({ name: 'UAuthForm' }).vm.$emit('submit', {
-      data: { email: 'admin@example.com', password: 'secret' },
-    })
-    await flushPromises()
+    await signIn(wrapper)
 
     expect(auth.navigateTo).toHaveBeenCalledWith('/')
   })

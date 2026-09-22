@@ -24,9 +24,9 @@ describe('app login page', () => {
     auth.signIn.mockResolvedValue(undefined)
     const wrapper = await mountSuspended(LoginPage)
 
-    wrapper.findComponent({ name: 'UAuthForm' }).vm.$emit('submit', {
-      data: { email: 'user@example.com', password: 'secret' },
-    })
+    await wrapper.find('input[name="email"]').setValue('user@example.com')
+    await wrapper.find('input[name="password"]').setValue('secret')
+    await wrapper.find('form').trigger('submit')
     await flushPromises()
 
     expect(auth.signIn).toHaveBeenCalledWith({ email: 'user@example.com', password: 'secret' })
@@ -37,9 +37,9 @@ describe('app login page', () => {
     auth.signIn.mockRejectedValue(new Error('Invalid email or password'))
     const wrapper = await mountSuspended(LoginPage)
 
-    wrapper.findComponent({ name: 'UAuthForm' }).vm.$emit('submit', {
-      data: { email: 'user@example.com', password: 'nope' },
-    })
+    await wrapper.find('input[name="email"]').setValue('user@example.com')
+    await wrapper.find('input[name="password"]').setValue('nope')
+    await wrapper.find('form').trigger('submit')
     await flushPromises()
 
     expect(wrapper.text()).toContain('Invalid email or password')
