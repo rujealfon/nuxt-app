@@ -26,6 +26,10 @@ describe('api docs (dev server)', async () => {
       type: 'object',
       properties: { message: { type: 'string' } },
     })
+    expect(document.components.securitySchemes).toMatchObject({
+      sessionCookie: { type: 'apiKey', in: 'cookie', name: 'better-auth.session_token' },
+      bearerAuth: { type: 'http', scheme: 'bearer' },
+    })
   })
 
   it('keeps the spec unversioned like other infra routes', async () => {

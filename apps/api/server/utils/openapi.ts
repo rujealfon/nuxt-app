@@ -14,9 +14,9 @@ const openApiDocumentSchema = z.looseObject({
   openapi: z.string(),
 })
 
-function apiErrorResponse() {
+function apiErrorResponse(description = 'API error contract. Clients branch on `error`, not message text.'): OpenApiResponse {
   return {
-    description: 'API error contract. Clients branch on `error`, not message text.',
+    description,
     content: {
       'application/json': {
         schema: { $ref: '#/components/schemas/ApiError' },
@@ -47,14 +47,39 @@ interface OpenApiOperation {
   tags: string[]
   summary: string
   description?: string
+  security?: Array<Record<string, string[]>>
   responses: Record<string, OpenApiResponse>
 }
 
 type OpenApiPathItem = Partial<Record<'get' | 'put' | 'post' | 'delete' | 'patch' | 'options' | 'head', OpenApiOperation>>
 
-const operationsByVersion = {
+const operationsByVersion: Record<ApiVersion, readonly v1.VersionedOperation[]> = {
   v1: v1.operations,
-} satisfies Record<ApiVersion, typeof v1.operations>
+}
+
+// The credentials a protected operation accepts. Better Auth sets an HttpOnly
+// session cookie; deployments that enable the bearer plugin also accept the
+// opaque session token as `Authorization: Bearer <token>` (ADR 0003). Both are
+// alternatives, so a client authenticates with either one.
+function authenticatedSecurity(): Array<Record<string, string[]>> {
+  return [{ sessionCookie: [] }, { bearerAuth: [] }]
+}
+
+function securitySchemes() {
+  return {
+    sessionCookie: {
+      type: 'apiKey',
+      in: 'cookie',
+      name: 'better-auth.session_token',
+      description: 'Better Auth session cookie, set by `/api/auth/*` and HttpOnly. HTTPS deployments prefix it with `__Secure-`. Paste the cookie value to authenticate try-it requests.',
+    },
+    bearerAuth: {
+      type: 'http',
+      scheme: 'bearer',
+      description: 'Opaque session token in an `Authorization: Bearer <token>` header. Only available when the deployment enables bearer transport (`AUTH_BEARER_ENABLED=true`).',
+    },
+  }
+}
 
 // Every versioned response advertises its version (mirroring
 // `defineVersionedHandler`). Deprecation headers share `deprecationHeaders`.
@@ -87,18 +112,24 @@ function versionResponseHeaders(version: ApiVersion) {
   return headers
 }
 
-function versionedPaths(): Record<string, OpenApiPathItem> {
+// Pure: takes the operation tables so specs can exercise authenticated
+// operations without a live protected route.
+export function buildVersionedPaths(
+  operations: Record<ApiVersion, readonly v1.VersionedOperation[]> = operationsByVersion,
+): Record<string, OpenApiPathItem> {
   return Object.fromEntries(
     apiVersions.flatMap(version =>
-      operationsByVersion[version].map(operation => [
+      operations[version].map(operation => [
         `/api/${version}${operation.suffix}`,
         {
           [operation.method]: {
             tags: [version],
             summary: operation.summary,
             ...(operation.description ? { description: operation.description } : {}),
+            ...(operation.authenticated ? { security: authenticatedSecurity() } : {}),
             responses: {
               200: jsonRef(operation.responseName, 'Success.', versionResponseHeaders(version)),
+              ...(operation.authenticated ? { 401: apiErrorResponse('No valid session.') } : {}),
               default: apiErrorResponse(),
             },
           },
@@ -149,7 +180,7 @@ export function buildOpenApiDocument() {
         },
       },
     },
-    ...versionedPaths(),
+    ...buildVersionedPaths(),
     '/api/health': {
       get: {
         tags: ['infra'],
@@ -186,7 +217,7 @@ export function buildOpenApiDocument() {
     info: {
       title: 'nuxt-app API',
       version: currentApiVersion,
-      description: 'Versioned routes live under `/api/<version>/` and advertise it via `X-Api-Version`. Infra routes (`/api/auth/*`, `/api/health*`, `GET /api`, `/api/docs*`, `/api/openapi.json`) are unversioned. Failures use the API error contract except Better Auth, which keeps its own. Health 200s are custom liveness/readiness bodies; health failures use the API error contract.',
+      description: 'Versioned routes live under `/api/<version>/` and advertise it via `X-Api-Version`. Infra routes (`/api/auth/*`, `/api/health*`, `GET /api`, `/api/docs*`, `/api/openapi.json`) are unversioned. Failures use the API error contract except Better Auth, which keeps its own. Health 200s are custom liveness/readiness bodies; health failures use the API error contract. Protected operations accept either the Better Auth session cookie or, on deployments that enable it, a bearer token.',
     },
     servers: [
       { url: '/', description: 'Same origin: docs, spec, and API share one host.' },
@@ -198,6 +229,7 @@ export function buildOpenApiDocument() {
     ],
     paths,
     components: {
+      securitySchemes: securitySchemes(),
       schemas,
     },
   }

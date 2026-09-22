@@ -1,6 +1,7 @@
 import { apiVersions, currentApiVersion } from '@nuxt-app/config'
+import { v1 } from '@nuxt-app/types'
 import { describe, expect, it } from 'vitest'
-import { buildOpenApiDocument } from './openapi'
+import { buildOpenApiDocument, buildVersionedPaths } from './openapi'
 
 describe('buildOpenApiDocument', () => {
   it('reports the current version as the document version', () => {
@@ -83,5 +84,49 @@ describe('buildOpenApiDocument', () => {
     expect(document.servers).toEqual([
       { url: '/', description: expect.any(String) },
     ])
+  })
+
+  it('advertises the session cookie and bearer security schemes', () => {
+    const document = buildOpenApiDocument()
+
+    expect(document.components.securitySchemes).toMatchObject({
+      sessionCookie: {
+        type: 'apiKey',
+        in: 'cookie',
+        name: 'better-auth.session_token',
+      },
+      bearerAuth: {
+        type: 'http',
+        scheme: 'bearer',
+      },
+    })
+  })
+
+  it('leaves public operations without a security requirement', () => {
+    const document = buildOpenApiDocument()
+
+    expect(document.paths['/api/v1/hello']?.get?.security).toBeUndefined()
+  })
+
+  it('marks authenticated operations with both schemes and a 401', () => {
+    const paths = buildVersionedPaths({
+      v1: [
+        {
+          suffix: '/secret',
+          method: 'get',
+          summary: 'Secret operation',
+          responseName: 'HelloResponse',
+          responseSchema: v1.helloResponseSchema,
+          authenticated: true,
+        },
+      ],
+    })
+
+    const operation = paths['/api/v1/secret']?.get
+
+    expect(operation?.security).toEqual([{ sessionCookie: [] }, { bearerAuth: [] }])
+    expect(operation?.responses['401']?.content?.['application/json']?.schema).toEqual({
+      $ref: '#/components/schemas/ApiError',
+    })
   })
 })
