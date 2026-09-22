@@ -1,6 +1,6 @@
 import type { ApiVersion } from '@nuxt-app/config'
 import { apiVersions, currentApiVersion, versionMeta } from '@nuxt-app/config'
-import { apiErrorSchema, v1 } from '@nuxt-app/types'
+import { apiErrorSchema, loginSchema, registerSchema, v1 } from '@nuxt-app/types'
 import { z } from 'zod'
 import { deprecationHeaders } from './deprecation'
 import { healthResponseSchema, readyResponseSchema, versionRegistrySchema } from './infra'
@@ -43,11 +43,17 @@ interface OpenApiResponse {
   content?: Record<string, { schema: unknown }>
 }
 
+interface OpenApiRequestBody {
+  required?: boolean
+  content: Record<string, { schema: unknown }>
+}
+
 interface OpenApiOperation {
   tags: string[]
   summary: string
   description?: string
   security?: Array<Record<string, string[]>>
+  requestBody?: OpenApiRequestBody
   responses: Record<string, OpenApiResponse>
 }
 
@@ -77,6 +83,127 @@ function securitySchemes() {
       type: 'http',
       scheme: 'bearer',
       description: 'Opaque session token in an `Authorization: Bearer <token>` header. Only available when the deployment enables bearer transport (`AUTH_BEARER_ENABLED=true`).',
+    },
+  }
+}
+
+// Better Auth owns these shapes and answers failures with its own error body,
+// not the API error contract. They are documented loosely and only for the
+// sign-in flow: Scalar sends them same-origin, so a successful sign-in stores
+// the session cookie for later try-it requests. Better Auth internals are not
+// frozen here.
+const authUserSchema = z.looseObject({
+  id: z.string(),
+  email: z.string(),
+  name: z.string().nullable(),
+})
+
+const authSessionSchema = z.looseObject({
+  id: z.string(),
+  token: z.string(),
+  userId: z.string(),
+  expiresAt: z.string(),
+})
+
+const authSignInResponseSchema = z.looseObject({
+  redirect: z.boolean(),
+  token: z.string(),
+  url: z.string().nullable().optional(),
+  user: authUserSchema,
+})
+
+const authSignUpResponseSchema = z.looseObject({
+  token: z.string().nullable(),
+  user: authUserSchema,
+})
+
+// `GET /api/auth/get-session` answers `null` (200) when no session is present.
+const authSessionResponseSchema = z.union([
+  z.looseObject({ session: authSessionSchema, user: authUserSchema }),
+  z.null(),
+])
+
+const authSignOutResponseSchema = z.object({ success: z.boolean() })
+
+const authErrorSchema = z.looseObject({
+  message: z.string(),
+  code: z.string().optional(),
+  status: z.number().optional(),
+})
+
+function authErrorResponse(): OpenApiResponse {
+  return {
+    description: 'Better Auth error. Better Auth keeps its own error shape, not the API error contract.',
+    content: {
+      'application/json': {
+        schema: { $ref: '#/components/schemas/AuthError' },
+      },
+    },
+  }
+}
+
+function authRequestBody(schemaName: string): OpenApiRequestBody {
+  return {
+    required: true,
+    content: {
+      'application/json': {
+        schema: { $ref: `#/components/schemas/${schemaName}` },
+      },
+    },
+  }
+}
+
+// Better Auth routes are unversioned, so they are documented here rather than
+// in a `vN.operations` table. Only the email/password flow is covered: it is
+// what a local Scalar session needs. Social, OTP, and verification routes stay
+// out. Every response is the same-origin browser storing `better-auth.session_token`.
+function authPaths(): Record<string, OpenApiPathItem> {
+  return {
+    '/api/auth/sign-in/email': {
+      post: {
+        tags: ['auth'],
+        summary: 'Sign in with email and password',
+        description: 'Better Auth email/password sign-in. Success sets the `better-auth.session_token` cookie, which the browser stores for later try-it requests on this origin.',
+        requestBody: authRequestBody('LoginCredentials'),
+        responses: {
+          200: jsonRef('AuthSignInResponse', 'Signed in; session cookie set.'),
+          default: authErrorResponse(),
+        },
+      },
+    },
+    '/api/auth/sign-up/email': {
+      post: {
+        tags: ['auth'],
+        summary: 'Register with email and password',
+        description: 'Better Auth email/password registration. Success signs the new user in and sets the session cookie.',
+        requestBody: authRequestBody('RegisterCredentials'),
+        responses: {
+          200: jsonRef('AuthSignUpResponse', 'Registered and signed in; session cookie set.'),
+          default: authErrorResponse(),
+        },
+      },
+    },
+    '/api/auth/get-session': {
+      get: {
+        tags: ['auth'],
+        summary: 'Current session',
+        description: 'Returns the active session and user, or `null` when signed out. Useful to confirm a Scalar sign-in took effect.',
+        responses: {
+          200: jsonRef('AuthSessionResponse', 'Active session, or `null` when signed out.'),
+          default: authErrorResponse(),
+        },
+      },
+    },
+    '/api/auth/sign-out': {
+      post: {
+        tags: ['auth'],
+        summary: 'Sign out',
+        description: 'Clears the session and the session cookie.',
+        responses: {
+          200: jsonRef('AuthSignOutResponse', 'Signed out; session cookie cleared.'),
+          default: authErrorResponse(),
+        },
+      },
     },
   }
 }
@@ -181,6 +308,7 @@ export function buildOpenApiDocument() {
       },
     },
     ...buildVersionedPaths(),
+    ...authPaths(),
     '/api/health': {
       get: {
         tags: ['infra'],
@@ -210,6 +338,13 @@ export function buildOpenApiDocument() {
     HealthResponse: toJsonSchema(healthResponseSchema),
     ReadyResponse: toJsonSchema(readyResponseSchema),
     VersionRegistry: toJsonSchema(versionRegistrySchema),
+    LoginCredentials: toJsonSchema(loginSchema),
+    RegisterCredentials: toJsonSchema(registerSchema),
+    AuthSignInResponse: toJsonSchema(authSignInResponseSchema),
+    AuthSignUpResponse: toJsonSchema(authSignUpResponseSchema),
+    AuthSessionResponse: toJsonSchema(authSessionResponseSchema),
+    AuthSignOutResponse: toJsonSchema(authSignOutResponseSchema),
+    AuthError: toJsonSchema(authErrorSchema),
   }
 
   return {
@@ -217,7 +352,7 @@ export function buildOpenApiDocument() {
     info: {
       title: 'nuxt-app API',
       version: currentApiVersion,
-      description: 'Versioned routes live under `/api/<version>/` and advertise it via `X-Api-Version`. Infra routes (`/api/auth/*`, `/api/health*`, `GET /api`, `/api/docs*`, `/api/openapi.json`) are unversioned. Failures use the API error contract except Better Auth, which keeps its own. Health 200s are custom liveness/readiness bodies; health failures use the API error contract. Protected operations accept either the Better Auth session cookie or, on deployments that enable it, a bearer token.',
+      description: 'Versioned routes live under `/api/<version>/` and advertise it via `X-Api-Version`. Infra routes (`/api/auth/*`, `/api/health*`, `GET /api`, `/api/docs*`, `/api/openapi.json`) are unversioned. Failures use the API error contract except Better Auth, which keeps its own. Health 200s are custom liveness/readiness bodies; health failures use the API error contract. Protected operations accept either the Better Auth session cookie or, on deployments that enable it, a bearer token. The `auth` tag documents the email/password sign-in flow so a local Scalar session can authenticate before calling protected routes.',
     },
     servers: [
       { url: '/', description: 'Same origin: docs, spec, and API share one host.' },
@@ -225,6 +360,7 @@ export function buildOpenApiDocument() {
     tags: [
       { name: 'meta', description: 'Version registry and API documentation.' },
       ...apiVersions.map(version => ({ name: version, description: `Versioned-route operations (${versionMeta(version).deprecated ? 'deprecated' : 'current'}).` })),
+      { name: 'auth', description: 'Better Auth email/password sign-in, sign-up, session, and sign-out. Same-origin try-it stores the session cookie.' },
       { name: 'infra', description: 'Unversioned health checks.' },
     ],
     paths,

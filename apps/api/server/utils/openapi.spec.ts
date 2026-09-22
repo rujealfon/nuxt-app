@@ -129,4 +129,37 @@ describe('buildOpenApiDocument', () => {
       $ref: '#/components/schemas/ApiError',
     })
   })
+
+  it('documents the Better Auth email/password flow for same-origin try-it', () => {
+    const document = buildOpenApiDocument()
+
+    expect(document.tags.map(tag => tag.name)).toContain('auth')
+    expect(document.paths['/api/auth/sign-in/email']?.post?.tags).toEqual(['auth'])
+    expect(document.paths['/api/auth/sign-in/email']?.post?.requestBody?.content?.['application/json']?.schema)
+      .toEqual({ $ref: '#/components/schemas/LoginCredentials' })
+    expect(document.paths['/api/auth/sign-up/email']?.post?.requestBody?.content?.['application/json']?.schema)
+      .toEqual({ $ref: '#/components/schemas/RegisterCredentials' })
+    expect(document.paths['/api/auth/get-session']?.get?.responses['200']?.content?.['application/json']?.schema)
+      .toEqual({ $ref: '#/components/schemas/AuthSessionResponse' })
+    expect(document.paths['/api/auth/sign-out']?.post).toBeDefined()
+  })
+
+  it('keeps Better Auth on its own error contract instead of the API error contract', () => {
+    const document = buildOpenApiDocument()
+
+    expect(document.paths['/api/auth/sign-in/email']?.post?.responses.default?.content?.['application/json']?.schema)
+      .toEqual({ $ref: '#/components/schemas/AuthError' })
+    expect(document.components.schemas.AuthError).toMatchObject({
+      type: 'object',
+      properties: { message: { type: 'string' } },
+    })
+    expect(document.components.schemas.AuthSignInResponse).toMatchObject({
+      type: 'object',
+      properties: { redirect: { type: 'boolean' }, token: { type: 'string' } },
+    })
+    expect(document.components.schemas.LoginCredentials).toMatchObject({
+      type: 'object',
+      properties: { email: { type: 'string' }, password: { type: 'string' } },
+    })
+  })
 })
