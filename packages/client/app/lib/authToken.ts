@@ -50,11 +50,24 @@ export const browserAuthTokenStore: AuthTokenStore = {
 }
 
 let store: AuthTokenStore = browserAuthTokenStore
+let customStoreInstalled = false
 
-// Replaces the backing store, e.g. with `@capacitor/preferences` in a native
-// shell where `localStorage` is not guaranteed to survive an app update.
-export function setAuthTokenStore(next: AuthTokenStore) {
+// Installs the backing store once. Replacing an installed store could strand a
+// token in the old store and make the next request appear signed out.
+export function installAuthTokenStore(next: AuthTokenStore): boolean {
+  if (customStoreInstalled) {
+    return false
+  }
+
   store = next
+  customStoreInstalled = true
+  return true
+}
+
+// Test support for restoring module state between specs.
+export function resetAuthTokenStoreState() {
+  store = browserAuthTokenStore
+  customStoreInstalled = false
 }
 
 export function authTokenStore(): AuthTokenStore {

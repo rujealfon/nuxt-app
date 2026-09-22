@@ -8,7 +8,7 @@ function tokenResponse(headers: Record<string, string>) {
 }
 
 function requestContext() {
-  return { options: {} as { headers?: HeadersInit } }
+  return {} as { headers?: HeadersInit }
 }
 
 beforeEach(resetAuthTokenStore)
@@ -20,25 +20,31 @@ describe('authFetchOptions', () => {
     expect(options.credentials).toBe('include')
     expect(options.auth).toBeUndefined()
     expect(options.onSuccess).toBeUndefined()
-    expect(options.onResponseError).toBeUndefined()
+    expect(options.onError).toBeUndefined()
   })
 
   it('drops cookies and sends the token as a bearer header', async () => {
     await writeAuthToken('session-token')
 
     const options = authFetchOptions(true)
+    const token = options.auth?.type === 'Bearer' ? options.auth.token : undefined
 
     expect(options.credentials).toBe('omit')
     expect(options.auth?.type).toBe('Bearer')
-    await expect(options.auth?.token()).resolves.toBe('session-token')
+    expect(typeof token).toBe('function')
+    await expect((token as () => Promise<string>)()).resolves.toBe('session-token')
   })
 
   it('sends an empty token before sign-in', async () => {
-    await expect(authFetchOptions(true).auth?.token()).resolves.toBe('')
+    const auth = authFetchOptions(true).auth
+    const token = auth?.type === 'Bearer' ? auth.token : undefined
+
+    expect(typeof token).toBe('function')
+    await expect((token as () => Promise<string>)()).resolves.toBe('')
   })
 
   it('persists the token handed back on a successful response', async () => {
-    await authFetchOptions(true).onSuccess?.(tokenResponse({ 'set-auth-token': 'issued-token' }))
+    await authFetchOptions(true).onSuccess?.(tokenResponse({ 'set-auth-token': 'issued-token' }) as never)
 
     await expect(readAuthToken()).resolves.toBe('issued-token')
   })
@@ -46,7 +52,7 @@ describe('authFetchOptions', () => {
   it('leaves a stored token alone when the response carries none', async () => {
     await writeAuthToken('session-token')
 
-    await authFetchOptions(true).onSuccess?.(tokenResponse({}))
+    await authFetchOptions(true).onSuccess?.(tokenResponse({}) as never)
 
     await expect(readAuthToken()).resolves.toBe('session-token')
   })
@@ -65,8 +71,8 @@ describe('apiFetchOptions', () => {
     const options = apiFetchOptions(true)
 
     expect(options.credentials).toBe('omit')
-    expect(options.onRequest).toBe(setBearerAuthorization)
-    expect(options.onResponseError).toBe(clearStaleBearer)
+    expect(typeof options.onRequest).toBe('function')
+    expect(typeof options.onResponseError).toBe('function')
   })
 })
 
@@ -77,16 +83,16 @@ describe('setBearerAuthorization', () => {
 
     await setBearerAuthorization(context)
 
-    expect(new Headers(context.options.headers).get('Authorization')).toBe('Bearer session-token')
+    expect(new Headers(context.headers).get('Authorization')).toBe('Bearer session-token')
   })
 
   it('keeps headers a caller already set', async () => {
     await writeAuthToken('session-token')
-    const context = { options: { headers: { 'x-trace': 'abc' } } }
+    const context = { headers: { 'x-trace': 'abc' } as HeadersInit }
 
     await setBearerAuthorization(context)
 
-    const headers = new Headers(context.options.headers)
+    const headers = new Headers(context.headers)
     expect(headers.get('x-trace')).toBe('abc')
     expect(headers.get('Authorization')).toBe('Bearer session-token')
   })
@@ -96,7 +102,7 @@ describe('setBearerAuthorization', () => {
 
     await setBearerAuthorization(context)
 
-    expect(context.options.headers).toBeUndefined()
+    expect(context.headers).toBeUndefined()
   })
 })
 
@@ -104,7 +110,7 @@ describe('clearStaleBearer', () => {
   it('drops the stored token when the API answers 401', async () => {
     await writeAuthToken('session-token')
 
-    await clearStaleBearer({ response: { status: 401 } })
+    await clearStaleBearer(401)
 
     await expect(readAuthToken()).resolves.toBeNull()
   })
@@ -112,7 +118,7 @@ describe('clearStaleBearer', () => {
   it('keeps the stored token on any other status', async () => {
     await writeAuthToken('session-token')
 
-    await clearStaleBearer({ response: { status: 500 } })
+    await clearStaleBearer(500)
 
     await expect(readAuthToken()).resolves.toBe('session-token')
   })

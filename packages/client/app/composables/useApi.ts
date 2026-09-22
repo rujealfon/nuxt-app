@@ -1,6 +1,6 @@
 import { isBearerTransport } from '@nuxt-app/config'
 import { parseApiError } from '@nuxt-app/types'
-import { $fetch, useRuntimeConfig } from '#imports'
+import { $fetch, createUseFetch, useRuntimeConfig } from '#imports'
 import { apiFetchOptions } from '../lib/authTransport'
 
 type ApiClient = typeof $fetch
@@ -46,10 +46,13 @@ export function useApi() {
 
   return {
     api: clientFor(baseURL, bearer),
-    // Cookie transport only: `useFetch` builds its own request and never runs
-    // this client's `onRequest`, so bearer mode would send it unauthenticated.
-    // Use `api` for bearer calls.
-    apiUrl: (path: string) => `${baseURL}${path}`,
     parseApiError: apiErrorFromCaught,
   }
 }
+
+// SSR-aware versioned-route fetcher. It uses the same configured client as
+// `useApi()`, so cookie and bearer transports cannot diverge.
+export const useApiFetch = createUseFetch(callerOptions => ({
+  ...callerOptions,
+  $fetch: useApi().api,
+}))

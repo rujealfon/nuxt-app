@@ -17,6 +17,13 @@ function jsonResponse(body: unknown, headers: Record<string, string> = {}) {
   })
 }
 
+function errorResponse(status: number, body: unknown) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { 'content-type': 'application/json' },
+  })
+}
+
 function requestOf(call: unknown[]) {
   const [input, init] = call as [RequestInfo | URL, RequestInit | undefined]
 
@@ -72,5 +79,14 @@ describe('bearer transport against the real better-auth client', () => {
 
     expect(request.headers.get('authorization')).toBe('Bearer issued-token')
     expect(request.credentials).toBe('omit')
+  })
+
+  it('clears a stale token when the auth client receives a 401', async () => {
+    const client = await signedInClient()
+
+    fetchMock.mockResolvedValueOnce(errorResponse(401, { message: 'Unauthorized' }))
+    await client.getSession()
+
+    await expect(readAuthToken()).resolves.toBeNull()
   })
 })

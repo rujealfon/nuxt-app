@@ -366,10 +366,9 @@ To ship a new version:
 Frontends target a version with `NUXT_PUBLIC_API_VERSION` (defaults to
 `currentApiVersion`). `useApi()` from `@nuxt-app/client` returns a `$fetch`
 instance scoped to `<apiBase>/api/<version>` (carrying the session per the
-configured [session transport](#native-capacitor-app)) plus an `apiUrl(path)`
-helper for `useFetch` — cookie transport only, since `useFetch` never runs the
-client's request hook; Better Auth keeps its own unversioned client (internal to
-`useAuth()`).
+configured [session transport](#native-capacitor-app)). `useApiFetch()` provides
+the SSR-aware Nuxt fetch path with the same authenticated client. Better Auth
+keeps its own unversioned client internal to `useAuth()`.
 
 ## Native (Capacitor) app
 

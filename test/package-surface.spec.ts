@@ -6,6 +6,7 @@ import { describe, expect, it, vi } from 'vitest'
 // so this node-environment export check can read the modules' exports.
 vi.mock('#imports', () => ({
   $fetch: Object.assign(vi.fn(), { create: vi.fn(() => vi.fn()) }),
+  createUseFetch: vi.fn(() => vi.fn()),
   navigateTo: vi.fn(),
   useRuntimeConfig: vi.fn(() => ({ public: {} })),
 }))
@@ -16,7 +17,7 @@ const root = fileURLToPath(new URL('..', import.meta.url))
 // layer publishes to apps. Compared with exact equality, so adding or renaming
 // a public symbol must update this list deliberately, and nothing joins the
 // interface by accident.
-const clientComposables = ['useApi', 'useAuth', 'useAuthForm', 'useAuthTokenStore']
+const clientComposables = ['useApi', 'useApiFetch', 'useAuth', 'useAuthForm', 'useAuthTokenStore']
 const uiComposables = ['useSite']
 const uiComponents = ['AppHeader', 'AppShell', 'AuthScreen']
 
