@@ -4,6 +4,7 @@ import { actorFromSession } from '@nuxt-app/types'
 import { createAuthClient } from 'better-auth/vue'
 import { computed, getCurrentScope } from 'vue'
 import { useRuntimeConfig } from '#imports'
+import { authRequestError } from '../lib/authError'
 import { clearAuthToken } from '../lib/authToken'
 import { authFetchOptions } from '../lib/authTransport'
 
@@ -49,7 +50,7 @@ export function useAuth() {
     const { error } = await client.signIn.email(credentials)
 
     if (error) {
-      throw new Error(error.message || 'Unable to sign in')
+      throw authRequestError(error)
     }
   }
 
@@ -57,7 +58,7 @@ export function useAuth() {
     const { error } = await client.signUp.email(credentials)
 
     if (error) {
-      throw new Error(error.message || 'Unable to sign up')
+      throw authRequestError(error)
     }
   }
 

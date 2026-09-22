@@ -60,6 +60,23 @@ describe('authScreen', () => {
     expect(wrapper.text()).toContain('Invalid email or password')
   })
 
+  it('applies server field errors to the form', async () => {
+    const wrapper = await mountScreen()
+
+    await wrapper.setProps({
+      fieldErrors: [{ name: 'email', message: 'Enter a valid email address' }],
+    })
+    await flushPromises()
+
+    const form = wrapper.getComponent({ name: 'UForm' }).vm as unknown as {
+      getErrors: (name: string) => Array<{ message: string }>
+    }
+
+    expect(form.getErrors('email')).toEqual([
+      expect.objectContaining({ message: 'Enter a valid email address' }),
+    ])
+  })
+
   it('passes the loading state to the form', async () => {
     const wrapper = await mountScreen({ loading: true })
 

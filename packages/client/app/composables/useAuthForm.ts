@@ -1,6 +1,8 @@
 import type { MaybeRefOrGetter } from 'vue'
+import type { AuthFieldError } from '../lib/authError'
 import { ref, toValue } from 'vue'
 import { navigateTo } from '#imports'
+import { AuthRequestError } from '../lib/authError'
 
 export interface AuthFormOptions<T> {
   submit: (data: T) => Promise<void>
@@ -22,6 +24,7 @@ function inAppPath(path: string): string {
 // UI package stays presentational.
 export function useAuthForm<T>(options: AuthFormOptions<T>) {
   const errorMessage = ref('')
+  const fieldErrors = ref<AuthFieldError[]>([])
   const submitting = ref(false)
 
   async function onSubmit(data: T) {
@@ -31,6 +34,7 @@ export function useAuthForm<T>(options: AuthFormOptions<T>) {
 
     submitting.value = true
     errorMessage.value = ''
+    fieldErrors.value = []
 
     try {
       await options.submit(data)
@@ -45,14 +49,19 @@ export function useAuthForm<T>(options: AuthFormOptions<T>) {
       }
     }
     catch (error) {
-      errorMessage.value = error instanceof Error && error.message
-        ? error.message
-        : options.fallbackMessage ?? 'Something went wrong'
+      // Field recovery is more useful than the catch-all, so only surface a
+      // message when there is no field to attach the failure to.
+      fieldErrors.value = error instanceof AuthRequestError ? error.fieldErrors : []
+      errorMessage.value = fieldErrors.value.length
+        ? ''
+        : error instanceof Error && error.message
+          ? error.message
+          : options.fallbackMessage ?? 'Something went wrong'
     }
     finally {
       submitting.value = false
     }
   }
 
-  return { errorMessage, submitting, onSubmit }
+  return { errorMessage, fieldErrors, submitting, onSubmit }
 }

@@ -25,8 +25,9 @@ function clientFor(baseURL: string, bearer: boolean): ApiClient {
   return cached
 }
 
-// $fetch throws a FetchError whose `data` is the JSON body. Better Auth
-// failures are a different shape and must not parse as the API error contract.
+// $fetch throws a FetchError whose `data` is the JSON body. `useAuth` reads the
+// auth client's failures through `authRequestError`; both are the API error
+// contract, so this reads only the versioned-route body.
 function apiErrorFromCaught(error: unknown) {
   if (error && typeof error === 'object' && 'data' in error) {
     const fromBody = parseApiError(error.data)

@@ -137,23 +137,6 @@ const authSignOutResponseSchema = z.looseObject({
   redirect: z.boolean().optional(),
 })
 
-const authErrorSchema = z.looseObject({
-  message: z.string(),
-  code: z.string().optional(),
-  status: z.number().optional(),
-})
-
-function authErrorResponse(): OpenApiResponse {
-  return {
-    description: 'Better Auth error. Better Auth keeps its own error shape, not the API error contract.',
-    content: {
-      'application/json': {
-        schema: { $ref: '#/components/schemas/AuthError' },
-      },
-    },
-  }
-}
-
 function authRequestBody(schemaName: string): OpenApiRequestBody {
   return {
     required: true,
@@ -169,6 +152,8 @@ function authRequestBody(schemaName: string): OpenApiRequestBody {
 // in a `vN.operations` table. Only the email/password flow is covered: it is
 // what a local Scalar session needs. Social, OTP, and verification routes stay
 // out. Every response is the same-origin browser storing `better-auth.session_token`.
+// Failures are normalized onto the API error contract by `server/api/auth/[...all].ts`;
+// `invalid_input` may carry `details`, so try-it shows per-field errors.
 function authPaths(): Record<string, OpenApiPathItem> {
   return {
     '/api/auth/sign-in/email': {
@@ -179,7 +164,7 @@ function authPaths(): Record<string, OpenApiPathItem> {
         requestBody: authRequestBody('LoginCredentials'),
         responses: {
           200: jsonRef('AuthSignInResponse', 'Signed in; session cookie set.'),
-          default: authErrorResponse(),
+          default: apiErrorResponse(),
         },
       },
     },
@@ -187,11 +172,11 @@ function authPaths(): Record<string, OpenApiPathItem> {
       post: {
         tags: ['auth'],
         summary: 'Register with email and password',
-        description: 'Better Auth email/password registration. Success signs the new user in and sets the session cookie.',
+        description: 'Better Auth email/password registration. Success signs the new user in and sets the session cookie. A body that fails the shared `RegisterCredentials` schema answers `invalid_input` with `details`.',
         requestBody: authRequestBody('RegisterCredentials'),
         responses: {
           200: jsonRef('AuthSignUpResponse', 'Registered and signed in; session cookie set.'),
-          default: authErrorResponse(),
+          default: apiErrorResponse(),
         },
       },
     },
@@ -202,7 +187,7 @@ function authPaths(): Record<string, OpenApiPathItem> {
         description: 'Returns the active session and user, or `null` when signed out. Useful to confirm a Scalar sign-in took effect.',
         responses: {
           200: jsonRef('AuthSessionResponse', 'Active session, or `null` when signed out.'),
-          default: authErrorResponse(),
+          default: apiErrorResponse(),
         },
       },
     },
@@ -214,7 +199,7 @@ function authPaths(): Record<string, OpenApiPathItem> {
         requestBody: authRequestBody('AuthSignOutRequest'),
         responses: {
           200: jsonRef('AuthSignOutResponse', 'Signed out; session cookie cleared.'),
-          default: authErrorResponse(),
+          default: apiErrorResponse(),
         },
       },
     },
@@ -358,7 +343,6 @@ export function buildOpenApiDocument() {
     AuthSessionResponse: toJsonSchema(authSessionResponseSchema),
     AuthSignOutRequest: toJsonSchema(authSignOutRequestSchema),
     AuthSignOutResponse: toJsonSchema(authSignOutResponseSchema),
-    AuthError: toJsonSchema(authErrorSchema),
   }
 
   return {
@@ -366,7 +350,7 @@ export function buildOpenApiDocument() {
     info: {
       title: 'nuxt-app API',
       version: currentApiVersion,
-      description: 'Versioned routes live under `/api/<version>/` and advertise it via `X-Api-Version`. Infra routes (`/api/auth/*`, `/api/health*`, `GET /api`, `/api/docs*`, `/api/openapi.json`) are unversioned. Failures use the API error contract except Better Auth, which keeps its own. Health 200s are custom liveness/readiness bodies; health failures use the API error contract. Protected operations accept either the Better Auth session cookie or, on deployments that enable it, a bearer token. The `auth` tag documents the email/password sign-in flow so a local Scalar session can authenticate before calling protected routes.',
+      description: 'Versioned routes live under `/api/<version>/` and advertise it via `X-Api-Version`. Infra routes (`/api/auth/*`, `/api/health*`, `GET /api`, `/api/docs*`, `/api/openapi.json`) are unversioned. Failures use the API error contract: `/api/auth/*` normalizes Better Auth failures onto it, and `invalid_input` may carry `details`. Health 200s are custom liveness/readiness bodies; health failures use the API error contract. Protected operations accept either the Better Auth session cookie or, on deployments that enable it, a bearer token. The `auth` tag documents the email/password sign-in flow so a local Scalar session can authenticate before calling protected routes.',
     },
     servers: [
       { url: '/', description: 'Same origin: docs, spec, and API share one host.' },
@@ -374,7 +358,7 @@ export function buildOpenApiDocument() {
     tags: [
       { name: 'meta', description: 'Version registry and API documentation.' },
       ...apiVersions.map(version => ({ name: version, description: `Versioned-route operations (${versionMeta(version).deprecated ? 'deprecated' : 'current'}).` })),
-      { name: 'auth', description: 'Better Auth email/password sign-in, sign-up, session, and sign-out. Same-origin try-it stores the session cookie.' },
+      { name: 'auth', description: 'Better Auth email/password sign-in, sign-up, session, and sign-out. Same-origin try-it stores the session cookie. Failures use the API error contract.' },
       { name: 'infra', description: 'Unversioned health checks.' },
     ],
     paths,

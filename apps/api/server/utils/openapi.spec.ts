@@ -147,15 +147,22 @@ describe('buildOpenApiDocument', () => {
       .toEqual({ $ref: '#/components/schemas/AuthSignOutRequest' })
   })
 
-  it('keeps Better Auth on its own error contract instead of the API error contract', () => {
+  it('documents auth failures with the API error contract', () => {
     const document = buildOpenApiDocument()
 
-    expect(document.paths['/api/auth/sign-in/email']?.post?.responses.default?.content?.['application/json']?.schema)
-      .toEqual({ $ref: '#/components/schemas/AuthError' })
-    expect(document.components.schemas.AuthError).toMatchObject({
-      type: 'object',
-      properties: { message: { type: 'string' } },
-    })
+    for (const path of [
+      '/api/auth/sign-in/email',
+      '/api/auth/sign-up/email',
+      '/api/auth/get-session',
+      '/api/auth/sign-out',
+    ]) {
+      const method = path === '/api/auth/get-session' ? 'get' : 'post'
+
+      expect(document.paths[path]?.[method]?.responses.default?.content?.['application/json']?.schema)
+        .toEqual({ $ref: '#/components/schemas/ApiError' })
+    }
+
+    expect(document.components.schemas.AuthError).toBeUndefined()
     expect(document.components.schemas.AuthSignInResponse).toMatchObject({
       type: 'object',
       properties: { redirect: { type: 'boolean' }, token: { type: 'string' } },

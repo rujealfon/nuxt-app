@@ -25,7 +25,7 @@ A failure independent of transport. Domain code raises it when an operation cann
 _Avoid_: error, exception, API error, product failure, ProductFailure
 
 **API error contract**:
-The single failure shape for versioned routes: `error` (a stable code), a safe non-empty message, and optional input details only on `invalid_input`. Clients branch on `error`, never the message. Better Auth keeps its own contract. Health 200s are custom liveness/readiness bodies; health failures and other infra-route failures use this shape.
+The single failure shape: `error` (a stable code), a safe non-empty message, and optional input details only on `invalid_input`. Clients branch on `error`, never the message. `/api/auth/*` normalizes Better Auth failures onto this shape. Health 200s are custom liveness/readiness bodies; health failures and other infra-route failures use this shape.
 _Avoid_: error response, error format, Zod issue, validation error, ProductError
 
 **Input detail**:

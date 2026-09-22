@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { effectScope } from 'vue'
 import { useRuntimeConfig } from '#imports'
 import { resetAuthTokenStore } from '../../test/helpers/authTokenStore'
+import { AuthRequestError } from '../lib/authError'
 import { installAuthTokenStore, readAuthToken, writeAuthToken } from '../lib/authToken'
 import { useAuth } from './useAuth'
 
@@ -103,6 +104,28 @@ describe('useAuth', () => {
     await expect(useAuth().signIn({ email: 'user@example.com', password: 'nope' }))
       .rejects
       .toThrow('Invalid credentials')
+  })
+
+  it('throws a typed error carrying invalid_input details', async () => {
+    signUpEmail.mockResolvedValue({
+      data: null,
+      error: {
+        error: 'invalid_input',
+        message: 'The request was invalid',
+        details: [{ path: ['email'], message: 'Enter a valid email address' }],
+        status: 400,
+        statusText: 'Bad Request',
+      },
+    })
+
+    const error = await useAuth()
+      .signUp({ name: 'A', email: 'bad', password: 'short' })
+      .catch((caught: unknown) => caught)
+
+    expect(error).toBeInstanceOf(AuthRequestError)
+    expect((error as AuthRequestError).fieldErrors).toEqual([
+      { name: 'email', message: 'Enter a valid email address' },
+    ])
   })
 
   it('signs up through the auth client', async () => {

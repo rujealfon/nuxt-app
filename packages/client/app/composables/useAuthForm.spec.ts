@@ -1,5 +1,6 @@
 import { mockNuxtImport } from '@nuxt/test-utils/runtime'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { AuthRequestError } from '../lib/authError'
 import { useAuthForm } from './useAuthForm'
 
 const navigateTo = vi.hoisted(() => vi.fn())
@@ -46,6 +47,22 @@ describe('useAuthForm', () => {
     await onSubmit({})
 
     expect(errorMessage.value).toBe('Email already in use')
+  })
+
+  it('maps invalid_input details onto fields instead of the catch-all', async () => {
+    const { errorMessage, fieldErrors, onSubmit } = useAuthForm({
+      submit: vi.fn().mockRejectedValue(new AuthRequestError('The request was invalid', {
+        error: 'invalid_input',
+        message: 'The request was invalid',
+        details: [{ path: ['email'], message: 'Enter a valid email address' }],
+      })),
+      fallbackMessage: 'Unable to create your account',
+    })
+
+    await onSubmit({})
+
+    expect(fieldErrors.value).toEqual([{ name: 'email', message: 'Enter a valid email address' }])
+    expect(errorMessage.value).toBe('')
   })
 
   it('falls back when the failure has no usable message', async () => {
