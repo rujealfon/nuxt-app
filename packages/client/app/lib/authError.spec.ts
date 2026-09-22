@@ -54,4 +54,13 @@ describe('authRequestError', () => {
   it('uses a safe default when there is no message', () => {
     expect(authRequestError(undefined).message).toBe('Unable to continue')
   })
+
+  it('has no field errors when invalid_input carries no details', () => {
+    const error = authRequestError({
+      error: 'invalid_input',
+      message: 'The request was invalid',
+    })
+
+    expect(error.fieldErrors).toEqual([])
+  })
 })

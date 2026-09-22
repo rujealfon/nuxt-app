@@ -76,6 +76,16 @@ describe('useAuthForm', () => {
     expect(errorMessage.value).toBe('Invalid email or password')
   })
 
+  it('uses the built-in fallback when none is configured', async () => {
+    const { errorMessage, onSubmit } = useAuthForm({
+      submit: vi.fn().mockRejectedValue('nope'),
+    })
+
+    await onSubmit({})
+
+    expect(errorMessage.value).toBe('Something went wrong')
+  })
+
   it('reports a navigation failure separately from a submit failure', async () => {
     navigateTo.mockRejectedValue(new Error('external'))
     const { errorMessage, onSubmit } = useAuthForm({

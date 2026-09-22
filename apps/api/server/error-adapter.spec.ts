@@ -287,4 +287,58 @@ describe('error adapter', () => {
     })
     expect(loggerError).toHaveBeenCalled()
   })
+
+  it('treats a fatal H3 error as internal_error', () => {
+    const event = makeEvent()
+
+    handle(h3Error(500, { fatal: true }), event)
+
+    expect(setResponseStatus).toHaveBeenCalledWith(event, 500)
+    expect(sentBody(send.mock.calls[0] as unknown[])).toEqual({
+      error: 'internal_error',
+      message: 'An unexpected error occurred',
+    })
+  })
+
+  it('conceals an unmapped 5xx as internal_error', () => {
+    const event = makeEvent()
+
+    handle(h3Error(503), event)
+
+    expect(setResponseStatus).toHaveBeenCalledWith(event, 500)
+    expect(sentBody(send.mock.calls[0] as unknown[])).toEqual({
+      error: 'internal_error',
+      message: 'An unexpected error occurred',
+    })
+  })
+
+  it('ignores a non-numeric statusCode', () => {
+    const event = makeEvent()
+
+    handle(Object.assign(new Error('h3'), { statusCode: 'oops' }), event)
+
+    expect(setResponseStatus).toHaveBeenCalledWith(event, 500)
+  })
+
+  it('normalizes a non-object error', () => {
+    const event = makeEvent()
+
+    handle('boom', event)
+
+    expect(setResponseStatus).toHaveBeenCalledWith(event, 500)
+    expect(sentBody(send.mock.calls[0] as unknown[])).toEqual({
+      error: 'internal_error',
+      message: 'An unexpected error occurred',
+    })
+  })
+
+  it('keeps an existing cache-control on a non-404 body', () => {
+    const event = makeEvent()
+    mocks.getResponseHeader.mockReturnValueOnce('public, max-age=60')
+
+    handle(domainFailure('internal_error'), event)
+
+    const headers = setResponseHeaders.mock.calls[0]![1] as Record<string, unknown>
+    expect(headers['cache-control']).toBeUndefined()
+  })
 })

@@ -82,4 +82,20 @@ describe('rate-limit middleware', () => {
     expect(setHeader).toHaveBeenCalledWith(expect.anything(), 'x-retry-after', '13')
     expect(setHeader).toHaveBeenCalledWith(expect.anything(), 'retry-after', 13)
   })
+
+  it('falls back to an unknown ip when none is available', async () => {
+    mocks.getRequestIP.mockReturnValueOnce(undefined as unknown as string)
+
+    await handler(event('/api/v1/hello'))
+
+    expect(consume).toHaveBeenCalledWith('unknown:GET:/api/v1/hello', { window: 60, max: 100 })
+  })
+
+  it('defaults a missing retry-after to zero', async () => {
+    consume.mockResolvedValue({ allowed: false, retryAfter: null })
+
+    await handler(event('/api/v1/hello')).catch(() => {})
+
+    expect(setHeader).toHaveBeenCalledWith(expect.anything(), 'retry-after', 0)
+  })
 })

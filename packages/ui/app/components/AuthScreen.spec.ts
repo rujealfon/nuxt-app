@@ -82,4 +82,18 @@ describe('authScreen', () => {
 
     expect(wrapper.getComponent({ name: 'UAuthForm' }).props('submit')).toMatchObject({ loading: true })
   })
+
+  it('clears field errors when the prop is removed', async () => {
+    const wrapper = await mountScreen({ fieldErrors: [{ name: 'email', message: 'bad' }] })
+    await flushPromises()
+
+    await wrapper.setProps({ fieldErrors: undefined })
+    await flushPromises()
+
+    const form = wrapper.getComponent({ name: 'UForm' }).vm as unknown as {
+      getErrors: (name: string) => unknown[]
+    }
+
+    expect(form.getErrors('email')).toEqual([])
+  })
 })

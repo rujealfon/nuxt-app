@@ -45,4 +45,17 @@ describe('admin login page', () => {
 
     expect(wrapper.text()).toContain('Invalid email or password')
   })
+
+  it('falls back to the app root when the redirect is not a string', async () => {
+    auth.redirect = ['/users'] as unknown as string
+    auth.signIn.mockResolvedValue(undefined)
+    const wrapper = await mountSuspended(LoginPage)
+
+    wrapper.findComponent({ name: 'UAuthForm' }).vm.$emit('submit', {
+      data: { email: 'admin@example.com', password: 'secret' },
+    })
+    await flushPromises()
+
+    expect(auth.navigateTo).toHaveBeenCalledWith('/')
+  })
 })

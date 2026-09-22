@@ -51,4 +51,10 @@ describe('useApi', () => {
 
     expect(parseApiError({ data: { message: 'Invalid credentials' } })).toBeNull()
   })
+
+  it('returns null for a falsy failure', () => {
+    const { parseApiError } = useApi()
+
+    expect(parseApiError(null)).toBeNull()
+  })
 })

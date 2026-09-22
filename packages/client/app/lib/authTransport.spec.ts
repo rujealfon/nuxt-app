@@ -2,7 +2,7 @@ import { $fetch } from 'ofetch'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { resetAuthTokenStore } from '../../test/helpers/authTokenStore'
 import { readAuthToken, writeAuthToken } from './authToken'
-import { apiFetchOptions, authFetchOptions, clearStaleBearer, setBearerAuthorization } from './authTransport'
+import { apiClientKey, apiFetchOptions, authFetchOptions, clearStaleBearer, setBearerAuthorization } from './authTransport'
 
 function tokenResponse(headers: Record<string, string>) {
   return { response: new Response(null, { headers }) }
@@ -157,5 +157,12 @@ describe('clearStaleBearer', () => {
     await clearStaleBearer(401)
 
     await expect(readAuthToken()).resolves.toBe('session-token')
+  })
+})
+
+describe('apiClientKey', () => {
+  it('distinguishes the bearer and cookie transports', () => {
+    expect(apiClientKey('https://api.test/api/v1', true)).toBe('https://api.test/api/v1|bearer')
+    expect(apiClientKey('https://api.test/api/v1', false)).toBe('https://api.test/api/v1|cookie')
   })
 })

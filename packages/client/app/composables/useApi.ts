@@ -2,7 +2,7 @@ import type { FetchContext } from 'ofetch'
 import { isBearerTransport } from '@nuxt-app/config'
 import { parseApiError } from '@nuxt-app/types'
 import { $fetch, createUseFetch, useRequestHeaders, useRuntimeConfig } from '#imports'
-import { apiFetchOptions } from '../lib/authTransport'
+import { apiClientKey, apiFetchOptions } from '../lib/authTransport'
 
 type ApiClient = typeof $fetch
 
@@ -11,7 +11,7 @@ type ApiClient = typeof $fetch
 const clients = new Map<string, ApiClient>()
 
 function clientFor(baseURL: string, bearer: boolean): ApiClient {
-  const key = `${baseURL}|${bearer ? 'bearer' : 'cookie'}`
+  const key = apiClientKey(baseURL, bearer)
   let cached = clients.get(key)
 
   if (!cached) {

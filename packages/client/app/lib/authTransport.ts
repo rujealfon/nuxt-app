@@ -64,3 +64,9 @@ export function apiFetchOptions(bearer: boolean): ApiFetchOptions {
 
   return options
 }
+
+// Cache key for a configured API client: one per origin + transport. Pure, so
+// the key is testable without a Nuxt environment.
+export function apiClientKey(baseURL: string, bearer: boolean): string {
+  return `${baseURL}|${bearer ? 'bearer' : 'cookie'}`
+}
