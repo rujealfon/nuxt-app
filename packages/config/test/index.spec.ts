@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { apiBaseFor, apiVersions, appPorts, currentApiVersion, deprecatedApiVersions, parseOrigins, siteUrls, versionMeta } from '../index'
+import { apiBaseFor, apiVersions, appPorts, authModeFor, currentApiVersion, deprecatedApiVersions, parseOrigins, siteUrls, versionMeta } from '../index'
 
 describe('apiBaseFor', () => {
   it('falls back to the local API port', () => {
@@ -8,6 +8,20 @@ describe('apiBaseFor', () => {
 
   it('returns the provided base unchanged', () => {
     expect(apiBaseFor('https://api.nuxt-app.com')).toBe('https://api.nuxt-app.com')
+  })
+})
+
+describe('authModeFor', () => {
+  it('defaults to cookies', () => {
+    expect(authModeFor(undefined)).toBe('cookie')
+    expect(authModeFor('')).toBe('cookie')
+  })
+
+  it('selects bearer only for the exact value', () => {
+    expect(authModeFor('bearer')).toBe('bearer')
+    // A typo must not silently switch transports.
+    expect(authModeFor('Bearer')).toBe('cookie')
+    expect(authModeFor('token')).toBe('cookie')
   })
 })
 

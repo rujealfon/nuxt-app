@@ -304,7 +304,9 @@ pnpm --filter @nuxt-app/api db:migrate
 [Better Auth](https://better-auth.com) handles email + password authentication.
 Its handler is mounted at `/api/auth/[...all]` on the API
 (`apps/api/server/api/auth/[...all].ts`) with the Drizzle adapter; sessions live
-in Postgres (`session` table), and Better Auth sends the session token in an HttpOnly cookie.
+in Postgres (`session` table). The browser apps carry the session token in an
+HttpOnly cookie; a native shell switches to a bearer token instead (see
+[Native (Capacitor) app](#native-capacitor-app)).
 Config is in `apps/api/server/database/auth.ts` (shared with the CLI and seed),
 and server guards (`getActor`, `requireActor`) are in
 `apps/api/server/utils/session.ts`.
@@ -363,6 +365,38 @@ To ship a new version:
 
 Frontends target a version with `NUXT_PUBLIC_API_VERSION` (defaults to
 `currentApiVersion`). `useApi()` from `@nuxt-app/client` returns a `$fetch`
-instance scoped to `<apiBase>/api/<version>` (credentials included) plus an
-`apiUrl(path)` helper for `useFetch`; Better Auth keeps its own unversioned
-client (internal to `useAuth()`).
+instance scoped to `<apiBase>/api/<version>` (carrying the session per the
+configured [session transport](#native-capacitor-app)) plus an `apiUrl(path)`
+helper for `useFetch`; Better Auth keeps its own unversioned client (internal to
+`useAuth()`).
+
+## Native (Capacitor) app
+
+A native shell hosts the SPA in a WebView, served from `capacitor://localhost`
+(iOS) or `https://localhost` (Android). Every API call is therefore cross-origin,
+and WebViews refuse the API's cross-origin `Set-Cookie`: the sign-in request
+succeeds, the cookie is dropped, and the user is signed out again on the next
+navigation. The shell uses the bearer transport instead ([ADR-0003](docs/adr/0003-bearer-tokens-for-native-clients.md)).
+
+1. Set `NUXT_PUBLIC_AUTH_MODE=bearer` in the app's environment. `useAuth()` and
+   `useApi()` then send the session token in an `Authorization` header and stop
+   using cookies. Unset — or any other value — keeps cookies, per
+   `authModeFor()`.
+2. Add the WebView origin to `CORS_ORIGINS` on the API. The origin is
+   `server.iosScheme` / `server.androidScheme` + `server.hostname`, i.e.
+   `capacitor://localhost` on iOS and `https://localhost` on Android by default;
+   log `window.location.origin` from the device to confirm rather than trusting
+   that. The same list feeds Better Auth's `trustedOrigins`, so a missing origin
+   fails sign-in with a `403` rather than a CORS error.
+3. Optionally replace token storage. The default is `localStorage`; call
+   `useAuthTokenStore()` once at startup with a store backed by
+   `@capacitor/preferences` (or a Keychain/Keystore plugin) so the token
+   survives a WebView data eviction. It accepts any `{ read, write, clear }`
+   whose members return promises.
+
+No API route changes are needed: `requireActor` resolves the actor from the same
+`Authorization` header.
+
+Social sign-in does not work through `signIn.social()` in a WebView. Complete it
+with the provider's native SDK and forward the ID token, or register a
+custom-scheme callback. Email + password is covered as-is.

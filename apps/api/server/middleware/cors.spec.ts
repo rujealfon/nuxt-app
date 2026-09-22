@@ -86,6 +86,12 @@ describe('cors middleware', () => {
     expect(header('access-control-allow-headers')).toBe('content-type, authorization')
   })
 
+  it('exposes the bearer session token to cross-origin clients', () => {
+    handler(event())
+
+    expect(header('access-control-expose-headers')).toBe('set-auth-token')
+  })
+
   it('short-circuits preflight requests with 204', () => {
     mocks.getMethod.mockReturnValue('OPTIONS')
 

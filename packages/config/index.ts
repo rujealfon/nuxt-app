@@ -13,6 +13,17 @@ export function apiBaseFor(env: string | undefined): string {
   return env || `http://localhost:${appPorts.api}`
 }
 
+// How the browser apps carry a session. `cookie` is the default browser
+// transport; `bearer` carries the opaque session token in an `Authorization`
+// header, which is the only transport that survives a cross-origin WebView
+// (a Capacitor app, whose origin the API sees as `https://localhost`).
+// Anything unrecognized falls back to cookies, the conservative choice.
+export type AuthMode = 'cookie' | 'bearer'
+
+export function authModeFor(env: string | undefined): AuthMode {
+  return env === 'bearer' ? 'bearer' : 'cookie'
+}
+
 // Localhost-defaulted cross-site URLs for `runtimeConfig.public`. Each app
 // spreads these and adds its own `appName`; `NUXT_PUBLIC_*` env vars override
 // individual URLs at runtime through Nuxt's own mapping.

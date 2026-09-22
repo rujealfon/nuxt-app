@@ -16,7 +16,7 @@ const root = fileURLToPath(new URL('..', import.meta.url))
 // layer publishes to apps. Compared with exact equality, so adding or renaming
 // a public symbol must update this list deliberately, and nothing joins the
 // interface by accident.
-const clientComposables = ['useApi', 'useAuth', 'useAuthForm']
+const clientComposables = ['useApi', 'useAuth', 'useAuthForm', 'useAuthTokenStore']
 const uiComposables = ['useSite']
 const uiComponents = ['AppHeader', 'AppShell', 'AuthScreen']
 

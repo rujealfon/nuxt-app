@@ -16,6 +16,10 @@ _Avoid_: system endpoint, internal route, infrastructure route
 The authenticated identity a request acts as: a user id, email, name, and role. Client and server both derive it from the Better Auth session; the UI and middleware gate on the role.
 _Avoid_: user, account, session user
 
+**Session transport**:
+How a client carries its session to the API: in the session cookie, or as the opaque session token in an `Authorization: Bearer` header when the client is a WebView that refuses cross-origin cookies. Selected per app through `authMode`; the API accepts both for every route.
+_Avoid_: auth mode, token type, credential transport, cookie mode, bearer mode
+
 **Domain failure**:
 A failure independent of transport. Domain code raises it when an operation cannot complete: validation, authentication, authorization, absence, conflict, rate limiting, or an unexpected fault. It describes what went wrong, not how to phrase it in HTTP.
 _Avoid_: error, exception, API error, product failure, ProductFailure

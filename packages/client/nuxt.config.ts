@@ -11,6 +11,9 @@ export default defineNuxtConfig({
       apiBase: '',
       // Version used by useApi() for versioned routes. Each app overrides this.
       apiVersion: currentApiVersion,
+      // How the auth and API clients carry a session. Apps override this
+      // through NUXT_PUBLIC_AUTH_MODE; see `authModeFor`.
+      authMode: 'cookie',
     },
   },
 })

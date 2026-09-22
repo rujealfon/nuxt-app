@@ -3,17 +3,20 @@ import { actorFromSession } from '@nuxt-app/types'
 import { createAuthClient } from 'better-auth/vue'
 import { computed, getCurrentScope } from 'vue'
 import { useRuntimeConfig } from '#imports'
+import { clearAuthToken } from '../lib/authToken'
+import { authFetchOptions } from '../lib/authTransport'
 
 let client: ReturnType<typeof createAuthClient> | undefined
 
 function useAuthClient() {
   if (!client) {
     const config = useRuntimeConfig()
+
     client = createAuthClient({
       baseURL: config.public.apiBase,
-      fetchOptions: {
-        credentials: 'include',
-      },
+      // `authMode` is `cookie` unless an app opts into `bearer`. The two
+      // transports differ in credentials and token handling, not in endpoints.
+      fetchOptions: authFetchOptions(config.public.authMode === 'bearer'),
     })
   }
 
@@ -55,6 +58,9 @@ export function useAuth() {
 
   async function signOut() {
     await client.signOut()
+    // Drop the local token in the same step, so a revoked session cannot leave
+    // a usable credential behind on the device.
+    await clearAuthToken()
   }
 
   return {

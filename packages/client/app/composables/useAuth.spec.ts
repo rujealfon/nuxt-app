@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { effectScope } from 'vue'
+import { readAuthToken, writeAuthToken } from '../lib/authToken'
 import { useAuth } from './useAuth'
 
 const signInEmail = vi.fn()
@@ -110,5 +111,14 @@ describe('useAuth', () => {
     await useAuth().signOut()
 
     expect(signOut).toHaveBeenCalled()
+  })
+
+  it('clears the stored token on sign out', async () => {
+    await writeAuthToken('session-token')
+    signOut.mockResolvedValue({ data: {}, error: null })
+
+    await useAuth().signOut()
+
+    await expect(readAuthToken()).resolves.toBeNull()
   })
 })
