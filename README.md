@@ -237,8 +237,11 @@ and put API integration tests in `apps/api/test/e2e/`. See
 [`vitest.config.ts`](vitest.config.ts) for the discovery patterns.
 
 CI ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs install, lint,
-type-check, and test on pushes to `main` and on pull requests. No coverage
-threshold is configured; cover changed behavior and regressions.
+type-check, and test on pushes to `main` and on pull requests. A separate
+`coverage` job runs `pnpm test:coverage:ci`; Vitest enforces the thresholds in
+[`vitest.config.ts`](vitest.config.ts) (90% lines/functions/branches/statements)
+and fails the job if they drop. Coverage is not uploaded anywhere — the
+thresholds are the gate.
 
 ## Build
 
