@@ -1,7 +1,8 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { effectScope } from 'vue'
+import { useRuntimeConfig } from '#imports'
 import { resetAuthTokenStore } from '../../test/helpers/authTokenStore'
-import { readAuthToken, writeAuthToken } from '../lib/authToken'
+import { installAuthTokenStore, readAuthToken, writeAuthToken } from '../lib/authToken'
 import { useAuth } from './useAuth'
 
 const signInEmail = vi.fn()
@@ -28,12 +29,17 @@ function inScope<T>(fn: () => T): T {
 
 beforeEach(async () => {
   await resetAuthTokenStore()
+  useRuntimeConfig().public.sessionTransport = 'bearer'
   signInEmail.mockReset()
   signUpEmail.mockReset()
   signOut.mockReset()
   getSession.mockReset()
   useSession.mockClear()
   useSession.mockReturnValue({ value: { data: null } })
+})
+
+afterEach(() => {
+  useRuntimeConfig().public.sessionTransport = 'cookie'
 })
 
 describe('useAuth', () => {
@@ -130,5 +136,28 @@ describe('useAuth', () => {
 
     await expect(useAuth().signOut()).rejects.toThrow('network down')
     await expect(readAuthToken()).resolves.toBeNull()
+  })
+
+  it('reports failed local cleanup and stops using the saved credential', async () => {
+    installAuthTokenStore({
+      read: async () => 'old-session',
+      write: async () => {},
+      clear: async () => { throw new Error('storage unavailable') },
+    })
+    signOut.mockResolvedValue({ error: { message: 'Server unavailable' } })
+
+    await expect(useAuth().signOut()).rejects.toThrow('Unable to remove')
+    await expect(readAuthToken()).resolves.toBeNull()
+  })
+
+  it('does not access token storage when signing out with cookies', async () => {
+    useRuntimeConfig().public.sessionTransport = 'cookie'
+    const clear = vi.fn().mockRejectedValue(new Error('storage blocked'))
+    installAuthTokenStore({ read: async () => null, write: async () => {}, clear })
+    signOut.mockResolvedValue({ data: {}, error: null })
+
+    await useAuth().signOut()
+
+    expect(clear).not.toHaveBeenCalled()
   })
 })

@@ -29,6 +29,7 @@ function useAuthClient() {
 
 export function useAuth() {
   const client = useAuthClient()
+  const bearer = isBearerTransport(useRuntimeConfig().public.sessionTransport)
 
   // A route guard runs outside a Vue effect scope, so subscribing there would
   // leak a session listener on every navigation. Only bind the reactive store
@@ -65,10 +66,11 @@ export function useAuth() {
       await client.signOut()
     }
     finally {
-      // Local logout must not depend on the server: clear the stored token even
-      // when revocation fails, so the device holds no usable credential. A
-      // cookie-mode client has nothing stored and this is a no-op.
-      await clearAuthToken()
+      // Attempt local cleanup even when revocation fails. Storage failures
+      // invalidate local reads and reject so callers can ask the user to retry.
+      if (bearer) {
+        await clearAuthToken()
+      }
     }
   }
 

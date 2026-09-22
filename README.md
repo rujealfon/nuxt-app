@@ -400,6 +400,12 @@ navigation. The shell uses the bearer transport instead ([ADR-0003](docs/adr/000
    across a WebView data eviction. It accepts any `{ read, write, clear }` whose
    members return promises.
 
+   A failed token write or clear rejects the authentication action and prevents
+   further token reads in that app session until storage recovers through a
+   successful write or clear. Failed writes also attempt to remove the previous
+   token. If cleanup fails, retry sign-out before closing the app: the underlying
+   storage may still contain the old token after a restart.
+
 No API route changes are needed: `requireActor` resolves the actor from the same
 `Authorization` header.
 

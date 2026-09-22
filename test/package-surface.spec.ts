@@ -9,6 +9,7 @@ vi.mock('#imports', () => ({
   createUseFetch: vi.fn(() => vi.fn()),
   navigateTo: vi.fn(),
   useRuntimeConfig: vi.fn(() => ({ public: {} })),
+  useRequestHeaders: vi.fn(() => ({})),
 }))
 
 const root = fileURLToPath(new URL('..', import.meta.url))

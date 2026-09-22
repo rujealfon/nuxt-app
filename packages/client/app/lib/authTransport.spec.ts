@@ -1,4 +1,5 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { $fetch } from 'ofetch'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { resetAuthTokenStore } from '../../test/helpers/authTokenStore'
 import { readAuthToken, writeAuthToken } from './authToken'
 import { apiFetchOptions, authFetchOptions, clearStaleBearer, setBearerAuthorization } from './authTransport'
@@ -74,6 +75,25 @@ describe('apiFetchOptions', () => {
     expect(typeof options.onRequest).toBe('function')
     expect(typeof options.onResponseError).toBe('function')
   })
+
+  it('keeps a newer token when a versioned-route request returns a late 401', async () => {
+    await writeAuthToken('old-session')
+    const started = Promise.withResolvers<void>()
+    const response = Promise.withResolvers<Response>()
+    const fetch = vi.fn(() => {
+      started.resolve()
+      return response.promise
+    })
+    const api = $fetch.create({ ...apiFetchOptions(true), retry: 0 }, { fetch })
+
+    const failure = expect(api('http://api.test/api/v1/hello')).rejects.toThrow()
+    await started.promise
+    await writeAuthToken('new-session')
+    response.resolve(new Response(null, { status: 401 }))
+    await failure
+
+    await expect(readAuthToken()).resolves.toBe('new-session')
+  })
 })
 
 describe('setBearerAuthorization', () => {
@@ -110,7 +130,7 @@ describe('clearStaleBearer', () => {
   it('drops the stored token when the API answers 401', async () => {
     await writeAuthToken('session-token')
 
-    await clearStaleBearer(401)
+    await clearStaleBearer(401, { authorization: 'Bearer session-token' })
 
     await expect(readAuthToken()).resolves.toBeNull()
   })
@@ -118,7 +138,23 @@ describe('clearStaleBearer', () => {
   it('keeps the stored token on any other status', async () => {
     await writeAuthToken('session-token')
 
-    await clearStaleBearer(500)
+    await clearStaleBearer(500, { authorization: 'Bearer session-token' })
+
+    await expect(readAuthToken()).resolves.toBe('session-token')
+  })
+
+  it('preserves a new session when an old request returns 401', async () => {
+    await writeAuthToken('new-session')
+
+    await clearStaleBearer(401, { authorization: 'Bearer old-session' })
+
+    await expect(readAuthToken()).resolves.toBe('new-session')
+  })
+
+  it('preserves a session when the failed request had no token', async () => {
+    await writeAuthToken('session-token')
+
+    await clearStaleBearer(401)
 
     await expect(readAuthToken()).resolves.toBe('session-token')
   })

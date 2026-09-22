@@ -1,6 +1,7 @@
+import type { FetchContext } from 'ofetch'
 import { isBearerTransport } from '@nuxt-app/config'
 import { parseApiError } from '@nuxt-app/types'
-import { $fetch, createUseFetch, useRuntimeConfig } from '#imports'
+import { $fetch, createUseFetch, useRequestHeaders, useRuntimeConfig } from '#imports'
 import { apiFetchOptions } from '../lib/authTransport'
 
 type ApiClient = typeof $fetch
@@ -43,9 +44,26 @@ export function useApi() {
   const config = useRuntimeConfig()
   const baseURL = `${config.public.apiBase}/api/${config.public.apiVersion}`
   const bearer = isBearerTransport(config.public.sessionTransport)
+  // Never cache request credentials at module scope. Forward only cookies,
+  // and only to the configured API origin, including when callers pass a URL.
+  const cookie = import.meta.server && !bearer ? useRequestHeaders(['cookie']).cookie : undefined
+  const api = import.meta.server
+    ? $fetch.create({
+        baseURL,
+        ...apiFetchOptions(bearer),
+        ...(cookie && {
+          onRequest({ request, options }: FetchContext) {
+            const target = new URL(typeof request === 'string' ? request : request.url, options.baseURL || baseURL)
+            if (target.origin === new URL(baseURL).origin) {
+              options.headers.set('cookie', cookie)
+            }
+          },
+        }),
+      })
+    : clientFor(baseURL, bearer)
 
   return {
-    api: clientFor(baseURL, bearer),
+    api,
     parseApiError: apiErrorFromCaught,
   }
 }

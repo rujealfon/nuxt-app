@@ -18,11 +18,12 @@ export async function setBearerAuthorization(options: { headers?: HeadersInit })
   }
 }
 
-// A 401 means the stored token no longer names a session. Drop it so a dead
-// credential does not linger across launches.
-export async function clearStaleBearer(status: number) {
-  if (status === 401) {
-    await clearAuthToken()
+// An old request must not clear a token saved by a newer sign-in.
+export async function clearStaleBearer(status: number, headers?: HeadersInit) {
+  const authorization = new Headers(headers).get('authorization')
+  const token = authorization?.match(/^Bearer (.+)$/i)?.[1]
+  if (status === 401 && token) {
+    await clearAuthToken(token)
   }
 }
 
@@ -40,7 +41,13 @@ export function authFetchOptions(bearer: boolean): AuthFetchOptions {
       token: async () => (await readAuthToken()) ?? '',
     },
     onSuccess: async context => captureIssuedToken(context.response),
-    onError: async context => clearStaleBearer(context.response.status),
+    onError: async (context) => {
+      // Other auth endpoints can reject credentials without invalidating the
+      // current session, for example an incorrect password during sign-in.
+      if (new URL(context.request.url).pathname.endsWith('/get-session')) {
+        await clearStaleBearer(context.response.status, context.request.headers)
+      }
+    },
   }
 }
 
@@ -52,7 +59,7 @@ export function apiFetchOptions(bearer: boolean): ApiFetchOptions {
   const options = {
     credentials: 'omit',
     onRequest: async (context: FetchContext) => setBearerAuthorization(context.options),
-    onResponseError: async (context: ApiResponseContext) => clearStaleBearer(context.response.status),
+    onResponseError: async (context: ApiResponseContext) => clearStaleBearer(context.response.status, context.options.headers),
   } satisfies ApiFetchOptions
 
   return options

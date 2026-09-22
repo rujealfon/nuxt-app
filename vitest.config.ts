@@ -13,6 +13,7 @@ function nuxtProject(name: string, root: string, appName: string) {
       name,
       environment: 'nuxt',
       include: [`${root}/app/**/*.spec.ts`, `${root}/test/**/*.spec.ts`],
+      exclude: ['**/*.server.spec.ts', '**/node_modules/**'],
       environmentOptions: {
         nuxt: {
           rootDir: dir(root),
@@ -38,6 +39,7 @@ export default defineConfig({
   test: {
     projects: [
       {
+        define: { 'import.meta.server': true },
         test: {
           name: 'unit',
           environment: 'node',
@@ -45,6 +47,7 @@ export default defineConfig({
             'test/**/*.spec.ts',
             'packages/{config,types,logger}/test/**/*.spec.ts',
             'apps/api/server/**/*.spec.ts',
+            'packages/client/app/**/*.server.spec.ts',
           ],
         },
       },

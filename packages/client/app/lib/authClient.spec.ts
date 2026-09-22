@@ -1,7 +1,7 @@
 import { createAuthClient } from 'better-auth/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { resetAuthTokenStore } from '../../test/helpers/authTokenStore'
-import { readAuthToken } from './authToken'
+import { installAuthTokenStore, readAuthToken, writeAuthToken } from './authToken'
 import { authFetchOptions } from './authTransport'
 
 // Unlike the other specs, this drives the REAL better-auth client with a
@@ -87,6 +87,44 @@ describe('bearer transport against the real better-auth client', () => {
     fetchMock.mockResolvedValueOnce(errorResponse(401, { message: 'Unauthorized' }))
     await client.getSession()
 
+    await expect(readAuthToken()).resolves.toBeNull()
+  })
+
+  it('preserves the current session after an incorrect-password response', async () => {
+    const client = await signedInClient()
+    fetchMock.mockResolvedValueOnce(errorResponse(401, { code: 'INVALID_EMAIL_OR_PASSWORD' }))
+
+    await client.signIn.email({ email: 'other@example.com', password: 'wrong' })
+
+    await expect(readAuthToken()).resolves.toBe('issued-token')
+  })
+
+  it('preserves a newer session when an in-flight session lookup fails', async () => {
+    const client = await signedInClient()
+    const started = Promise.withResolvers<void>()
+    const response = Promise.withResolvers<Response>()
+    fetchMock.mockImplementationOnce(() => {
+      started.resolve()
+      return response.promise
+    })
+
+    const lookup = client.getSession()
+    await started.promise
+    await writeAuthToken('new-session')
+    response.resolve(errorResponse(401, { message: 'Unauthorized' }))
+    await lookup
+
+    await expect(readAuthToken()).resolves.toBe('new-session')
+  })
+
+  it('reports failed persistence instead of resolving sign-in with an old credential', async () => {
+    installAuthTokenStore({
+      read: async () => 'old-session',
+      write: async () => { throw new Error('storage full') },
+      clear: async () => { throw new Error('storage blocked') },
+    })
+
+    await expect(signedInClient()).rejects.toThrow('Unable to save')
     await expect(readAuthToken()).resolves.toBeNull()
   })
 })

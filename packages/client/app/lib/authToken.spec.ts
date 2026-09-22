@@ -5,6 +5,7 @@ import { browserAuthTokenStore, captureIssuedToken, clearAuthToken, installAuthT
 beforeEach(resetAuthTokenStore)
 afterEach(() => {
   vi.unstubAllGlobals()
+  vi.restoreAllMocks()
 })
 
 describe('auth token store', () => {
@@ -64,8 +65,6 @@ describe('auth token store failures', () => {
     vi.spyOn(console, 'warn').mockImplementation(() => {})
   })
 
-  // A store that rejects must degrade to "no token", not fail the request or a
-  // sign-in that already succeeded on the server.
   it('reads as no token when the store rejects', async () => {
     installAuthTokenStore(rejectingStore)
 
@@ -73,16 +72,75 @@ describe('auth token store failures', () => {
     expect(console.warn).toHaveBeenCalled()
   })
 
-  it('does not reject on write when the store rejects', async () => {
-    installAuthTokenStore(rejectingStore)
+  it('rejects a failed write and prevents reuse of the previous account', async () => {
+    installAuthTokenStore({ ...rejectingStore, read: async () => 'old-session' })
 
-    await expect(writeAuthToken('session-token')).resolves.toBeUndefined()
+    await expect(writeAuthToken('new-session')).rejects.toThrow('Unable to save')
+    await expect(readAuthToken()).resolves.toBeNull()
   })
 
-  it('does not reject on clear when the store rejects', async () => {
-    installAuthTokenStore(rejectingStore)
+  it('rejects a failed clear and stops sending the persisted token', async () => {
+    installAuthTokenStore({ ...rejectingStore, read: async () => 'old-session' })
 
-    await expect(clearAuthToken()).resolves.toBeUndefined()
+    await expect(clearAuthToken()).rejects.toThrow('Unable to remove')
+    await expect(readAuthToken()).resolves.toBeNull()
+  })
+
+  it('removes the previous persisted token after a failed write when possible', async () => {
+    const store = memoryAuthTokenStore('old-session')
+    installAuthTokenStore({ ...store, write: rejectingStore.write })
+
+    await expect(writeAuthToken('new-session')).rejects.toThrow('Unable to save')
+    await expect(store.read()).resolves.toBeNull()
+  })
+
+  it('recovers after a successful retry', async () => {
+    const store = memoryAuthTokenStore('old-session')
+    const write = vi.fn(store.write).mockRejectedValueOnce(new Error('temporarily unavailable'))
+    installAuthTokenStore({ ...store, write })
+
+    await expect(writeAuthToken('new-session')).rejects.toThrow('Unable to save')
+    await writeAuthToken('new-session')
+
+    await expect(readAuthToken()).resolves.toBe('new-session')
+  })
+
+  it('also invalidates old credentials when browser storage throws', async () => {
+    vi.stubGlobal('localStorage', {
+      getItem: () => 'old-session',
+      setItem: () => { throw new Error('quota exceeded') },
+      removeItem: () => { throw new Error('storage blocked') },
+    })
+
+    await expect(writeAuthToken('new-session')).rejects.toThrow('Unable to save')
+    await expect(readAuthToken()).resolves.toBeNull()
+    await expect(clearAuthToken()).rejects.toThrow('Unable to remove')
+    await expect(readAuthToken()).resolves.toBeNull()
+  })
+})
+
+describe('concurrent storage mutations', () => {
+  it('finishes a slow native clear before saving a newer sign-in', async () => {
+    const started = Promise.withResolvers<void>()
+    const release = Promise.withResolvers<void>()
+    const store = memoryAuthTokenStore('old-session')
+    installAuthTokenStore({
+      ...store,
+      clear: async () => {
+        started.resolve()
+        await release.promise
+        await store.clear()
+      },
+    })
+
+    const clearing = clearAuthToken('old-session')
+    await started.promise
+    const writing = writeAuthToken('new-session')
+    release.resolve()
+    await Promise.all([clearing, writing])
+
+    await expect(readAuthToken()).resolves.toBe('new-session')
+    await expect(store.read()).resolves.toBe('new-session')
   })
 })
 
