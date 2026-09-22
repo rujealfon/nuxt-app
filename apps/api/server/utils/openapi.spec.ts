@@ -141,7 +141,10 @@ describe('buildOpenApiDocument', () => {
       .toEqual({ $ref: '#/components/schemas/RegisterCredentials' })
     expect(document.paths['/api/auth/get-session']?.get?.responses['200']?.content?.['application/json']?.schema)
       .toEqual({ $ref: '#/components/schemas/AuthSessionResponse' })
-    expect(document.paths['/api/auth/sign-out']?.post).toBeDefined()
+    // Sign-out is a bodyless POST, but Better Auth rejects a missing JSON
+    // `Content-Type` with 415, so the document declares a JSON body.
+    expect(document.paths['/api/auth/sign-out']?.post?.requestBody?.content?.['application/json']?.schema)
+      .toEqual({ $ref: '#/components/schemas/AuthSignOutRequest' })
   })
 
   it('keeps Better Auth on its own error contract instead of the API error contract', () => {

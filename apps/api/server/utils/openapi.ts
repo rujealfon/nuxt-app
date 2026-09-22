@@ -123,7 +123,19 @@ const authSessionResponseSchema = z.union([
   z.null(),
 ])
 
-const authSignOutResponseSchema = z.object({ success: z.boolean() })
+const authSignOutRequestSchema = z.looseObject({
+  callbackURL: z.string().optional(),
+  disableRedirect: z.boolean().optional(),
+  state: z.string().optional(),
+})
+
+// Better Auth answers `{ success, url?, redirect? }`; `url`/`redirect` only for
+// provider (RP-initiated) logout.
+const authSignOutResponseSchema = z.looseObject({
+  success: z.boolean(),
+  url: z.string().optional(),
+  redirect: z.boolean().optional(),
+})
 
 const authErrorSchema = z.looseObject({
   message: z.string(),
@@ -198,7 +210,8 @@ function authPaths(): Record<string, OpenApiPathItem> {
       post: {
         tags: ['auth'],
         summary: 'Sign out',
-        description: 'Clears the session and the session cookie.',
+        description: 'Clears the session and the session cookie. Better Auth requires a JSON `Content-Type`, so an empty object body (`{}`) is sent; all fields are optional.',
+        requestBody: authRequestBody('AuthSignOutRequest'),
         responses: {
           200: jsonRef('AuthSignOutResponse', 'Signed out; session cookie cleared.'),
           default: authErrorResponse(),
@@ -343,6 +356,7 @@ export function buildOpenApiDocument() {
     AuthSignInResponse: toJsonSchema(authSignInResponseSchema),
     AuthSignUpResponse: toJsonSchema(authSignUpResponseSchema),
     AuthSessionResponse: toJsonSchema(authSessionResponseSchema),
+    AuthSignOutRequest: toJsonSchema(authSignOutRequestSchema),
     AuthSignOutResponse: toJsonSchema(authSignOutResponseSchema),
     AuthError: toJsonSchema(authErrorSchema),
   }
