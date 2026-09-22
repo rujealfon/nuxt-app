@@ -14,7 +14,8 @@ const mocks = vi.hoisted(() => {
 vi.mock('./redis', () => ({ useRedis: mocks.useRedis }))
 vi.mock('./logger', () => ({ useLogger: mocks.useLogger }))
 
-const { createRateLimitStorage, rateLimitPolicy } = await import('./rate-limit')
+const { createRateLimitStorage } = await import('./rate-limit')
+const { rateLimitPolicy } = await import('./rate-limit-policy')
 
 const { evalMock, loggerError } = mocks
 

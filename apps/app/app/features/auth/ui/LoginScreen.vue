@@ -5,7 +5,7 @@ import AuthScreen from '@nuxt-app/ui/components/AuthScreen.vue'
 import { useAuth, useAuthForm } from '#imports'
 
 const { signIn } = useAuth()
-const { errorMessage, submitting, onSubmit } = useAuthForm({
+const { errorMessage, fieldErrors, submitting, onSubmit } = useAuthForm({
   submit: signIn,
   redirectTo: '/',
   fallbackMessage: 'Invalid email or password',
@@ -27,6 +27,7 @@ const fields: AuthFormField[] = [
     submit-label="Sign in"
     :loading="submitting"
     :error-message="errorMessage"
+    :field-errors="fieldErrors"
     :submit="onSubmit"
   >
     <template #footer>

@@ -26,6 +26,13 @@ describe('api docs (dev server)', async () => {
       type: 'object',
       properties: { message: { type: 'string' } },
     })
+    expect(document.components.securitySchemes).toMatchObject({
+      sessionCookie: { type: 'apiKey', in: 'cookie', name: 'better-auth.session_token' },
+      bearerAuth: { type: 'http', scheme: 'bearer' },
+    })
+    expect(document.paths['/api/auth/sign-in/email'].post.requestBody.content['application/json'].schema).toEqual({
+      $ref: '#/components/schemas/LoginCredentials',
+    })
   })
 
   it('keeps the spec unversioned like other infra routes', async () => {

@@ -1,4 +1,4 @@
-import { apiBaseFor, currentApiVersion, siteUrls } from '@nuxt-app/config'
+import { apiBaseFor, currentApiVersion, sessionTransportFor, siteUrls } from '@nuxt-app/config'
 
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
@@ -18,6 +18,7 @@ export default defineNuxtConfig({
       ...siteUrls,
       apiBase: apiBaseFor(process.env.NUXT_PUBLIC_API_BASE),
       apiVersion: process.env.NUXT_PUBLIC_API_VERSION || currentApiVersion,
+      sessionTransport: sessionTransportFor(process.env.NUXT_PUBLIC_SESSION_TRANSPORT),
     },
   },
 })

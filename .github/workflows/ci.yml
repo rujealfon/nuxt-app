@@ -31,3 +31,23 @@ jobs:
       - run: pnpm type-check
 
       - run: pnpm test
+
+  coverage:
+    runs-on: ubuntu-latest
+    env:
+      HUSKY: 0
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # Runs `unit` plus the Nuxt-environment projects (no external services).
+      # Thresholds in vitest.config.ts fail the job if coverage drops.
+      - run: pnpm test:coverage:ci

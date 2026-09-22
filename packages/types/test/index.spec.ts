@@ -129,6 +129,13 @@ describe('aPI error contract', () => {
       message: apiErrorMessages.forbidden,
     })
   })
+
+  it('falls back to internal_error when the constructor drifts', () => {
+    expect(apiError('teapot' as never)).toEqual({
+      error: 'internal_error',
+      message: apiErrorMessages.internal_error,
+    })
+  })
 })
 
 describe('actor contract', () => {

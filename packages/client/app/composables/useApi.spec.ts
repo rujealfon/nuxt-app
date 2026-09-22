@@ -1,17 +1,19 @@
 import { describe, expect, it } from 'vitest'
-import { useApi } from './useApi'
+import { useApi, useApiFetch } from './useApi'
 
 describe('useApi', () => {
-  it('scopes urls to the configured API version', () => {
-    const { apiUrl } = useApi()
-
-    expect(apiUrl('/hello')).toBe('http://api.test/api/v1/hello')
-  })
-
   it('exposes a fetch client', () => {
     const { api } = useApi()
 
     expect(typeof api).toBe('function')
+  })
+
+  it('reuses one client for the same configuration', () => {
+    expect(useApi().api).toBe(useApi().api)
+  })
+
+  it('exposes an SSR-aware fetch composable', () => {
+    expect(typeof useApiFetch).toBe('function')
   })
 
   it('reads the API error contract from a fetch failure', () => {
@@ -48,5 +50,11 @@ describe('useApi', () => {
     const { parseApiError } = useApi()
 
     expect(parseApiError({ data: { message: 'Invalid credentials' } })).toBeNull()
+  })
+
+  it('returns null for a falsy failure', () => {
+    const { parseApiError } = useApi()
+
+    expect(parseApiError(null)).toBeNull()
   })
 })

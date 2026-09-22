@@ -24,9 +24,10 @@ describe('app register page', () => {
     auth.signUp.mockResolvedValue(undefined)
     const wrapper = await mountSuspended(RegisterPage)
 
-    wrapper.findComponent({ name: 'UAuthForm' }).vm.$emit('submit', {
-      data: { name: 'A', email: 'user@example.com', password: 'longenough' },
-    })
+    await wrapper.find('input[name="name"]').setValue('A')
+    await wrapper.find('input[name="email"]').setValue('user@example.com')
+    await wrapper.find('input[name="password"]').setValue('longenough')
+    await wrapper.find('form').trigger('submit')
     await flushPromises()
 
     expect(auth.signUp).toHaveBeenCalledWith({ name: 'A', email: 'user@example.com', password: 'longenough' })
@@ -37,9 +38,10 @@ describe('app register page', () => {
     auth.signUp.mockRejectedValue(new Error('Email already in use'))
     const wrapper = await mountSuspended(RegisterPage)
 
-    wrapper.findComponent({ name: 'UAuthForm' }).vm.$emit('submit', {
-      data: { name: 'A', email: 'user@example.com', password: 'longenough' },
-    })
+    await wrapper.find('input[name="name"]').setValue('A')
+    await wrapper.find('input[name="email"]').setValue('user@example.com')
+    await wrapper.find('input[name="password"]').setValue('longenough')
+    await wrapper.find('form').trigger('submit')
     await flushPromises()
 
     expect(wrapper.text()).toContain('Email already in use')

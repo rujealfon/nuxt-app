@@ -1,5 +1,9 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { effectScope } from 'vue'
+import { useRuntimeConfig } from '#imports'
+import { resetAuthTokenStore } from '../../test/helpers/authTokenStore'
+import { AuthRequestError } from '../lib/authError'
+import { installAuthTokenStore, readAuthToken, writeAuthToken } from '../lib/authToken'
 import { useAuth } from './useAuth'
 
 const signInEmail = vi.fn()
@@ -24,13 +28,19 @@ function inScope<T>(fn: () => T): T {
   return effectScope().run(fn) as T
 }
 
-beforeEach(() => {
+beforeEach(async () => {
+  await resetAuthTokenStore()
+  useRuntimeConfig().public.sessionTransport = 'bearer'
   signInEmail.mockReset()
   signUpEmail.mockReset()
   signOut.mockReset()
   getSession.mockReset()
   useSession.mockClear()
   useSession.mockReturnValue({ value: { data: null } })
+})
+
+afterEach(() => {
+  useRuntimeConfig().public.sessionTransport = 'cookie'
 })
 
 describe('useAuth', () => {
@@ -96,6 +106,28 @@ describe('useAuth', () => {
       .toThrow('Invalid credentials')
   })
 
+  it('throws a typed error carrying invalid_input details', async () => {
+    signUpEmail.mockResolvedValue({
+      data: null,
+      error: {
+        error: 'invalid_input',
+        message: 'The request was invalid',
+        details: [{ path: ['email'], message: 'Enter a valid email address' }],
+        status: 400,
+        statusText: 'Bad Request',
+      },
+    })
+
+    const error = await useAuth()
+      .signUp({ name: 'A', email: 'bad', password: 'short' })
+      .catch((caught: unknown) => caught)
+
+    expect(error).toBeInstanceOf(AuthRequestError)
+    expect((error as AuthRequestError).fieldErrors).toEqual([
+      { name: 'email', message: 'Enter a valid email address' },
+    ])
+  })
+
   it('signs up through the auth client', async () => {
     signUpEmail.mockResolvedValue({ data: {}, error: null })
 
@@ -110,5 +142,45 @@ describe('useAuth', () => {
     await useAuth().signOut()
 
     expect(signOut).toHaveBeenCalled()
+  })
+
+  it('clears the stored token on sign out', async () => {
+    await writeAuthToken('session-token')
+    signOut.mockResolvedValue({ data: {}, error: null })
+
+    await useAuth().signOut()
+
+    await expect(readAuthToken()).resolves.toBeNull()
+  })
+
+  it('clears the stored token even when sign out fails', async () => {
+    await writeAuthToken('session-token')
+    signOut.mockRejectedValue(new Error('network down'))
+
+    await expect(useAuth().signOut()).rejects.toThrow('network down')
+    await expect(readAuthToken()).resolves.toBeNull()
+  })
+
+  it('reports failed local cleanup and stops using the saved credential', async () => {
+    installAuthTokenStore({
+      read: async () => 'old-session',
+      write: async () => {},
+      clear: async () => { throw new Error('storage unavailable') },
+    })
+    signOut.mockResolvedValue({ error: { message: 'Server unavailable' } })
+
+    await expect(useAuth().signOut()).rejects.toThrow('Unable to remove')
+    await expect(readAuthToken()).resolves.toBeNull()
+  })
+
+  it('does not access token storage when signing out with cookies', async () => {
+    useRuntimeConfig().public.sessionTransport = 'cookie'
+    const clear = vi.fn().mockRejectedValue(new Error('storage blocked'))
+    installAuthTokenStore({ read: async () => null, write: async () => {}, clear })
+    signOut.mockResolvedValue({ data: {}, error: null })
+
+    await useAuth().signOut()
+
+    expect(clear).not.toHaveBeenCalled()
   })
 })

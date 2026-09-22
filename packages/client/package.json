@@ -9,6 +9,7 @@
   },
   "main": "./nuxt.config.ts",
   "scripts": {
+    "nuxt:prepare": "nuxt prepare",
     "lint": "eslint ."
   },
   "dependencies": {
@@ -17,6 +18,7 @@
     "@pinia/colada": "^1.4.4",
     "@pinia/colada-nuxt": "^1.1.0",
     "@pinia/nuxt": "^1.0.2",
-    "better-auth": "^1.7.4"
+    "better-auth": "^1.7.4",
+    "ofetch": "^1.5.1"
   }
 }

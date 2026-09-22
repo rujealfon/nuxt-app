@@ -1,5 +1,6 @@
 import { apiErrorCodes, apiErrorSchema, loginSchema } from '@nuxt-app/types'
 import { describe, expect, it } from 'vitest'
+import { ZodError } from 'zod'
 import { domainFailure, domainFailureMessages, invalidInputFromZod } from './domain-failure'
 
 describe('invalidInputFromZod', () => {
@@ -19,6 +20,14 @@ describe('invalidInputFromZod', () => {
       { path: ['email'], message: 'Enter a valid email address' },
       { path: ['password'], message: 'Password is required' },
     ])
+  })
+
+  it('omits details that cannot satisfy the contract', () => {
+    const zodError = new ZodError([
+      { code: 'custom', path: ['email'], message: '' },
+    ] as never)
+
+    expect(invalidInputFromZod(zodError).details).toBeUndefined()
   })
 })
 

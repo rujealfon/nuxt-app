@@ -16,13 +16,21 @@
     "db:up": "docker compose up -d --wait --remove-orphans",
     "db:down": "docker compose down",
     "db:logs": "docker compose logs -f postgres",
-    "db:studio": "docker compose up -d --build --wait drizzle-studio && echo 'Drizzle Studio -> https://local.drizzle.studio?port=4984'",
+    "db:studio:docker": "docker compose up -d --build --wait drizzle-studio && echo 'Drizzle Studio -> https://local.drizzle.studio?port=4984'",
     "db:reset": "docker compose down -v && docker compose up -d --build --wait --remove-orphans",
+    "db:generate": "pnpm --filter @nuxt-app/api db:generate",
+    "db:migrate": "pnpm --filter @nuxt-app/api db:migrate",
+    "db:push": "pnpm --filter @nuxt-app/api db:push",
+    "db:studio": "pnpm --filter @nuxt-app/api db:studio",
+    "db:seed": "pnpm --filter @nuxt-app/api db:seed",
+    "db:auth:generate": "pnpm --filter @nuxt-app/api db:auth:generate",
     "build": "turbo run build",
-    "lint": "eslint",
-    "lint:fix": "eslint --fix",
+    "lint": "node scripts/lint.mjs",
+    "lint:fix": "node scripts/lint.mjs --fix",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:coverage:ci": "vitest run --coverage --project unit --project client --project ui --project web --project app --project admin",
     "type-check": "turbo run type-check && tsc -p tsconfig.test.json",
     "clean": "turbo run clean",
     "postinstall": "turbo run nuxt:prepare",
@@ -32,6 +40,7 @@
     "@antfu/eslint-config": "^9.5.1",
     "@nuxt/test-utils": "^4.3.2",
     "@types/node": "^22",
+    "@vitest/coverage-v8": "5.0.1",
     "@vue/test-utils": "^2.5.0",
     "eslint": "^10.10.0",
     "eslint-import-resolver-typescript": "^4.4.5",
@@ -51,6 +60,6 @@
     "vue-router": "^5.3.1"
   },
   "lint-staged": {
-    "*": "eslint --fix --no-warn-ignored"
+    "*": "node --max-old-space-size=6144 node_modules/eslint/bin/eslint.js --fix --no-warn-ignored"
   }
 }

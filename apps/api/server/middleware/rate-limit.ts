@@ -1,11 +1,12 @@
 // Rate limits the API's own Nitro routes. Better Auth rate-limits `/api/auth/*`
 // itself (with stricter per-endpoint rules); health checks are exempt so
 // monitoring isn't throttled, and docs are exempt as static reference content.
-import { defineEventHandler, getMethod, getRequestIP, setHeader } from 'h3'
+import { defineEventHandler, getRequestIP, setHeader } from 'h3'
 import { useRuntimeConfig } from 'nitropack/runtime'
 import { isDocsPath, requestPath } from '../utils/api-paths'
 import { domainFailure } from '../utils/domain-failure'
-import { createRateLimitStorage, rateLimitPolicy } from '../utils/rate-limit'
+import { createRateLimitStorage } from '../utils/rate-limit'
+import { rateLimitPolicy } from '../utils/rate-limit-policy'
 
 const EXEMPT_PREFIXES = ['/api/auth', '/api/health']
 
@@ -30,7 +31,7 @@ export default defineEventHandler(async (event) => {
 
   const ip = getRequestIP(event, { xForwardedFor: true }) || 'unknown'
   const { allowed, retryAfter } = await storage.consume(
-    `${ip}:${getMethod(event)}:${path}`,
+    `${ip}:${event.method}:${path}`,
     rateLimitPolicy,
   )
 

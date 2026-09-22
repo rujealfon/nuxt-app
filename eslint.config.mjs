@@ -39,4 +39,41 @@ export default antfu({
     'vuejs-accessibility': vuejsAccessibility,
   },
   rules: vuejsAccessibility.configs['flat/recommended'][1].rules,
+}, {
+  name: 'nuxt-app/deprecated-apis',
+  files: ['apps/*/{app,server,shared,test}/**/*.ts'],
+  languageOptions: {
+    parserOptions: {
+      projectService: true,
+      tsconfigRootDir: import.meta.dirname,
+    },
+  },
+  rules: {
+    'ts/no-deprecated': 'error',
+  },
+}, {
+  // Nuxt layer packages generate their own tsconfig via `nuxt prepare`.
+  name: 'nuxt-app/layer-deprecated-apis',
+  files: ['packages/{client,ui}/{app,test,shared}/**/*.ts'],
+  languageOptions: {
+    parserOptions: {
+      projectService: true,
+      tsconfigRootDir: import.meta.dirname,
+    },
+  },
+  rules: {
+    'ts/no-deprecated': 'error',
+  },
+}, {
+  name: 'nuxt-app/shared-deprecated-apis',
+  files: ['packages/{config,types,logger}/**/*.ts', 'test/**/*.ts'],
+  languageOptions: {
+    parserOptions: {
+      project: './tsconfig.test.json',
+      tsconfigRootDir: import.meta.dirname,
+    },
+  },
+  rules: {
+    'ts/no-deprecated': 'error',
+  },
 }, architecture, ...workspaceResolvers)

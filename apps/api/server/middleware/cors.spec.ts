@@ -3,29 +3,30 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 const mocks = vi.hoisted(() => ({
   setHeader: vi.fn(),
   getHeader: vi.fn(),
-  getMethod: vi.fn(() => 'GET'),
   setResponseStatus: vi.fn(),
-  state: { corsOrigins: '' },
+  state: { corsOrigins: '', authBearerEnabled: false },
 }))
 
 vi.mock('h3', () => ({
   defineEventHandler: (handler: unknown) => handler,
   getHeader: mocks.getHeader,
-  getMethod: mocks.getMethod,
   setHeader: mocks.setHeader,
   setResponseStatus: mocks.setResponseStatus,
 }))
 
 vi.mock('nitropack/runtime', () => ({
-  useRuntimeConfig: () => ({ corsOrigins: mocks.state.corsOrigins }),
+  useRuntimeConfig: () => ({
+    corsOrigins: mocks.state.corsOrigins,
+    authBearerEnabled: mocks.state.authBearerEnabled,
+  }),
 }))
 
 const handler = (await import('./cors')).default as (event: unknown) => unknown
 
 const { setHeader, setResponseStatus } = mocks
 
-function event() {
-  return { context: {} }
+function event(method = 'GET') {
+  return { method, context: {} }
 }
 
 function header(name: string) {
@@ -36,7 +37,7 @@ describe('cors middleware', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mocks.state.corsOrigins = ''
-    mocks.getMethod.mockReturnValue('GET')
+    mocks.state.authBearerEnabled = false
     mocks.getHeader.mockReturnValue(undefined)
   })
 
@@ -86,10 +87,20 @@ describe('cors middleware', () => {
     expect(header('access-control-allow-headers')).toBe('content-type, authorization')
   })
 
-  it('short-circuits preflight requests with 204', () => {
-    mocks.getMethod.mockReturnValue('OPTIONS')
+  it('exposes the bearer session token only when bearer is enabled', () => {
+    handler(event())
 
-    const result = handler(event())
+    expect(header('access-control-expose-headers')).toBeUndefined()
+
+    mocks.state.authBearerEnabled = true
+
+    handler(event())
+
+    expect(header('access-control-expose-headers')).toBe('set-auth-token')
+  })
+
+  it('short-circuits preflight requests with 204', () => {
+    const result = handler(event('OPTIONS'))
 
     expect(setResponseStatus).toHaveBeenCalledWith(expect.anything(), 204)
     expect(result).toBe('')

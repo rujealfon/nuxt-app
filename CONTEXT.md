@@ -16,12 +16,16 @@ _Avoid_: system endpoint, internal route, infrastructure route
 The authenticated identity a request acts as: a user id, email, name, and role. Client and server both derive it from the Better Auth session; the UI and middleware gate on the role.
 _Avoid_: user, account, session user
 
+**Session transport**:
+How a client carries its session to the API: in the session cookie, or as the opaque session token in an `Authorization: Bearer` header when the client is a WebView that refuses cross-origin cookies. Selected per app through `sessionTransport`; the API accepts both for every route, but only a deployment that opts in with `AUTH_BEARER_ENABLED` registers the bearer plugin.
+_Avoid_: auth mode, token type, credential transport, cookie mode, bearer mode
+
 **Domain failure**:
 A failure independent of transport. Domain code raises it when an operation cannot complete: validation, authentication, authorization, absence, conflict, rate limiting, or an unexpected fault. It describes what went wrong, not how to phrase it in HTTP.
 _Avoid_: error, exception, API error, product failure, ProductFailure
 
 **API error contract**:
-The single failure shape for versioned routes: `error` (a stable code), a safe non-empty message, and optional input details only on `invalid_input`. Clients branch on `error`, never the message. Better Auth keeps its own contract. Health 200s are custom liveness/readiness bodies; health failures and other infra-route failures use this shape.
+The single failure shape: `error` (a stable code), a safe non-empty message, and optional input details only on `invalid_input`. Clients branch on `error`, never the message. `/api/auth/*` normalizes Better Auth failures onto this shape. Health 200s are custom liveness/readiness bodies; health failures and other infra-route failures use this shape.
 _Avoid_: error response, error format, Zod issue, validation error, ProductError
 
 **Input detail**:

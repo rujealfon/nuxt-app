@@ -4,14 +4,12 @@ import { DomainFailure } from '../utils/domain-failure'
 const mocks = vi.hoisted(() => ({
   consume: vi.fn(),
   setHeader: vi.fn(),
-  getMethod: vi.fn(() => 'GET'),
   getRequestIP: vi.fn(() => '203.0.113.7'),
   state: { rateLimitEnabled: true },
 }))
 
 vi.mock('h3', () => ({
   defineEventHandler: (handler: unknown) => handler,
-  getMethod: mocks.getMethod,
   getRequestIP: mocks.getRequestIP,
   setHeader: mocks.setHeader,
 }))
@@ -21,7 +19,6 @@ vi.mock('nitropack/runtime', () => ({
 }))
 
 vi.mock('../utils/rate-limit', () => ({
-  rateLimitPolicy: { window: 60, max: 100 },
   createRateLimitStorage: () => ({ consume: mocks.consume }),
 }))
 
@@ -30,7 +27,7 @@ const handler = (await import('./rate-limit')).default as (event: unknown) => Pr
 const { consume, setHeader } = mocks
 
 function event(path: string) {
-  return { path, context: {} }
+  return { path, method: 'GET', context: {} }
 }
 
 describe('rate-limit middleware', () => {
@@ -84,5 +81,21 @@ describe('rate-limit middleware', () => {
     expect((caught as DomainFailure).error).toBe('rate_limited')
     expect(setHeader).toHaveBeenCalledWith(expect.anything(), 'x-retry-after', '13')
     expect(setHeader).toHaveBeenCalledWith(expect.anything(), 'retry-after', 13)
+  })
+
+  it('falls back to an unknown ip when none is available', async () => {
+    mocks.getRequestIP.mockReturnValueOnce(undefined as unknown as string)
+
+    await handler(event('/api/v1/hello'))
+
+    expect(consume).toHaveBeenCalledWith('unknown:GET:/api/v1/hello', { window: 60, max: 100 })
+  })
+
+  it('defaults a missing retry-after to zero', async () => {
+    consume.mockResolvedValue({ allowed: false, retryAfter: null })
+
+    await handler(event('/api/v1/hello')).catch(() => {})
+
+    expect(setHeader).toHaveBeenCalledWith(expect.anything(), 'retry-after', 0)
   })
 })

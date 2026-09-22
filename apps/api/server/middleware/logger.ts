@@ -1,5 +1,5 @@
 import type { Logger } from '@nuxt-app/logger'
-import { defineEventHandler, getMethod, getResponseStatus } from 'h3'
+import { defineEventHandler, getResponseStatus } from 'h3'
 import { useLogger } from '../utils/logger'
 
 // Monitoring hits health checks constantly, so keep routine successes at debug
@@ -15,7 +15,7 @@ export default defineEventHandler((event) => {
   event.node.res.on('finish', () => {
     const status = getResponseStatus(event)
     const entry = {
-      method: getMethod(event),
+      method: event.method,
       path,
       status,
       durationMs: Math.round(performance.now() - start),

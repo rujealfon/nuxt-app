@@ -14,5 +14,7 @@ export function isDocsPath(path: string): boolean {
 // Request path without the query string. Middleware that routes on path alone
 // shares this instead of each splitting on `?`.
 export function requestPath(event: H3Event): string {
-  return event.path.split('?')[0] ?? '/'
+  const query = event.path.indexOf('?')
+
+  return query === -1 ? event.path : event.path.slice(0, query)
 }

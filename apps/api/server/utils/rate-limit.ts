@@ -1,3 +1,4 @@
+import type { RateLimitStorage, RateLimitStorageOptions } from './rate-limit-policy'
 import { useLogger } from './logger'
 import { useRedis } from './redis'
 
@@ -11,24 +12,6 @@ end
 local ttl = redis.call('PTTL', KEYS[1])
 return { current, ttl }
 `
-
-export interface RateLimitStorage {
-  consume: (
-    key: string,
-    rule: { window: number, max: number },
-  ) => Promise<{ allowed: boolean, retryAfter: number | null }>
-}
-
-// Shared default policy: the Nitro middleware and Better Auth read the same
-// window and maximum from here instead of restating them.
-export const rateLimitPolicy = { window: 60, max: 100 } as const
-
-export interface RateLimitStorageOptions {
-  // When true, a store outage denies the request instead of allowing it.
-  // Better Auth's per-endpoint brute-force limiter opts in so a Redis outage
-  // cannot silently disable auth throttling.
-  failClosed?: boolean
-}
 
 // Redis-backed `RateLimitStorage` shared by the Nitro middleware and Better
 // Auth. The Nitro limiter fails open. When the store is unavailable it allows

@@ -1,54 +1,59 @@
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-vi.mock('nitropack/runtime', () => ({ useRuntimeConfig: vi.fn() }))
+// The Nitro-facing wrapper (`db.ts`). The framework-free construction it defers
+// to is covered in `db-core.spec.ts`; here we mock it to test the lazy handle.
+const mocks = vi.hoisted(() => {
+  const db = { tag: 'db' }
+  const withTransaction = vi.fn(async (fn: (tx: unknown) => unknown) => fn(db))
 
-const { createDb, parseDriver, selectDriver } = await import('./db')
+  return {
+    db,
+    withTransaction,
+    createDb: vi.fn((_config: unknown) => ({ db, withTransaction })),
+    parseDriver: vi.fn((value: unknown) => (value === 'pg' || value === 'neon' ? value : undefined)),
+    state: {
+      databaseUrl: 'postgres://user:pass@localhost:5432/db',
+      databaseDriver: 'pg' as string,
+    },
+  }
+})
 
-const pgUrl = 'postgres://user:pass@localhost:5432/db'
-const neonUrl = 'postgres://user:pass@ep-foo-123456.us-east-2.aws.neon.tech/db'
+vi.mock('nitropack/runtime', () => ({ useRuntimeConfig: () => mocks.state }))
+vi.mock('./db-core', () => ({ createDb: mocks.createDb, parseDriver: mocks.parseDriver }))
 
-describe('selectDriver', () => {
-  it('selects the pg driver for a local postgres url', () => {
-    expect(selectDriver({ url: pgUrl })).toBe('pg')
+let mod: typeof import('./db')
+
+beforeEach(async () => {
+  vi.resetModules()
+  vi.clearAllMocks()
+  mocks.state.databaseDriver = 'pg'
+  mod = await import('./db')
+})
+
+describe('useDb', () => {
+  it('builds the handle from runtime config and caches it', () => {
+    expect(mod.useDb()).toBe(mocks.db)
+    expect(mocks.createDb).toHaveBeenCalledTimes(1)
+    expect(mocks.createDb).toHaveBeenCalledWith({ url: mocks.state.databaseUrl, driver: 'pg' })
+
+    mod.useDb()
+    expect(mocks.createDb).toHaveBeenCalledTimes(1)
   })
 
-  it('selects the neon driver for a neon host', () => {
-    expect(selectDriver({ url: neonUrl })).toBe('neon')
-  })
+  it('defers to host detection when no driver is configured', () => {
+    mocks.state.databaseDriver = ''
 
-  it('selects the neon driver when configured explicitly', () => {
-    expect(selectDriver({ url: pgUrl, driver: 'neon' })).toBe('neon')
-  })
+    mod.useDb()
 
-  it('honors an explicit pg driver on a neon host', () => {
-    expect(selectDriver({ url: neonUrl, driver: 'pg' })).toBe('pg')
-  })
-
-  it('does not treat neon.tech in the password as a neon host', () => {
-    expect(selectDriver({ url: 'postgres://user:neon.tech@localhost:5432/db' })).toBe('pg')
-  })
-
-  it('detects a neon host regardless of case', () => {
-    expect(selectDriver({ url: 'postgres://user:pass@EP-FOO.AWS.NEON.TECH/db' })).toBe('neon')
+    expect(mocks.createDb).toHaveBeenCalledWith({ url: mocks.state.databaseUrl, driver: undefined })
   })
 })
 
-describe('parseDriver', () => {
-  it('accepts known drivers and ignores anything else', () => {
-    expect(parseDriver('neon')).toBe('neon')
-    expect(parseDriver('pg')).toBe('pg')
-    expect(parseDriver('')).toBeUndefined()
-    expect(parseDriver(undefined)).toBeUndefined()
-    expect(parseDriver('mysql')).toBeUndefined()
-  })
-})
+describe('withTransaction', () => {
+  it('delegates to the cached handle', async () => {
+    const fn = vi.fn(async () => 'ok')
 
-describe('createDb', () => {
-  it('fails transactions loudly on the neon driver', async () => {
-    const handle = createDb({ url: neonUrl })
-
-    await expect(handle.withTransaction(async () => 'never')).rejects.toThrow(
-      'Transactions are not supported by the neon-http driver',
-    )
+    await expect(mod.withTransaction(fn)).resolves.toBe('ok')
+    expect(mocks.withTransaction).toHaveBeenCalledWith(fn)
   })
 })

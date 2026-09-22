@@ -43,14 +43,14 @@ describe('validate-env plugin', () => {
   ])('rejects an invalid %s', (_field, override) => {
     Object.assign(mocks.state, override)
 
-    expect(() => plugin()).toThrowError(/Invalid environment configuration/)
+    expect(() => plugin()).toThrow(/Invalid environment configuration/)
   })
 
   it('lists each failing field in the error', () => {
     Object.assign(mocks.state, { databaseUrl: '', redisUrl: '' })
 
-    expect(() => plugin()).toThrowError(/databaseUrl: DATABASE_URL is required/)
-    expect(() => plugin()).toThrowError(/redisUrl: REDIS_URL is required/)
+    expect(() => plugin()).toThrow(/databaseUrl: DATABASE_URL is required/)
+    expect(() => plugin()).toThrow(/redisUrl: REDIS_URL is required/)
   })
 })
 

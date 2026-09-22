@@ -1,60 +1,20 @@
 import type { ApiVersion } from '@nuxt-app/config'
+import type { OpenApiPathItem } from './openapi/shared'
 import { apiVersions, currentApiVersion, versionMeta } from '@nuxt-app/config'
 import { apiErrorSchema, v1 } from '@nuxt-app/types'
 import { z } from 'zod'
 import { deprecationHeaders } from './deprecation'
 import { healthResponseSchema, readyResponseSchema, versionRegistrySchema } from './infra'
-
-function toJsonSchema(schema: z.ZodType) {
-  const { $schema: _, ...json } = z.toJSONSchema(schema)
-  return json
-}
+import { authenticatedSecurity, buildAuthOpenApi } from './openapi/auth'
+import { apiErrorResponse, jsonRef, toJsonSchema } from './openapi/shared'
 
 const openApiDocumentSchema = z.looseObject({
   openapi: z.string(),
 })
 
-function apiErrorResponse() {
-  return {
-    description: 'API error contract. Clients branch on `error`, not message text.',
-    content: {
-      'application/json': {
-        schema: { $ref: '#/components/schemas/ApiError' },
-      },
-    },
-  }
-}
-
-function jsonRef(schemaName: string, description: string, headers?: OpenApiResponse['headers']): OpenApiResponse {
-  return {
-    description,
-    ...(headers ? { headers } : {}),
-    content: {
-      'application/json': {
-        schema: { $ref: `#/components/schemas/${schemaName}` },
-      },
-    },
-  }
-}
-
-interface OpenApiResponse {
-  description: string
-  headers?: Record<string, { description: string, schema: unknown }>
-  content?: Record<string, { schema: unknown }>
-}
-
-interface OpenApiOperation {
-  tags: string[]
-  summary: string
-  description?: string
-  responses: Record<string, OpenApiResponse>
-}
-
-type OpenApiPathItem = Partial<Record<'get' | 'put' | 'post' | 'delete' | 'patch' | 'options' | 'head', OpenApiOperation>>
-
-const operationsByVersion = {
+const operationsByVersion: Record<ApiVersion, readonly v1.VersionedOperation[]> = {
   v1: v1.operations,
-} satisfies Record<ApiVersion, typeof v1.operations>
+}
 
 // Every versioned response advertises its version (mirroring
 // `defineVersionedHandler`). Deprecation headers share `deprecationHeaders`.
@@ -87,18 +47,24 @@ function versionResponseHeaders(version: ApiVersion) {
   return headers
 }
 
-function versionedPaths(): Record<string, OpenApiPathItem> {
+// Pure: takes the operation tables so specs can exercise authenticated
+// operations without a live protected route.
+export function buildVersionedPaths(
+  operations: Record<ApiVersion, readonly v1.VersionedOperation[]> = operationsByVersion,
+): Record<string, OpenApiPathItem> {
   return Object.fromEntries(
     apiVersions.flatMap(version =>
-      operationsByVersion[version].map(operation => [
+      operations[version].map(operation => [
         `/api/${version}${operation.suffix}`,
         {
           [operation.method]: {
             tags: [version],
             summary: operation.summary,
             ...(operation.description ? { description: operation.description } : {}),
+            ...(operation.authenticated ? { security: authenticatedSecurity() } : {}),
             responses: {
               200: jsonRef(operation.responseName, 'Success.', versionResponseHeaders(version)),
+              ...(operation.authenticated ? { 401: apiErrorResponse('No valid session.') } : {}),
               default: apiErrorResponse(),
             },
           },
@@ -123,6 +89,7 @@ function versionedComponentSchemas(): Record<string, ReturnType<typeof toJsonSch
 // JSON, specs import it without touching shared state. Component schemas come
 // from the same Zod contracts the handlers parse.
 export function buildOpenApiDocument() {
+  const auth = buildAuthOpenApi()
   const paths: Record<string, OpenApiPathItem> = {
     '/api': {
       get: {
@@ -149,7 +116,8 @@ export function buildOpenApiDocument() {
         },
       },
     },
-    ...versionedPaths(),
+    ...buildVersionedPaths(),
+    ...auth.paths,
     '/api/health': {
       get: {
         tags: ['infra'],
@@ -179,6 +147,7 @@ export function buildOpenApiDocument() {
     HealthResponse: toJsonSchema(healthResponseSchema),
     ReadyResponse: toJsonSchema(readyResponseSchema),
     VersionRegistry: toJsonSchema(versionRegistrySchema),
+    ...auth.schemas,
   }
 
   return {
@@ -186,7 +155,7 @@ export function buildOpenApiDocument() {
     info: {
       title: 'nuxt-app API',
       version: currentApiVersion,
-      description: 'Versioned routes live under `/api/<version>/` and advertise it via `X-Api-Version`. Infra routes (`/api/auth/*`, `/api/health*`, `GET /api`, `/api/docs*`, `/api/openapi.json`) are unversioned. Failures use the API error contract except Better Auth, which keeps its own. Health 200s are custom liveness/readiness bodies; health failures use the API error contract.',
+      description: 'Versioned routes live under `/api/<version>/` and advertise it via `X-Api-Version`. Infra routes (`/api/auth/*`, `/api/health*`, `GET /api`, `/api/docs*`, `/api/openapi.json`) are unversioned. Failures use the API error contract: `/api/auth/*` normalizes Better Auth failures onto it, and `invalid_input` may carry `details`. Health 200s are custom liveness/readiness bodies; health failures use the API error contract. Protected operations accept either the Better Auth session cookie or, on deployments that enable it, a bearer token. The `auth` tag documents the email/password sign-in flow so a local Scalar session can authenticate before calling protected routes.',
     },
     servers: [
       { url: '/', description: 'Same origin: docs, spec, and API share one host.' },
@@ -194,10 +163,12 @@ export function buildOpenApiDocument() {
     tags: [
       { name: 'meta', description: 'Version registry and API documentation.' },
       ...apiVersions.map(version => ({ name: version, description: `Versioned-route operations (${versionMeta(version).deprecated ? 'deprecated' : 'current'}).` })),
+      auth.tag,
       { name: 'infra', description: 'Unversioned health checks.' },
     ],
     paths,
     components: {
+      securitySchemes: auth.securitySchemes,
       schemas,
     },
   }

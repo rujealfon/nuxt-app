@@ -5,12 +5,18 @@ import { defineEventHandler } from 'h3'
 import { isDocsPath, requestPath } from '../utils/api-paths'
 import { domainFailure } from '../utils/domain-failure'
 
-export default defineEventHandler((event) => {
-  if (!isDocsPath(requestPath(event))) {
-    return
-  }
+// Takes the compile-time `import.meta.dev` flag so specs can exercise both the
+// development passthrough and the production 404.
+export function createDocsGuard(dev: boolean) {
+  return defineEventHandler((event) => {
+    if (!isDocsPath(requestPath(event))) {
+      return
+    }
 
-  if (!import.meta.dev) {
-    throw domainFailure('not_found')
-  }
-})
+    if (!dev) {
+      throw domainFailure('not_found')
+    }
+  })
+}
+
+export default createDocsGuard(import.meta.dev)

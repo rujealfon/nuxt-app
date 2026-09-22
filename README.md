@@ -138,11 +138,11 @@ pnpm db:reset  # DESTRUCTIVE: down -v (wipes data) then rebuild + up
 - Redis: `redis://localhost:6381`
 
 Drizzle Studio is part of the same compose project (host port `4984`), so
-`db:up` starts it too. Use `db:studio` to rebuild its image after dependency
-changes:
+`db:up` starts it too. Use `db:studio:docker` to rebuild its image after
+dependency changes:
 
 ```bash
-pnpm db:studio   # rebuild + start drizzle-studio
+pnpm db:studio:docker   # rebuild + start drizzle-studio
 ```
 
 Open <https://local.drizzle.studio?port=4984> to browse the database. (The
@@ -156,13 +156,16 @@ from the generated `auth-schema.ts`); server helpers such as `useDb()` are
 imported explicitly from `server/utils/`.
 
 ```bash
-pnpm --filter @nuxt-app/api db:generate       # generate SQL migrations
-pnpm --filter @nuxt-app/api db:migrate        # apply migrations
-pnpm --filter @nuxt-app/api db:seed           # upsert the dev admin user
-pnpm --filter @nuxt-app/api db:push           # push schema without migrations (prototyping)
-pnpm --filter @nuxt-app/api db:studio         # run Drizzle Studio locally (no Docker)
-pnpm --filter @nuxt-app/api db:auth:generate  # regenerate the Better Auth Drizzle schema
+pnpm db:generate       # generate SQL migrations
+pnpm db:migrate        # apply migrations
+pnpm db:seed           # upsert the dev admin user
+pnpm db:push           # push schema without migrations (prototyping)
+pnpm db:studio         # run Drizzle Studio locally (no Docker)
+pnpm db:auth:generate  # regenerate the Better Auth Drizzle schema
 ```
+
+Each forwards to `pnpm --filter @nuxt-app/api <script>`, so the same commands
+work from the API package directly.
 
 The seed signs up `dev@nuxt-app.com` / `password123` (override with `SEED_EMAIL` /
 `SEED_PASSWORD`) through Better Auth and grants it the `admin` role.
@@ -186,6 +189,23 @@ workspace root and covers every app and package.
 pnpm lint
 pnpm lint:fix
 ```
+
+`ts/no-deprecated` rejects APIs marked `@deprecated` in app TypeScript source and
+tests, root tests, `packages/{config,types,logger}`, and the Nuxt layer packages
+`client` and `ui`. This runs in CI and the pre-commit lint hook; TypeScript's type
+checker alone does not reject deprecated APIs. It requires the generated Nuxt
+types from `pnpm install`: every app and layer has a committed `tsconfig.json`
+over its `nuxt prepare` output. Vue files and configuration files are not yet
+covered by this type-aware rule.
+
+Type-aware linting loads a generated Nuxt TypeScript project per app and layer;
+every project binds ~2,000 declaration files and costs roughly 0.5 GB of heap, so
+linting the whole repository in one process peaks near 3.7 GB, above Node's
+default ~2 GB on CI. `pnpm lint` and `pnpm lint:fix` therefore run ESLint once per
+workspace through `scripts/lint.mjs`, keeping each process to a single project.
+The lint-staged hook still lints arbitrary staged files in one process, so it
+keeps a `--max-old-space-size=6144` cap. Add new lint entrypoints through the
+runner rather than a bare `eslint`.
 
 For auto-fix on save, install the VS Code ESLint extension and add the
 recommended settings from the config's README.
@@ -217,8 +237,11 @@ and put API integration tests in `apps/api/test/e2e/`. See
 [`vitest.config.ts`](vitest.config.ts) for the discovery patterns.
 
 CI ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs install, lint,
-type-check, and test on pushes to `main` and on pull requests. No coverage
-threshold is configured; cover changed behavior and regressions.
+type-check, and test on pushes to `main` and on pull requests. A separate
+`coverage` job runs `pnpm test:coverage:ci`; Vitest enforces the thresholds in
+[`vitest.config.ts`](vitest.config.ts) (90% lines/functions/branches/statements)
+and fails the job if they drop. Coverage is not uploaded anywhere — the
+thresholds are the gate.
 
 ## Build
 
@@ -295,8 +318,8 @@ Better Auth's adapter still calls `.transaction()` on the raw drizzle object.
 against the Neon pooled URL (not from the Vercel build):
 
 ```bash
-pnpm --filter @nuxt-app/api db:generate
-pnpm --filter @nuxt-app/api db:migrate
+pnpm db:generate
+pnpm db:migrate
 ```
 
 ### Auth and DNS
@@ -304,7 +327,9 @@ pnpm --filter @nuxt-app/api db:migrate
 [Better Auth](https://better-auth.com) handles email + password authentication.
 Its handler is mounted at `/api/auth/[...all]` on the API
 (`apps/api/server/api/auth/[...all].ts`) with the Drizzle adapter; sessions live
-in Postgres (`session` table), and Better Auth sends the session token in an HttpOnly cookie.
+in Postgres (`session` table). The browser apps carry the session token in an
+HttpOnly cookie; a native shell switches to a bearer token instead (see
+[Native (Capacitor) app](#native-capacitor-app)).
 Config is in `apps/api/server/database/auth.ts` (shared with the CLI and seed),
 and server guards (`getActor`, `requireActor`) are in
 `apps/api/server/utils/session.ts`.
@@ -363,6 +388,50 @@ To ship a new version:
 
 Frontends target a version with `NUXT_PUBLIC_API_VERSION` (defaults to
 `currentApiVersion`). `useApi()` from `@nuxt-app/client` returns a `$fetch`
-instance scoped to `<apiBase>/api/<version>` (credentials included) plus an
-`apiUrl(path)` helper for `useFetch`; Better Auth keeps its own unversioned
-client (internal to `useAuth()`).
+instance scoped to `<apiBase>/api/<version>` (carrying the session per the
+configured [session transport](#native-capacitor-app)). `useApiFetch()` provides
+the SSR-aware Nuxt fetch path with the same authenticated client. Better Auth
+keeps its own unversioned client internal to `useAuth()`.
+
+## Native (Capacitor) app
+
+A native shell hosts the SPA in a WebView, served from `capacitor://localhost`
+(iOS) or `https://localhost` (Android). Every API call is therefore cross-origin,
+and WebViews refuse the API's cross-origin `Set-Cookie`: the sign-in request
+succeeds, the cookie is dropped, and the user is signed out again on the next
+navigation. The shell uses the bearer transport instead ([ADR-0003](docs/adr/0003-bearer-tokens-for-native-clients.md)).
+
+1. Set `AUTH_BEARER_ENABLED=true` on the API deployment. Only then does Better
+   Auth register its bearer plugin and the CORS middleware expose
+   `set-auth-token`. This is opt-in because the plugin also hands the session
+   token to JavaScript on cookie sign-ins, which undoes HttpOnly; a deployment
+   that serves browser apps should leave it off unless it also serves a native
+   client.
+2. Set `NUXT_PUBLIC_SESSION_TRANSPORT=bearer` in the app's environment.
+   `useAuth()` and `useApi()` then send the session token in an `Authorization`
+   header and stop using cookies. Unset — or any other value — keeps cookies,
+   per `sessionTransportFor()`.
+3. Add the WebView origin to `CORS_ORIGINS` on the API. The origin is
+   `server.iosScheme` / `server.androidScheme` + `server.hostname`, i.e.
+   `capacitor://localhost` on iOS and `https://localhost` on Android by default;
+   log `window.location.origin` from the device to confirm rather than trusting
+   that. The same list feeds Better Auth's `trustedOrigins`, so a missing origin
+   fails sign-in with a `403` rather than a CORS error.
+4. Optionally replace token storage. The default is `localStorage`; call
+   `useAuthTokenStore()` once at startup with a store backed by
+   `@capacitor/preferences` (or a Keychain/Keystore plugin), which can persist
+   across a WebView data eviction. It accepts any `{ read, write, clear }` whose
+   members return promises.
+
+   A failed token write or clear rejects the authentication action and prevents
+   further token reads in that app session until storage recovers through a
+   successful write or clear. Failed writes also attempt to remove the previous
+   token. If cleanup fails, retry sign-out before closing the app: the underlying
+   storage may still contain the old token after a restart.
+
+No API route changes are needed: `requireActor` resolves the actor from the same
+`Authorization` header.
+
+Social sign-in does not work through `signIn.social()` in a WebView. Complete it
+with the provider's native SDK and forward the ID token, or register a
+custom-scheme callback. Email + password is covered as-is.

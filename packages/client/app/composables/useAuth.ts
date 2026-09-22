@@ -1,20 +1,28 @@
 import type { Actor, LoginCredentials, RegisterCredentials } from '@nuxt-app/types'
+import { isBearerTransport } from '@nuxt-app/config'
 import { actorFromSession } from '@nuxt-app/types'
 import { createAuthClient } from 'better-auth/vue'
 import { computed, getCurrentScope } from 'vue'
 import { useRuntimeConfig } from '#imports'
+import { authRequestError } from '../lib/authError'
+import { clearAuthToken } from '../lib/authToken'
+import { authFetchOptions } from '../lib/authTransport'
 
 let client: ReturnType<typeof createAuthClient> | undefined
+let clientKey = ''
 
 function useAuthClient() {
-  if (!client) {
-    const config = useRuntimeConfig()
+  const config = useRuntimeConfig()
+  const bearer = isBearerTransport(config.public.sessionTransport)
+  const key = `${config.public.apiBase}|${bearer ? 'bearer' : 'cookie'}`
+
+  if (!client || clientKey !== key) {
     client = createAuthClient({
       baseURL: config.public.apiBase,
-      fetchOptions: {
-        credentials: 'include',
-      },
+      // The transports differ in credentials and token handling, not endpoints.
+      fetchOptions: authFetchOptions(bearer),
     })
+    clientKey = key
   }
 
   return client
@@ -22,6 +30,7 @@ function useAuthClient() {
 
 export function useAuth() {
   const client = useAuthClient()
+  const bearer = isBearerTransport(useRuntimeConfig().public.sessionTransport)
 
   // A route guard runs outside a Vue effect scope, so subscribing there would
   // leak a session listener on every navigation. Only bind the reactive store
@@ -41,7 +50,7 @@ export function useAuth() {
     const { error } = await client.signIn.email(credentials)
 
     if (error) {
-      throw new Error(error.message || 'Unable to sign in')
+      throw authRequestError(error)
     }
   }
 
@@ -49,12 +58,21 @@ export function useAuth() {
     const { error } = await client.signUp.email(credentials)
 
     if (error) {
-      throw new Error(error.message || 'Unable to sign up')
+      throw authRequestError(error)
     }
   }
 
   async function signOut() {
-    await client.signOut()
+    try {
+      await client.signOut()
+    }
+    finally {
+      // Attempt local cleanup even when revocation fails. Storage failures
+      // invalidate local reads and reject so callers can ask the user to retry.
+      if (bearer) {
+        await clearAuthToken()
+      }
+    }
   }
 
   return {
