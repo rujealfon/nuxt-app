@@ -5,6 +5,11 @@ export default defineNuxtConfig({
     '@pinia/nuxt',
     '@pinia/colada-nuxt',
   ],
+  typescript: {
+    tsConfig: {
+      include: ['../test/**/*'],
+    },
+  },
   runtimeConfig: {
     public: {
       // Required by the auth composables. Each app overrides this.

@@ -9,6 +9,7 @@
   },
   "main": "./nuxt.config.ts",
   "scripts": {
+    "nuxt:prepare": "nuxt prepare",
     "lint": "eslint ."
   },
   "dependencies": {

@@ -52,6 +52,19 @@ export default antfu({
     'ts/no-deprecated': 'error',
   },
 }, {
+  // Nuxt layer packages generate their own tsconfig via `nuxt prepare`.
+  name: 'nuxt-app/layer-deprecated-apis',
+  files: ['packages/{client,ui}/{app,test,shared}/**/*.ts'],
+  languageOptions: {
+    parserOptions: {
+      projectService: true,
+      tsconfigRootDir: import.meta.dirname,
+    },
+  },
+  rules: {
+    'ts/no-deprecated': 'error',
+  },
+}, {
   name: 'nuxt-app/shared-deprecated-apis',
   files: ['packages/{config,types,logger}/**/*.ts', 'test/**/*.ts'],
   languageOptions: {
