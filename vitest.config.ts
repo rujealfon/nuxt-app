@@ -37,6 +37,39 @@ function nuxtProject(name: string, root: string, appName: string) {
 
 export default defineConfig({
   test: {
+    // Coverage is collected process-wide, so it is configured here (on the root
+    // config) rather than inside the individual projects. Run `pnpm test:coverage`.
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'html', 'lcov'],
+      reportsDirectory: './coverage',
+      include: [
+        'apps/*/app/**/*.{ts,vue}',
+        'apps/*/server/**/*.ts',
+        'packages/*/app/**/*.{ts,vue}',
+        'packages/*/server/**/*.ts',
+        'packages/*/src/**/*.{ts,vue}',
+        'packages/config/index.ts',
+        'packages/logger/index.ts',
+      ],
+      exclude: [
+        '**/*.spec.ts',
+        '**/*.test.ts',
+        '**/*.d.ts',
+        '**/.nuxt/**',
+        '**/.output/**',
+        '**/node_modules/**',
+      ],
+      // Baseline for `test:coverage:ci` is ~80.5% on all four metrics; the floor
+      // is kept a little lower so small additions don't red the build. Raise it
+      // (or use `thresholds.autoUpdate`) as coverage improves.
+      thresholds: {
+        lines: 79,
+        functions: 79,
+        branches: 79,
+        statements: 79,
+      },
+    },
     projects: [
       {
         define: { 'import.meta.server': true },

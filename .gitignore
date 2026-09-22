@@ -10,6 +10,9 @@ dist
 # Turborepo
 .turbo
 
+# Vitest coverage
+/coverage
+
 # Playwright
 .playwright-mcp
 /test-results/
