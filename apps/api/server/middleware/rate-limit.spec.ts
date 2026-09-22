@@ -4,14 +4,12 @@ import { DomainFailure } from '../utils/domain-failure'
 const mocks = vi.hoisted(() => ({
   consume: vi.fn(),
   setHeader: vi.fn(),
-  getMethod: vi.fn(() => 'GET'),
   getRequestIP: vi.fn(() => '203.0.113.7'),
   state: { rateLimitEnabled: true },
 }))
 
 vi.mock('h3', () => ({
   defineEventHandler: (handler: unknown) => handler,
-  getMethod: mocks.getMethod,
   getRequestIP: mocks.getRequestIP,
   setHeader: mocks.setHeader,
 }))
@@ -30,7 +28,7 @@ const handler = (await import('./rate-limit')).default as (event: unknown) => Pr
 const { consume, setHeader } = mocks
 
 function event(path: string) {
-  return { path, context: {} }
+  return { path, method: 'GET', context: {} }
 }
 
 describe('rate-limit middleware', () => {

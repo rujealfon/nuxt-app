@@ -1,6 +1,6 @@
 {
   "js/ts.tsdk.path": "node_modules/typescript/lib",
-  "explorer.fileNesting.enabled": true,
+  // "explorer.fileNesting.enabled": true,
   "explorer.fileNesting.patterns": {
     "package.json": "pnpm-lock.yaml, pnpm-workspace.yaml, turbo.json, skills-lock.json",
     "tsconfig.json": "tsconfig.*.json",
@@ -13,11 +13,7 @@
     "source.organizeImports": "never"
   },
   "eslint.format.enable": true,
-  "eslint.validate": [
-    "javascript",
-    "typescript",
-    "vue"
-  ],
+  "eslint.validate": ["javascript", "typescript", "vue"],
   "prettier.singleQuote": true,
   "prettier.jsxSingleQuote": true,
   "[javascript]": {

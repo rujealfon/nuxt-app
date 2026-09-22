@@ -3,7 +3,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 const mocks = vi.hoisted(() => ({
   setHeader: vi.fn(),
   getHeader: vi.fn(),
-  getMethod: vi.fn(() => 'GET'),
   setResponseStatus: vi.fn(),
   state: { corsOrigins: '', authBearerEnabled: false },
 }))
@@ -11,7 +10,6 @@ const mocks = vi.hoisted(() => ({
 vi.mock('h3', () => ({
   defineEventHandler: (handler: unknown) => handler,
   getHeader: mocks.getHeader,
-  getMethod: mocks.getMethod,
   setHeader: mocks.setHeader,
   setResponseStatus: mocks.setResponseStatus,
 }))
@@ -27,8 +25,8 @@ const handler = (await import('./cors')).default as (event: unknown) => unknown
 
 const { setHeader, setResponseStatus } = mocks
 
-function event() {
-  return { context: {} }
+function event(method = 'GET') {
+  return { method, context: {} }
 }
 
 function header(name: string) {
@@ -40,7 +38,6 @@ describe('cors middleware', () => {
     vi.clearAllMocks()
     mocks.state.corsOrigins = ''
     mocks.state.authBearerEnabled = false
-    mocks.getMethod.mockReturnValue('GET')
     mocks.getHeader.mockReturnValue(undefined)
   })
 
@@ -103,9 +100,7 @@ describe('cors middleware', () => {
   })
 
   it('short-circuits preflight requests with 204', () => {
-    mocks.getMethod.mockReturnValue('OPTIONS')
-
-    const result = handler(event())
+    const result = handler(event('OPTIONS'))
 
     expect(setResponseStatus).toHaveBeenCalledWith(expect.anything(), 204)
     expect(result).toBe('')

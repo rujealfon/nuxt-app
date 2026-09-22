@@ -24,9 +24,9 @@ describe('docs-guard', () => {
 
   it.skipIf(import.meta.dev)('answers 404 for docs paths outside development', () => {
     for (const path of ['/api/docs', '/api/openapi.json', '/api/docs-assets/standalone.js', '/api/docs/unknown']) {
-      expect(() => guard({ path })).toThrowError(DomainFailure)
+      expect(() => guard({ path })).toThrow(DomainFailure)
     }
 
-    expect(() => guard({ path: '/api/docs?foo=bar' })).toThrowError(DomainFailure)
+    expect(() => guard({ path: '/api/docs?foo=bar' })).toThrow(DomainFailure)
   })
 })

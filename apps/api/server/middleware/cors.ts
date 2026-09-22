@@ -1,5 +1,5 @@
 import { parseOrigins } from '@nuxt-app/config'
-import { defineEventHandler, getHeader, getMethod, setHeader, setResponseStatus } from 'h3'
+import { defineEventHandler, getHeader, setHeader, setResponseStatus } from 'h3'
 import { useRuntimeConfig } from 'nitropack/runtime'
 
 export default defineEventHandler((event) => {
@@ -27,7 +27,7 @@ export default defineEventHandler((event) => {
     setHeader(event, 'access-control-expose-headers', 'set-auth-token')
   }
 
-  if (getMethod(event) === 'OPTIONS') {
+  if (event.method === 'OPTIONS') {
     setResponseStatus(event, 204)
     return ''
   }

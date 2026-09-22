@@ -187,6 +187,13 @@ pnpm lint
 pnpm lint:fix
 ```
 
+`ts/no-deprecated` rejects APIs marked `@deprecated` in app TypeScript source and
+tests, root tests, and `packages/{config,types,logger}`. This runs in CI and the
+pre-commit lint hook; TypeScript's type checker alone does not reject deprecated
+APIs. It requires the generated Nuxt types from `pnpm install`. Vue files, Nuxt
+layer packages (`client` and `ui`), and configuration files are not yet covered
+by this type-aware rule.
+
 For auto-fix on save, install the VS Code ESLint extension and add the
 recommended settings from the config's README.
 

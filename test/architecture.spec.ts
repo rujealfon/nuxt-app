@@ -1,7 +1,13 @@
 import { ESLint } from 'eslint'
 import { describe, expect, it } from 'vitest'
 
-const eslint = new ESLint()
+// These snippets use virtual paths and only exercise import boundaries.
+const eslint = new ESLint({
+  overrideConfig: {
+    languageOptions: { parserOptions: { project: false, projectService: false } },
+    rules: { 'ts/no-deprecated': 'off' },
+  },
+})
 
 async function violations(filePath: string, code: string) {
   const [result] = await eslint.lintText(code, { filePath })
