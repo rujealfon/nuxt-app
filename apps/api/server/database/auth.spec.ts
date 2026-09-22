@@ -1,8 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
-
-// `rate-limit` pulls in Redis + Nitro runtime; stub the runtime so this unit
-// test can construct the auth instance without a Nitro context.
-vi.mock('nitropack/runtime', () => ({ useRuntimeConfig: vi.fn() }))
+import { describe, expect, it } from 'vitest'
 
 const { createAuth } = await import('./auth')
 

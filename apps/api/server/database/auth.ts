@@ -1,9 +1,9 @@
-import type { Database } from '../utils/db'
-import type { RateLimitStorage } from '../utils/rate-limit'
+import type { Database } from '../utils/db-core'
+import type { RateLimitStorage } from '../utils/rate-limit-policy'
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { bearer } from 'better-auth/plugins/bearer'
-import { rateLimitPolicy } from '../utils/rate-limit'
+import { rateLimitPolicy } from '../utils/rate-limit-policy'
 import * as schema from './schema'
 
 export interface AuthConfig {

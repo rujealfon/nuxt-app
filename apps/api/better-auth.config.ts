@@ -1,5 +1,5 @@
 import { createAuth } from './server/database/auth'
-import { createDb, parseDriver } from './server/utils/db'
+import { createDb, parseDriver } from './server/utils/db-core'
 
 try {
   process.loadEnvFile()

@@ -5,7 +5,8 @@ import { defineEventHandler, getRequestIP, setHeader } from 'h3'
 import { useRuntimeConfig } from 'nitropack/runtime'
 import { isDocsPath, requestPath } from '../utils/api-paths'
 import { domainFailure } from '../utils/domain-failure'
-import { createRateLimitStorage, rateLimitPolicy } from '../utils/rate-limit'
+import { createRateLimitStorage } from '../utils/rate-limit'
+import { rateLimitPolicy } from '../utils/rate-limit-policy'
 
 const EXEMPT_PREFIXES = ['/api/auth', '/api/health']
 

@@ -138,11 +138,11 @@ pnpm db:reset  # DESTRUCTIVE: down -v (wipes data) then rebuild + up
 - Redis: `redis://localhost:6381`
 
 Drizzle Studio is part of the same compose project (host port `4984`), so
-`db:up` starts it too. Use `db:studio` to rebuild its image after dependency
-changes:
+`db:up` starts it too. Use `db:studio:docker` to rebuild its image after
+dependency changes:
 
 ```bash
-pnpm db:studio   # rebuild + start drizzle-studio
+pnpm db:studio:docker   # rebuild + start drizzle-studio
 ```
 
 Open <https://local.drizzle.studio?port=4984> to browse the database. (The
@@ -156,13 +156,16 @@ from the generated `auth-schema.ts`); server helpers such as `useDb()` are
 imported explicitly from `server/utils/`.
 
 ```bash
-pnpm --filter @nuxt-app/api db:generate       # generate SQL migrations
-pnpm --filter @nuxt-app/api db:migrate        # apply migrations
-pnpm --filter @nuxt-app/api db:seed           # upsert the dev admin user
-pnpm --filter @nuxt-app/api db:push           # push schema without migrations (prototyping)
-pnpm --filter @nuxt-app/api db:studio         # run Drizzle Studio locally (no Docker)
-pnpm --filter @nuxt-app/api db:auth:generate  # regenerate the Better Auth Drizzle schema
+pnpm db:generate       # generate SQL migrations
+pnpm db:migrate        # apply migrations
+pnpm db:seed           # upsert the dev admin user
+pnpm db:push           # push schema without migrations (prototyping)
+pnpm db:studio         # run Drizzle Studio locally (no Docker)
+pnpm db:auth:generate  # regenerate the Better Auth Drizzle schema
 ```
+
+Each forwards to `pnpm --filter @nuxt-app/api <script>`, so the same commands
+work from the API package directly.
 
 The seed signs up `dev@nuxt-app.com` / `password123` (override with `SEED_EMAIL` /
 `SEED_PASSWORD`) through Better Auth and grants it the `admin` role.
@@ -302,8 +305,8 @@ Better Auth's adapter still calls `.transaction()` on the raw drizzle object.
 against the Neon pooled URL (not from the Vercel build):
 
 ```bash
-pnpm --filter @nuxt-app/api db:generate
-pnpm --filter @nuxt-app/api db:migrate
+pnpm db:generate
+pnpm db:migrate
 ```
 
 ### Auth and DNS

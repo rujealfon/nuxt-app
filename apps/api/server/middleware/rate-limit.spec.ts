@@ -19,7 +19,6 @@ vi.mock('nitropack/runtime', () => ({
 }))
 
 vi.mock('../utils/rate-limit', () => ({
-  rateLimitPolicy: { window: 60, max: 100 },
   createRateLimitStorage: () => ({ consume: mocks.consume }),
 }))
 
