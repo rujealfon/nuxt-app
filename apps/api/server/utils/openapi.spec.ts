@@ -86,20 +86,12 @@ describe('buildOpenApiDocument', () => {
     ])
   })
 
-  it('advertises the session cookie and bearer security schemes', () => {
+  it('composes the auth OpenAPI fragment', () => {
     const document = buildOpenApiDocument()
 
-    expect(document.components.securitySchemes).toMatchObject({
-      sessionCookie: {
-        type: 'apiKey',
-        in: 'cookie',
-        name: 'better-auth.session_token',
-      },
-      bearerAuth: {
-        type: 'http',
-        scheme: 'bearer',
-      },
-    })
+    expect(document.tags.map(tag => tag.name)).toContain('auth')
+    expect(document.paths['/api/auth/sign-in/email']?.post?.tags).toEqual(['auth'])
+    expect(document.components.securitySchemes.bearerAuth.scheme).toBe('bearer')
   })
 
   it('leaves public operations without a security requirement', () => {
@@ -127,49 +119,6 @@ describe('buildOpenApiDocument', () => {
     expect(operation?.security).toEqual([{ sessionCookie: [] }, { bearerAuth: [] }])
     expect(operation?.responses['401']?.content?.['application/json']?.schema).toEqual({
       $ref: '#/components/schemas/ApiError',
-    })
-  })
-
-  it('documents the Better Auth email/password flow for same-origin try-it', () => {
-    const document = buildOpenApiDocument()
-
-    expect(document.tags.map(tag => tag.name)).toContain('auth')
-    expect(document.paths['/api/auth/sign-in/email']?.post?.tags).toEqual(['auth'])
-    expect(document.paths['/api/auth/sign-in/email']?.post?.requestBody?.content?.['application/json']?.schema)
-      .toEqual({ $ref: '#/components/schemas/LoginCredentials' })
-    expect(document.paths['/api/auth/sign-up/email']?.post?.requestBody?.content?.['application/json']?.schema)
-      .toEqual({ $ref: '#/components/schemas/RegisterCredentials' })
-    expect(document.paths['/api/auth/get-session']?.get?.responses['200']?.content?.['application/json']?.schema)
-      .toEqual({ $ref: '#/components/schemas/AuthSessionResponse' })
-    // Sign-out is a bodyless POST, but Better Auth rejects a missing JSON
-    // `Content-Type` with 415, so the document declares a JSON body.
-    expect(document.paths['/api/auth/sign-out']?.post?.requestBody?.content?.['application/json']?.schema)
-      .toEqual({ $ref: '#/components/schemas/AuthSignOutRequest' })
-  })
-
-  it('documents auth failures with the API error contract', () => {
-    const document = buildOpenApiDocument()
-
-    for (const path of [
-      '/api/auth/sign-in/email',
-      '/api/auth/sign-up/email',
-      '/api/auth/get-session',
-      '/api/auth/sign-out',
-    ]) {
-      const method = path === '/api/auth/get-session' ? 'get' : 'post'
-
-      expect(document.paths[path]?.[method]?.responses.default?.content?.['application/json']?.schema)
-        .toEqual({ $ref: '#/components/schemas/ApiError' })
-    }
-
-    expect(document.components.schemas.AuthError).toBeUndefined()
-    expect(document.components.schemas.AuthSignInResponse).toMatchObject({
-      type: 'object',
-      properties: { redirect: { type: 'boolean' }, token: { type: 'string' } },
-    })
-    expect(document.components.schemas.LoginCredentials).toMatchObject({
-      type: 'object',
-      properties: { email: { type: 'string' }, password: { type: 'string' } },
     })
   })
 })

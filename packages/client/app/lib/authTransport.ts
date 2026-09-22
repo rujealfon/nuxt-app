@@ -6,6 +6,19 @@ type AuthFetchOptions = NonNullable<BetterAuthClientOptions['fetchOptions']>
 type ApiFetchOptions = FetchOptions
 type ApiResponseContext = FetchContext & { response: FetchResponse<unknown> }
 
+function targetsConfiguredOrigin(
+  request: FetchContext['request'],
+  requestBaseURL: string | undefined,
+  configuredBaseURL: string,
+): boolean {
+  const requestURL = new URL(
+    typeof request === 'string' ? request : request.url,
+    requestBaseURL || configuredBaseURL,
+  )
+
+  return requestURL.origin === new URL(configuredBaseURL).origin
+}
+
 // Adds the bearer header to one outgoing versioned-route request. The token is
 // read per request: it only exists once a sign-in has succeeded.
 export async function setBearerAuthorization(options: { headers?: HeadersInit }) {
@@ -51,15 +64,23 @@ export function authFetchOptions(bearer: boolean): AuthFetchOptions {
   }
 }
 
-export function apiFetchOptions(bearer: boolean): ApiFetchOptions {
+export function apiFetchOptions(baseURL: string, bearer: boolean): ApiFetchOptions {
   if (!bearer) {
     return { credentials: 'include' }
   }
 
   const options = {
     credentials: 'omit',
-    onRequest: async (context: FetchContext) => setBearerAuthorization(context.options),
-    onResponseError: async (context: ApiResponseContext) => clearStaleBearer(context.response.status, context.options.headers),
+    onRequest: async (context: FetchContext) => {
+      if (targetsConfiguredOrigin(context.request, context.options.baseURL, baseURL)) {
+        await setBearerAuthorization(context.options)
+      }
+    },
+    onResponseError: async (context: ApiResponseContext) => {
+      if (targetsConfiguredOrigin(context.request, context.options.baseURL, baseURL)) {
+        await clearStaleBearer(context.response.status, context.options.headers)
+      }
+    },
   } satisfies ApiFetchOptions
 
   return options

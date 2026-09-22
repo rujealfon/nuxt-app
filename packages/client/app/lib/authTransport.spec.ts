@@ -61,7 +61,7 @@ describe('authFetchOptions', () => {
 
 describe('apiFetchOptions', () => {
   it('keeps cookies in cookie mode', () => {
-    const options = apiFetchOptions(false)
+    const options = apiFetchOptions('https://api.test/api/v1', false)
 
     expect(options.credentials).toBe('include')
     expect(options.onRequest).toBeUndefined()
@@ -69,7 +69,7 @@ describe('apiFetchOptions', () => {
   })
 
   it('omits cookies and wires the bearer handlers in bearer mode', () => {
-    const options = apiFetchOptions(true)
+    const options = apiFetchOptions('https://api.test/api/v1', true)
 
     expect(options.credentials).toBe('omit')
     expect(typeof options.onRequest).toBe('function')
@@ -84,7 +84,7 @@ describe('apiFetchOptions', () => {
       started.resolve()
       return response.promise
     })
-    const api = $fetch.create({ ...apiFetchOptions(true), retry: 0 }, { fetch })
+    const api = $fetch.create({ ...apiFetchOptions('http://api.test/api/v1', true), retry: 0 }, { fetch })
 
     const failure = expect(api('http://api.test/api/v1/hello')).rejects.toThrow()
     await started.promise
@@ -93,6 +93,40 @@ describe('apiFetchOptions', () => {
     await failure
 
     await expect(readAuthToken()).resolves.toBe('new-session')
+  })
+
+  it('only sends the stored token to the configured API origin', async () => {
+    await writeAuthToken('session-token')
+    const authorizations: Array<string | null> = []
+    const fetch = vi.fn(async (_request: RequestInfo | URL, init?: RequestInit) => {
+      authorizations.push(new Headers(init?.headers).get('authorization'))
+      return new Response('{}', { headers: { 'content-type': 'application/json' } })
+    })
+    const baseURL = 'https://api.test/api/v1'
+    const api = $fetch.create({ baseURL, ...apiFetchOptions(baseURL, true) }, { fetch })
+
+    await api('/same-origin')
+    await api('https://other.test/absolute')
+    await api('/overridden', { baseURL: 'https://other.test' })
+
+    expect(authorizations).toEqual([
+      'Bearer session-token',
+      null,
+      null,
+    ])
+  })
+
+  it('does not clear the stored token after a foreign-origin 401', async () => {
+    await writeAuthToken('session-token')
+    const fetch = vi.fn(async () => new Response(null, { status: 401 }))
+    const baseURL = 'https://api.test/api/v1'
+    const api = $fetch.create({ baseURL, ...apiFetchOptions(baseURL, true), retry: 0 }, { fetch })
+
+    await expect(api('https://other.test/protected', {
+      headers: { authorization: 'Bearer session-token' },
+    })).rejects.toThrow()
+
+    await expect(readAuthToken()).resolves.toBe('session-token')
   })
 })
 

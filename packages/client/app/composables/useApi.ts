@@ -17,7 +17,7 @@ function clientFor(baseURL: string, bearer: boolean): ApiClient {
   if (!cached) {
     cached = $fetch.create({
       baseURL,
-      ...apiFetchOptions(bearer),
+      ...apiFetchOptions(baseURL, bearer),
     })
     clients.set(key, cached)
   }
@@ -51,7 +51,7 @@ export function useApi() {
   const api = import.meta.server
     ? $fetch.create({
         baseURL,
-        ...apiFetchOptions(bearer),
+        ...apiFetchOptions(baseURL, bearer),
         ...(cookie && {
           onRequest({ request, options }: FetchContext) {
             const target = new URL(typeof request === 'string' ? request : request.url, options.baseURL || baseURL)
