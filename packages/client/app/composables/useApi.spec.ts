@@ -14,6 +14,10 @@ describe('useApi', () => {
     expect(typeof api).toBe('function')
   })
 
+  it('reuses one client for the same configuration', () => {
+    expect(useApi().api).toBe(useApi().api)
+  })
+
   it('reads the API error contract from a fetch failure', () => {
     const { parseApiError } = useApi()
 

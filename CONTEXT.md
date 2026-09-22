@@ -17,7 +17,7 @@ The authenticated identity a request acts as: a user id, email, name, and role. 
 _Avoid_: user, account, session user
 
 **Session transport**:
-How a client carries its session to the API: in the session cookie, or as the opaque session token in an `Authorization: Bearer` header when the client is a WebView that refuses cross-origin cookies. Selected per app through `authMode`; the API accepts both for every route.
+How a client carries its session to the API: in the session cookie, or as the opaque session token in an `Authorization: Bearer` header when the client is a WebView that refuses cross-origin cookies. Selected per app through `sessionTransport`; the API accepts both for every route, but only a deployment that opts in with `AUTH_BEARER_ENABLED` registers the bearer plugin.
 _Avoid_: auth mode, token type, credential transport, cookie mode, bearer mode
 
 **Domain failure**:

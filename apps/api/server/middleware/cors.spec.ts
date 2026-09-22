@@ -5,7 +5,7 @@ const mocks = vi.hoisted(() => ({
   getHeader: vi.fn(),
   getMethod: vi.fn(() => 'GET'),
   setResponseStatus: vi.fn(),
-  state: { corsOrigins: '' },
+  state: { corsOrigins: '', authBearerEnabled: false },
 }))
 
 vi.mock('h3', () => ({
@@ -17,7 +17,10 @@ vi.mock('h3', () => ({
 }))
 
 vi.mock('nitropack/runtime', () => ({
-  useRuntimeConfig: () => ({ corsOrigins: mocks.state.corsOrigins }),
+  useRuntimeConfig: () => ({
+    corsOrigins: mocks.state.corsOrigins,
+    authBearerEnabled: mocks.state.authBearerEnabled,
+  }),
 }))
 
 const handler = (await import('./cors')).default as (event: unknown) => unknown
@@ -36,6 +39,7 @@ describe('cors middleware', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mocks.state.corsOrigins = ''
+    mocks.state.authBearerEnabled = false
     mocks.getMethod.mockReturnValue('GET')
     mocks.getHeader.mockReturnValue(undefined)
   })
@@ -86,7 +90,13 @@ describe('cors middleware', () => {
     expect(header('access-control-allow-headers')).toBe('content-type, authorization')
   })
 
-  it('exposes the bearer session token to cross-origin clients', () => {
+  it('exposes the bearer session token only when bearer is enabled', () => {
+    handler(event())
+
+    expect(header('access-control-expose-headers')).toBeUndefined()
+
+    mocks.state.authBearerEnabled = true
+
     handler(event())
 
     expect(header('access-control-expose-headers')).toBe('set-auth-token')

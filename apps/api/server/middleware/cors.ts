@@ -20,10 +20,12 @@ export default defineEventHandler((event) => {
 
   setHeader(event, 'access-control-allow-methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS')
   setHeader(event, 'access-control-allow-headers', 'content-type, authorization')
-  // The bearer plugin hands the session token back in `set-auth-token`. Without
-  // this the browser hides it from cross-origin JS, and a bearer sign-in stores
-  // nothing while reporting success.
-  setHeader(event, 'access-control-expose-headers', 'set-auth-token')
+  // Only a bearer-enabled deployment issues `set-auth-token`. Advertising it
+  // everywhere would invite cookie clients to read a token they should never
+  // see; see ADR-0003.
+  if (config.authBearerEnabled) {
+    setHeader(event, 'access-control-expose-headers', 'set-auth-token')
+  }
 
   if (getMethod(event) === 'OPTIONS') {
     setResponseStatus(event, 204)

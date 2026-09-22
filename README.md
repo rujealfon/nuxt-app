@@ -367,7 +367,8 @@ Frontends target a version with `NUXT_PUBLIC_API_VERSION` (defaults to
 `currentApiVersion`). `useApi()` from `@nuxt-app/client` returns a `$fetch`
 instance scoped to `<apiBase>/api/<version>` (carrying the session per the
 configured [session transport](#native-capacitor-app)) plus an `apiUrl(path)`
-helper for `useFetch`; Better Auth keeps its own unversioned client (internal to
+helper for `useFetch` — cookie transport only, since `useFetch` never runs the
+client's request hook; Better Auth keeps its own unversioned client (internal to
 `useAuth()`).
 
 ## Native (Capacitor) app
@@ -378,21 +379,27 @@ and WebViews refuse the API's cross-origin `Set-Cookie`: the sign-in request
 succeeds, the cookie is dropped, and the user is signed out again on the next
 navigation. The shell uses the bearer transport instead ([ADR-0003](docs/adr/0003-bearer-tokens-for-native-clients.md)).
 
-1. Set `NUXT_PUBLIC_AUTH_MODE=bearer` in the app's environment. `useAuth()` and
-   `useApi()` then send the session token in an `Authorization` header and stop
-   using cookies. Unset — or any other value — keeps cookies, per
-   `authModeFor()`.
-2. Add the WebView origin to `CORS_ORIGINS` on the API. The origin is
+1. Set `AUTH_BEARER_ENABLED=true` on the API deployment. Only then does Better
+   Auth register its bearer plugin and the CORS middleware expose
+   `set-auth-token`. This is opt-in because the plugin also hands the session
+   token to JavaScript on cookie sign-ins, which undoes HttpOnly; a deployment
+   that serves browser apps should leave it off unless it also serves a native
+   client.
+2. Set `NUXT_PUBLIC_SESSION_TRANSPORT=bearer` in the app's environment.
+   `useAuth()` and `useApi()` then send the session token in an `Authorization`
+   header and stop using cookies. Unset — or any other value — keeps cookies,
+   per `sessionTransportFor()`.
+3. Add the WebView origin to `CORS_ORIGINS` on the API. The origin is
    `server.iosScheme` / `server.androidScheme` + `server.hostname`, i.e.
    `capacitor://localhost` on iOS and `https://localhost` on Android by default;
    log `window.location.origin` from the device to confirm rather than trusting
    that. The same list feeds Better Auth's `trustedOrigins`, so a missing origin
    fails sign-in with a `403` rather than a CORS error.
-3. Optionally replace token storage. The default is `localStorage`; call
+4. Optionally replace token storage. The default is `localStorage`; call
    `useAuthTokenStore()` once at startup with a store backed by
-   `@capacitor/preferences` (or a Keychain/Keystore plugin) so the token
-   survives a WebView data eviction. It accepts any `{ read, write, clear }`
-   whose members return promises.
+   `@capacitor/preferences` (or a Keychain/Keystore plugin), which can persist
+   across a WebView data eviction. It accepts any `{ read, write, clear }` whose
+   members return promises.
 
 No API route changes are needed: `requireActor` resolves the actor from the same
 `Authorization` header.

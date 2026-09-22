@@ -37,6 +37,9 @@ export default defineNuxtConfig({
     betterAuthUrl: process.env.BETTER_AUTH_URL || '',
     redisUrl: process.env.REDIS_URL || '',
     corsOrigins: process.env.CORS_ORIGINS || '',
+    // Opt-in: the bearer plugin exposes the session token to page JS (see
+    // ADR-0003), so only a deployment that serves a native client enables it.
+    authBearerEnabled: process.env.AUTH_BEARER_ENABLED === 'true',
     rateLimitEnabled: process.env.RATE_LIMIT_ENABLED !== 'false',
   },
 })

@@ -13,15 +13,23 @@ export function apiBaseFor(env: string | undefined): string {
   return env || `http://localhost:${appPorts.api}`
 }
 
-// How the browser apps carry a session. `cookie` is the default browser
+// How a client carries its session to the API. `cookie` is the default browser
 // transport; `bearer` carries the opaque session token in an `Authorization`
 // header, which is the only transport that survives a cross-origin WebView
 // (a Capacitor app, whose origin the API sees as `https://localhost`).
 // Anything unrecognized falls back to cookies, the conservative choice.
-export type AuthMode = 'cookie' | 'bearer'
+export type SessionTransport = 'cookie' | 'bearer'
 
-export function authModeFor(env: string | undefined): AuthMode {
-  return env === 'bearer' ? 'bearer' : 'cookie'
+export const defaultSessionTransport: SessionTransport = 'cookie'
+
+export function sessionTransportFor(env: string | undefined): SessionTransport {
+  return env === 'bearer' ? 'bearer' : defaultSessionTransport
+}
+
+// The one place that knows which transport string means bearer, so the client
+// layer never repeats the literal.
+export function isBearerTransport(transport: string | undefined): boolean {
+  return transport === 'bearer'
 }
 
 // Localhost-defaulted cross-site URLs for `runtimeConfig.public`. Each app

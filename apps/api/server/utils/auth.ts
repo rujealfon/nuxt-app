@@ -14,6 +14,7 @@ function createInstance() {
     baseURL: config.betterAuthUrl,
     trustedOrigins: parseOrigins(config.corsOrigins || ''),
     rateLimitStorage: createRateLimitStorage({ failClosed: true }),
+    bearerEnabled: config.authBearerEnabled,
   })
 }
 

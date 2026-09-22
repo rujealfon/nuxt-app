@@ -58,6 +58,18 @@ describe('getActor', () => {
 
     await expect(getActor(event)).resolves.toBeNull()
   })
+
+  // The bearer transport rides on this: the gate has to hand the raw request
+  // headers (including `Authorization`) to Better Auth, or native clients are
+  // unauthenticated on every route.
+  it('forwards the request headers to the session lookup', async () => {
+    getSession.mockResolvedValue(null)
+    const headers = new Headers({ authorization: 'Bearer session-token' })
+
+    await getActor({ headers } as never)
+
+    expect(getSession).toHaveBeenCalledWith({ headers })
+  })
 })
 
 describe('requireActor', () => {

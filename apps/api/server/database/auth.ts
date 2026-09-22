@@ -2,7 +2,7 @@ import type { Database } from '../utils/db'
 import type { RateLimitStorage } from '../utils/rate-limit'
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
-import { bearer } from 'better-auth/plugins'
+import { bearer } from 'better-auth/plugins/bearer'
 import { rateLimitPolicy } from '../utils/rate-limit'
 import * as schema from './schema'
 
@@ -11,6 +11,7 @@ export interface AuthConfig {
   baseURL: string
   trustedOrigins?: string[]
   rateLimitStorage?: RateLimitStorage
+  bearerEnabled?: boolean
 }
 
 export function createAuth(
@@ -29,9 +30,14 @@ export function createAuth(
       enabled: true,
     },
     // Accepts the session token from an `Authorization: Bearer` header as well
-    // as from the session cookie. Inert for cookie clients; the only transport
-    // that works from a cross-origin WebView, where `Set-Cookie` is unreliable.
-    plugins: [bearer()],
+    // as from the session cookie.
+    //
+    // This plugin is NOT inert for cookie clients: its after-hook emits
+    // `set-auth-token` (and exposes it via CORS) on any response that sets a
+    // session cookie, handing page JS a replayable credential that was
+    // HttpOnly. It is therefore opt-in per API deployment, not global; see
+    // docs/adr/0003-bearer-tokens-for-native-clients.md.
+    plugins: config.bearerEnabled ? [bearer()] : [],
     rateLimit: {
       enabled: true,
       window: rateLimitPolicy.window,

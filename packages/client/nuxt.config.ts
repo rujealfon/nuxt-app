@@ -1,4 +1,4 @@
-import { currentApiVersion } from '@nuxt-app/config'
+import { currentApiVersion, defaultSessionTransport } from '@nuxt-app/config'
 
 export default defineNuxtConfig({
   modules: [
@@ -12,8 +12,8 @@ export default defineNuxtConfig({
       // Version used by useApi() for versioned routes. Each app overrides this.
       apiVersion: currentApiVersion,
       // How the auth and API clients carry a session. Apps override this
-      // through NUXT_PUBLIC_AUTH_MODE; see `authModeFor`.
-      authMode: 'cookie',
+      // through NUXT_PUBLIC_SESSION_TRANSPORT; see `sessionTransportFor`.
+      sessionTransport: defaultSessionTransport,
     },
   },
 })

@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { browserAuthTokenStore, readAuthToken, setAuthTokenStore, writeAuthToken } from './authToken'
-import { authFetchOptions, setBearerAuthorization } from './authTransport'
+import { resetAuthTokenStore } from '../../test/helpers/authTokenStore'
+import { readAuthToken, writeAuthToken } from './authToken'
+import { apiFetchOptions, authFetchOptions, clearStaleBearer, setBearerAuthorization } from './authTransport'
 
 function tokenResponse(headers: Record<string, string>) {
   return { response: new Response(null, { headers }) }
@@ -10,10 +11,7 @@ function requestContext() {
   return { options: {} as { headers?: HeadersInit } }
 }
 
-beforeEach(async () => {
-  setAuthTokenStore(browserAuthTokenStore)
-  await browserAuthTokenStore.clear()
-})
+beforeEach(resetAuthTokenStore)
 
 describe('authFetchOptions', () => {
   it('keeps the cookie transport unchanged', () => {
@@ -22,6 +20,7 @@ describe('authFetchOptions', () => {
     expect(options.credentials).toBe('include')
     expect(options.auth).toBeUndefined()
     expect(options.onSuccess).toBeUndefined()
+    expect(options.onResponseError).toBeUndefined()
   })
 
   it('drops cookies and sends the token as a bearer header', async () => {
@@ -53,6 +52,24 @@ describe('authFetchOptions', () => {
   })
 })
 
+describe('apiFetchOptions', () => {
+  it('keeps cookies in cookie mode', () => {
+    const options = apiFetchOptions(false)
+
+    expect(options.credentials).toBe('include')
+    expect(options.onRequest).toBeUndefined()
+    expect(options.onResponseError).toBeUndefined()
+  })
+
+  it('omits cookies and wires the bearer handlers in bearer mode', () => {
+    const options = apiFetchOptions(true)
+
+    expect(options.credentials).toBe('omit')
+    expect(options.onRequest).toBe(setBearerAuthorization)
+    expect(options.onResponseError).toBe(clearStaleBearer)
+  })
+})
+
 describe('setBearerAuthorization', () => {
   it('signs a versioned-route request with the stored token', async () => {
     await writeAuthToken('session-token')
@@ -80,5 +97,23 @@ describe('setBearerAuthorization', () => {
     await setBearerAuthorization(context)
 
     expect(context.options.headers).toBeUndefined()
+  })
+})
+
+describe('clearStaleBearer', () => {
+  it('drops the stored token when the API answers 401', async () => {
+    await writeAuthToken('session-token')
+
+    await clearStaleBearer({ response: { status: 401 } })
+
+    await expect(readAuthToken()).resolves.toBeNull()
+  })
+
+  it('keeps the stored token on any other status', async () => {
+    await writeAuthToken('session-token')
+
+    await clearStaleBearer({ response: { status: 500 } })
+
+    await expect(readAuthToken()).resolves.toBe('session-token')
   })
 })

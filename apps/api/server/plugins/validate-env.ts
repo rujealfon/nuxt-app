@@ -8,6 +8,7 @@ export const envSchema = z.object({
   betterAuthUrl: z.url('BETTER_AUTH_URL must be a valid URL'),
   redisUrl: z.string().min(1, 'REDIS_URL is required'),
   corsOrigins: z.string().default(''),
+  authBearerEnabled: z.boolean().default(false),
 })
 
 // Validated once at boot. AOT compilation wins on large or hot schemas, not a
@@ -27,6 +28,7 @@ export default defineNitroPlugin(() => {
     betterAuthUrl: config.betterAuthUrl,
     redisUrl: config.redisUrl,
     corsOrigins: config.corsOrigins,
+    authBearerEnabled: config.authBearerEnabled,
   })
 
   if (!parsed.success) {

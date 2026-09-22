@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { effectScope } from 'vue'
+import { resetAuthTokenStore } from '../../test/helpers/authTokenStore'
 import { readAuthToken, writeAuthToken } from '../lib/authToken'
 import { useAuth } from './useAuth'
 
@@ -25,7 +26,8 @@ function inScope<T>(fn: () => T): T {
   return effectScope().run(fn) as T
 }
 
-beforeEach(() => {
+beforeEach(async () => {
+  await resetAuthTokenStore()
   signInEmail.mockReset()
   signUpEmail.mockReset()
   signOut.mockReset()
@@ -119,6 +121,14 @@ describe('useAuth', () => {
 
     await useAuth().signOut()
 
+    await expect(readAuthToken()).resolves.toBeNull()
+  })
+
+  it('clears the stored token even when sign out fails', async () => {
+    await writeAuthToken('session-token')
+    signOut.mockRejectedValue(new Error('network down'))
+
+    await expect(useAuth().signOut()).rejects.toThrow('network down')
     await expect(readAuthToken()).resolves.toBeNull()
   })
 })

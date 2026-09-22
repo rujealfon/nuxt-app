@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { apiBaseFor, apiVersions, appPorts, authModeFor, currentApiVersion, deprecatedApiVersions, parseOrigins, siteUrls, versionMeta } from '../index'
+import { apiBaseFor, apiVersions, appPorts, currentApiVersion, defaultSessionTransport, deprecatedApiVersions, isBearerTransport, parseOrigins, sessionTransportFor, siteUrls, versionMeta } from '../index'
 
 describe('apiBaseFor', () => {
   it('falls back to the local API port', () => {
@@ -11,17 +11,26 @@ describe('apiBaseFor', () => {
   })
 })
 
-describe('authModeFor', () => {
+describe('sessionTransportFor', () => {
   it('defaults to cookies', () => {
-    expect(authModeFor(undefined)).toBe('cookie')
-    expect(authModeFor('')).toBe('cookie')
+    expect(sessionTransportFor(undefined)).toBe(defaultSessionTransport)
+    expect(sessionTransportFor('')).toBe(defaultSessionTransport)
   })
 
   it('selects bearer only for the exact value', () => {
-    expect(authModeFor('bearer')).toBe('bearer')
+    expect(sessionTransportFor('bearer')).toBe('bearer')
     // A typo must not silently switch transports.
-    expect(authModeFor('Bearer')).toBe('cookie')
-    expect(authModeFor('token')).toBe('cookie')
+    expect(sessionTransportFor('Bearer')).toBe(defaultSessionTransport)
+    expect(sessionTransportFor('token')).toBe(defaultSessionTransport)
+  })
+})
+
+describe('isBearerTransport', () => {
+  it('recognizes only the bearer transport', () => {
+    expect(isBearerTransport('bearer')).toBe(true)
+    expect(isBearerTransport('cookie')).toBe(false)
+    expect(isBearerTransport(undefined)).toBe(false)
+    expect(isBearerTransport('Bearer')).toBe(false)
   })
 })
 

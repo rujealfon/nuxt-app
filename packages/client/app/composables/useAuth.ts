@@ -1,4 +1,5 @@
 import type { Actor, LoginCredentials, RegisterCredentials } from '@nuxt-app/types'
+import { isBearerTransport } from '@nuxt-app/config'
 import { actorFromSession } from '@nuxt-app/types'
 import { createAuthClient } from 'better-auth/vue'
 import { computed, getCurrentScope } from 'vue'
@@ -7,17 +8,20 @@ import { clearAuthToken } from '../lib/authToken'
 import { authFetchOptions } from '../lib/authTransport'
 
 let client: ReturnType<typeof createAuthClient> | undefined
+let clientKey = ''
 
 function useAuthClient() {
-  if (!client) {
-    const config = useRuntimeConfig()
+  const config = useRuntimeConfig()
+  const bearer = isBearerTransport(config.public.sessionTransport)
+  const key = `${config.public.apiBase}|${bearer ? 'bearer' : 'cookie'}`
 
+  if (!client || clientKey !== key) {
     client = createAuthClient({
       baseURL: config.public.apiBase,
-      // `authMode` is `cookie` unless an app opts into `bearer`. The two
-      // transports differ in credentials and token handling, not in endpoints.
-      fetchOptions: authFetchOptions(config.public.authMode === 'bearer'),
+      // The transports differ in credentials and token handling, not endpoints.
+      fetchOptions: authFetchOptions(bearer),
     })
+    clientKey = key
   }
 
   return client
@@ -57,10 +61,15 @@ export function useAuth() {
   }
 
   async function signOut() {
-    await client.signOut()
-    // Drop the local token in the same step, so a revoked session cannot leave
-    // a usable credential behind on the device.
-    await clearAuthToken()
+    try {
+      await client.signOut()
+    }
+    finally {
+      // Local logout must not depend on the server: clear the stored token even
+      // when revocation fails, so the device holds no usable credential. A
+      // cookie-mode client has nothing stored and this is a no-op.
+      await clearAuthToken()
+    }
   }
 
   return {
