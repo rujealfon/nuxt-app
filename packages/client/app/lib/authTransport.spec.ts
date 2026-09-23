@@ -116,6 +116,21 @@ describe('apiFetchOptions', () => {
     ])
   })
 
+  it('signs a configured-origin request passed as a Request', async () => {
+    await writeAuthToken('session-token')
+    const authorizations: Array<string | null> = []
+    const fetch = vi.fn(async (_request: RequestInfo | URL, init?: RequestInit) => {
+      authorizations.push(new Headers(init?.headers).get('authorization'))
+      return new Response('{}', { headers: { 'content-type': 'application/json' } })
+    })
+    const baseURL = 'https://api.test/api/v1'
+    const api = $fetch.create({ baseURL, ...apiFetchOptions(baseURL, true) }, { fetch })
+
+    await api(new Request('https://api.test/api/v1/hello'))
+
+    expect(authorizations).toEqual(['Bearer session-token'])
+  })
+
   it('does not clear the stored token after a foreign-origin 401', async () => {
     await writeAuthToken('session-token')
     const fetch = vi.fn(async () => new Response(null, { status: 401 }))
