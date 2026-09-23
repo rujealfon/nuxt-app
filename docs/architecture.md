@@ -48,7 +48,8 @@ explicitly.
 
 ## Dependency rules
 
-`pnpm lint` enforces these rules through `eslint.architecture.mjs`:
+ESLint applies `eslint.architecture.mjs` to TypeScript and Vue files in `apps/`
+and `packages/`. It enforces these import rules:
 
 - Consumers access feature and service modules through `index.ts`.
 - Features are independent of peer features and application composition code.
@@ -60,11 +61,17 @@ explicitly.
 - Shared packages remain independent of applications.
 - Frontend code accesses server operations through HTTP and shared contracts.
 
-Steiger also runs during `pnpm lint` for the frontend app roots. It checks that
-feature slices have `index.ts` entrypoints, that `features/` has no layer-level
-entrypoint, and that segment folders such as `ui/` sit inside a feature. Run
-`pnpm lint:structure` to check these rules on their own. Steiger does not check
-the API service structure or replace the ESLint import rules.
+`pnpm lint` runs ESLint, then Steiger for the three frontend app roots. Steiger
+checks that each feature slice has an index file, that `features/` has no
+layer-level entrypoint, and that segment folders such as `ui/` sit inside a
+feature. Use `index.ts` for entrypoints in this TypeScript repository. Run
+`pnpm lint:structure` for these Steiger checks alone. `pnpm lint:fix` fixes
+ESLint findings only.
+
+Steiger does not inspect API services. ESLint rejects external imports into
+service implementation files, but neither linter requires an unused service
+directory to have an entrypoint. [Backend patterns](backend-patterns.md)
+requires `index.ts` for every service; check new service directories in review.
 
 The ESLint rules resolve relative imports and the existing Nuxt aliases per workspace,
 including static dynamic imports and re-exports. `test/architecture.spec.ts`

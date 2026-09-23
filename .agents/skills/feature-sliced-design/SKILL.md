@@ -33,4 +33,4 @@ Read [asset placement](references/asset-handling.md) when adding images, icons, 
 
 ## Check the result
 
-Run `pnpm lint:structure` for Steiger's FSD checks and `pnpm lint` for the repository's import boundaries. Follow the affected app's `AGENTS.md` and the root testing instructions for code changes.
+Run `pnpm lint` for ESLint import boundaries and Steiger's frontend feature structure checks. Use `pnpm lint:structure` to run Steiger alone. `pnpm lint:fix` fixes ESLint findings only. Follow the affected app's `AGENTS.md` and the root testing instructions for code changes.

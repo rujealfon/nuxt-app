@@ -20,7 +20,7 @@ Nuxt auto-imports are disabled (`imports.autoImport: false`, `components.dirs: [
 
 ## Tests and review
 
-Run commands from the repository root with Node.js 22 and the pnpm version in `package.json`. Before review, run `pnpm lint`, `pnpm type-check`, and `pnpm test`. Run `pnpm build` when changing exports, Nuxt configuration, or routing. See the [README](README.md) for setup, database, and deployment commands.
+Run commands from the repository root with Node.js 22 and the pnpm version in `package.json`. Before review, run `pnpm lint`, `pnpm type-check`, and `pnpm test`. `pnpm lint` runs ESLint and Steiger for frontend feature structure. Run `pnpm build` when changing exports, Nuxt configuration, or routing. See the [README](README.md) for setup, database, and deployment commands.
 
 Use `*.spec.ts` for tests. Put frontend tests under `app/` or `test/`, API unit tests beside server code, and API HTTP tests in `apps/api/test/e2e/`. Run a subset with a command such as `pnpm test --project app`; project names are in `vitest.config.ts`. Tests require no external services. Cover changed behavior and regressions. Extend the root coverage `include` globs when adding a source root; `pnpm test:coverage:ci` enforces thresholds.
 

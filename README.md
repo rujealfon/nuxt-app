@@ -208,7 +208,8 @@ Type-aware linting loads a Nuxt TypeScript project per app and layer. Linting th
 whole repository in one process peaks near 3.7 GB of heap, above Node's CI
 default of about 2 GB. `pnpm lint` and `pnpm lint:fix` run ESLint once per
 workspace through `scripts/lint.mjs`. After ESLint, `pnpm lint` runs Steiger
-against each frontend app. The lint-staged hook uses
+against each frontend app. `pnpm lint:structure` runs Steiger alone, and
+`pnpm lint:fix` fixes ESLint findings only. The lint-staged hook uses
 `--max-old-space-size=6144` when it checks staged files in one process. Add new
 ESLint workspace entrypoints through the runner.
 

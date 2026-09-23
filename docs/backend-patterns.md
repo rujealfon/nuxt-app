@@ -2,10 +2,10 @@
 
 ## Status and scope
 
-Use this guide when adding backend behavior. Feature modules, service
-entrypoints, import rules, and the API error contract are implemented. The
-policies, repositories, and jobs below are guidance for future work. They are
-not runtime helpers yet.
+Use this guide when adding backend behavior. Frontend feature modules and API
+service entrypoints are implemented, as are import rules and the API error
+contract. The policies, repositories, and jobs below are guidance for future
+work. They are not runtime helpers yet.
 
 The current versioned route is a greeting. Better Auth owns authentication and
 its persistence adapter. Add the other patterns when domain operations need
@@ -32,6 +32,11 @@ operations in `server/services/<domain>/`, exporting only the public operations
 from `index.ts`. Accept validated input and a trusted actor context obtained on
 the server. Keep calculations and decision rules as ordinary functions that
 return results without database or HTTP dependencies.
+
+ESLint requires external consumers to import services through their entrypoints.
+Neither linter checks that an unused service directory has an `index.ts`. Add
+one for each service and check new service directories in review. Steiger checks
+frontend features only.
 
 An illustrative future module could contain:
 
