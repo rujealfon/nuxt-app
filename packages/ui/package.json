@@ -11,6 +11,7 @@
   "main": "./nuxt.config.ts",
   "scripts": {
     "nuxt:prepare": "nuxt prepare",
+    "vite-doctor": "nuxt doctor",
     "lint": "eslint ."
   },
   "dependencies": {
@@ -18,5 +19,8 @@
     "@nuxt/ui": "^4.11.1",
     "@vueuse/nuxt": "^14.4.0",
     "tailwindcss": "^4.3.3"
+  },
+  "devDependencies": {
+    "vite-doctor": "^0.0.11"
   }
 }

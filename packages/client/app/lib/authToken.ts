@@ -18,7 +18,7 @@ export interface AuthTokenStore {
 // `localStorage` is absent during SSR. Storage errors are handled by the
 // session operations below, including errors from native stores.
 function webStorage(): Storage | null {
-  return typeof localStorage === 'undefined' ? null : localStorage
+  return import.meta.client ? localStorage : null
 }
 
 export const browserAuthTokenStore: AuthTokenStore = {

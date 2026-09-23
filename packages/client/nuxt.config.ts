@@ -4,7 +4,20 @@ export default defineNuxtConfig({
   modules: [
     '@pinia/nuxt',
     '@pinia/colada-nuxt',
+    'vite-doctor/nuxt',
   ],
+  doctor: {
+    extends: 'auto',
+    rules: {
+      // `useApiFetch` is a `createUseFetch` export from a scanned composables
+      // file; Nuxt injects its de-duplication key at build time, so the
+      // prepare-time manifest cannot see it.
+      'nuxt/fetch/keyed-composable-registration-required': 'off',
+    },
+  },
+  // Auto-imports are disabled repo-wide; the layer sets it too so its
+  // standalone `nuxt doctor` run matches how the apps consume it.
+  imports: { autoImport: false },
   typescript: {
     tsConfig: {
       include: ['../test/**/*'],

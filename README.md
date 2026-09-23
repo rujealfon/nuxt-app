@@ -121,11 +121,12 @@ pnpm vite-doctor # turbo run vite-doctor (Vite Doctor framework diagnostics)
 pnpm clean       # turbo run clean (nuxt cleanup)
 ```
 
-Each app registers the `vite-doctor/nuxt` module, so `nuxt doctor` runs Vite,
-Vue, Nuxt, and Nitro diagnostics against that app's source. Doctor is pre-1.0:
-its CI job is advisory (`continue-on-error`) and its findings do not block a
-pull request yet. Configure per-app rules through the `doctor` key in each
-`nuxt.config.ts`; see the [Nuxt guide](https://vite-doctor.onmax.me/nuxt).
+Each app and shared Nuxt layer registers the `vite-doctor/nuxt` module, so
+`nuxt doctor` runs Vite, Vue, Nuxt, and Nitro diagnostics against that project's
+source. Doctor is pre-1.0: its CI job is advisory (`continue-on-error`) and its
+findings do not block a pull request yet. Configure per-project rules through
+the `doctor` key in each `nuxt.config.ts`; see the
+[Nuxt guide](https://vite-doctor.onmax.me/nuxt).
 
 ## Database
 
