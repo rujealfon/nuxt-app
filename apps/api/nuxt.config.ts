@@ -11,6 +11,17 @@ export default defineNuxtConfig({
   // API-only: no Vue pages. Unmatched paths are JSON 404s from server/routes.
   pages: false,
   devtools: { enabled: true },
+  modules: ['vite-doctor/nuxt'],
+  // Config is read once from module scope (no request event exists there by
+  // design), and the CORS middleware intentionally passes non-OPTIONS requests
+  // through instead of asserting a single method.
+  doctor: {
+    extends: 'auto',
+    rules: {
+      'nitro/request/prefer-assert-method': 'off',
+      'nitro/runtime/require-event-runtime-config-in-server': 'off',
+    },
+  },
   imports: { autoImport: false },
   app: {
     head: {

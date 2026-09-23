@@ -31,6 +31,9 @@
     "type-check": {
       "dependsOn": ["^build", "nuxt:prepare"]
     },
+    "vite-doctor": {
+      "dependsOn": ["nuxt:prepare"]
+    },
     "clean": {
       "cache": false
     }

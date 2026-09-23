@@ -32,6 +32,7 @@
     "test:coverage": "vitest run --coverage",
     "test:coverage:ci": "vitest run --coverage --project unit --project client --project ui --project web --project app --project admin",
     "type-check": "turbo run type-check && tsc -p tsconfig.test.json",
+    "vite-doctor": "turbo run vite-doctor --continue",
     "clean": "turbo run clean",
     "postinstall": "turbo run nuxt:prepare",
     "prepare": "husky"

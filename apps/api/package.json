@@ -15,6 +15,7 @@
     "db:auth:generate": "pnpm dlx --allow-build=@prisma/client --allow-build=better-sqlite3 auth@1.7.4 generate --config ./better-auth.config.ts --output ./server/database/auth-schema.ts --yes",
     "nuxt:prepare": "nuxt prepare",
     "type-check": "nuxt typecheck",
+    "vite-doctor": "nuxt doctor",
     "lint": "eslint .",
     "clean": "nuxt cleanup"
   },
@@ -38,6 +39,7 @@
     "drizzle-kit": "^0.31.11",
     "tsx": "^4.23.15",
     "typescript": "^6.0.3",
+    "vite-doctor": "^0.0.11",
     "vue-tsc": "^3.3.11"
   }
 }
