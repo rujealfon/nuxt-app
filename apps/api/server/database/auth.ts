@@ -32,11 +32,9 @@ export function createAuth(
     // Accepts the session token from an `Authorization: Bearer` header as well
     // as from the session cookie.
     //
-    // This plugin is NOT inert for cookie clients: its after-hook emits
-    // `set-auth-token` (and exposes it via CORS) on any response that sets a
-    // session cookie, handing page JS a replayable credential that was
-    // HttpOnly. It is therefore opt-in per API deployment, not global; see
-    // docs/adr/0003-bearer-tokens-for-native-clients.md.
+    // The after-hook emits `set-auth-token` on cookie sign-ins too. The auth
+    // route removes that header and session tokens in auth JSON unless the
+    // request has an explicitly allowed native origin; see ADR-0003.
     plugins: config.bearerEnabled ? [bearer()] : [],
     rateLimit: {
       enabled: true,

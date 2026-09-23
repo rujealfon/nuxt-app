@@ -1,8 +1,10 @@
 import type { H3Event } from 'h3'
 import { appendResponseHeader, defineEventHandler, setResponseHeader, toWebRequest } from 'h3'
+import { useRuntimeConfig } from 'nitropack/runtime'
 import { authFailureFromResponse, isPasswordFlowPath, validateAuthRequest } from '../../services/auth'
 import { requestPath } from '../../utils/api-paths'
 import { useAuth } from '../../utils/auth'
+import { restrictBearerTokenResponse } from '../../utils/bearer-origin'
 
 async function jsonBody(source: Request | Response): Promise<unknown> {
   try {
@@ -55,7 +57,7 @@ export default defineEventHandler(async (event) => {
   const response = await useAuth().handler(request)
 
   if (response.status < 400) {
-    return response
+    return restrictBearerTokenResponse(response, request.headers.get('origin'), useRuntimeConfig(event), path)
   }
 
   preserveAuthErrorHeaders(event, response.headers)

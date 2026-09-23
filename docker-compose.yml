@@ -8,7 +8,7 @@ services:
       POSTGRES_PASSWORD: nuxt_app_password
       POSTGRES_DB: nuxt_app_db
     ports:
-      - '55432:5432'
+      - '127.0.0.1:55432:5432'
     volumes:
       - postgres-data:/var/lib/postgresql
     healthcheck:
@@ -22,7 +22,7 @@ services:
     container_name: nuxt-app-redis
     restart: unless-stopped
     ports:
-      - '6381:6379'
+      - '127.0.0.1:6381:6379'
     volumes:
       - redis-data:/data
     healthcheck:
@@ -43,7 +43,7 @@ services:
     environment:
       DATABASE_URL: postgres://nuxt_app_user:nuxt_app_password@postgres:5432/nuxt_app_db
     ports:
-      - '4984:4983'
+      - '127.0.0.1:4984:4983'
     volumes:
       - ./apps/api/drizzle.config.ts:/app/apps/api/drizzle.config.ts:ro
       - ./apps/api/server/database:/app/apps/api/server/database:ro
