@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { apiBaseFor, apiVersions, appPorts, currentApiVersion, defaultSessionTransport, deprecatedApiVersions, isBearerTransport, parseOrigins, sessionTransportFor, siteUrls, versionMeta } from '../index'
+import { apiBaseFor, apiVersions, appPorts, authMount, currentApiVersion, defaultSessionTransport, deprecatedApiVersions, isBearerTransport, parseOrigins, sessionEndpoint, sessionTokenHeader, sessionTransportFor, siteUrls, versionedOperations, versionMeta } from '../index'
 
 describe('apiBaseFor', () => {
   it('falls back to the local API port', () => {
@@ -76,6 +76,22 @@ describe('api version registry', () => {
 
   it('keeps the shared registry frozen', () => {
     expect(Object.isFrozen(deprecatedApiVersions)).toBe(true)
+  })
+
+  it('registers the operations of every version', () => {
+    for (const version of apiVersions) {
+      expect(versionedOperations[version]).toBeDefined()
+    }
+
+    expect(versionedOperations.v1.map(operation => operation.suffix)).toContain('/hello')
+  })
+})
+
+describe('session transport constants', () => {
+  it('shares the token header, session endpoint, and auth mount with both sides', () => {
+    expect(sessionTokenHeader).toBe('set-auth-token')
+    expect(sessionEndpoint).toBe('/get-session')
+    expect(authMount).toBe('/api/auth')
   })
 })
 

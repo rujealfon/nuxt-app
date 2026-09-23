@@ -6,7 +6,7 @@ import { computed, getCurrentScope } from 'vue'
 import { useRuntimeConfig } from '#imports'
 import { authRequestError } from '../lib/authError'
 import { clearAuthToken } from '../lib/authToken'
-import { authFetchOptions } from '../lib/authTransport'
+import { createSessionTransport } from '../lib/sessionTransport'
 
 let client: ReturnType<typeof createAuthClient> | undefined
 let clientKey = ''
@@ -14,15 +14,15 @@ let clientKey = ''
 function useAuthClient() {
   const config = useRuntimeConfig()
   const bearer = isBearerTransport(config.public.sessionTransport)
-  const key = `${config.public.apiBase}|${bearer ? 'bearer' : 'cookie'}`
+  const transport = createSessionTransport(config.public.apiBase, bearer)
 
-  if (!client || clientKey !== key) {
+  if (!client || clientKey !== transport.clientKey) {
     client = createAuthClient({
       baseURL: config.public.apiBase,
       // The transports differ in credentials and token handling, not endpoints.
-      fetchOptions: authFetchOptions(bearer),
+      fetchOptions: transport.authClientOptions,
     })
-    clientKey = key
+    clientKey = transport.clientKey
   }
 
   return client

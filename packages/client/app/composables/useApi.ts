@@ -1,8 +1,9 @@
 import type { FetchContext } from 'ofetch'
+import type { SessionTransport } from '../lib/sessionTransport'
 import { isBearerTransport } from '@nuxt-app/config'
-import { parseApiError } from '@nuxt-app/types'
 import { $fetch, createUseFetch, useRequestHeaders, useRuntimeConfig } from '#imports'
-import { apiClientKey, apiFetchOptions } from '../lib/authTransport'
+import { readApiErrorFrom } from '../lib/authError'
+import { createSessionTransport } from '../lib/sessionTransport'
 
 type ApiClient = typeof $fetch
 
@@ -10,33 +11,18 @@ type ApiClient = typeof $fetch
 // means adding a config dimension cannot silently reuse a stale client.
 const clients = new Map<string, ApiClient>()
 
-function clientFor(baseURL: string, bearer: boolean): ApiClient {
-  const key = apiClientKey(baseURL, bearer)
-  let cached = clients.get(key)
+function clientFor(baseURL: string, transport: SessionTransport): ApiClient {
+  let cached = clients.get(transport.clientKey)
 
   if (!cached) {
     cached = $fetch.create({
       baseURL,
-      ...apiFetchOptions(baseURL, bearer),
+      ...transport.apiClientOptions,
     })
-    clients.set(key, cached)
+    clients.set(transport.clientKey, cached)
   }
 
   return cached
-}
-
-// $fetch throws a FetchError whose `data` is the JSON body. `useAuth` reads the
-// auth client's failures through `authRequestError`; both are the API error
-// contract, so this reads only the versioned-route body.
-function apiErrorFromCaught(error: unknown) {
-  if (error && typeof error === 'object' && 'data' in error) {
-    const fromBody = parseApiError(error.data)
-    if (fromBody) {
-      return fromBody
-    }
-  }
-
-  return parseApiError(error)
 }
 
 // Versioned-route client. Better Auth keeps its own unversioned client
@@ -45,27 +31,27 @@ export function useApi() {
   const config = useRuntimeConfig()
   const baseURL = `${config.public.apiBase}/api/${config.public.apiVersion}`
   const bearer = isBearerTransport(config.public.sessionTransport)
+  const transport = createSessionTransport(baseURL, bearer)
   // Never cache request credentials at module scope. Forward only cookies,
   // and only to the configured API origin, including when callers pass a URL.
   const cookie = import.meta.server && !bearer ? useRequestHeaders(['cookie']).cookie : undefined
   const api = import.meta.server
     ? $fetch.create({
         baseURL,
-        ...apiFetchOptions(baseURL, bearer),
+        ...transport.apiClientOptions,
         ...(cookie && {
           onRequest({ request, options }: FetchContext) {
-            const target = new URL(typeof request === 'string' ? request : request.url, options.baseURL || baseURL)
-            if (target.origin === new URL(baseURL).origin) {
+            if (transport.isConfiguredOrigin(request, options.baseURL)) {
               options.headers.set('cookie', cookie)
             }
           },
         }),
       })
-    : clientFor(baseURL, bearer)
+    : clientFor(baseURL, transport)
 
   return {
     api,
-    parseApiError: apiErrorFromCaught,
+    parseApiError: readApiErrorFrom,
   }
 }
 

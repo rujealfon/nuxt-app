@@ -1,3 +1,5 @@
+import { authMount, sessionEndpoint, sessionTokenHeader } from '@nuxt-app/config'
+
 export interface BearerOriginConfig {
   authBearerEnabled: boolean
   authBearerOrigins: string
@@ -26,14 +28,16 @@ export function canExposeBearerToken(origin: string | null | undefined, config: 
   )
 }
 
+// Better Auth endpoints whose JSON can carry the session token. Built from the
+// shared mount and session endpoint so the client and the API agree on both.
 const sessionTokenResponsePaths = new Set([
-  '/api/auth/get-session',
-  '/api/auth/list-sessions',
-  '/api/auth/update-session',
-  '/api/auth/sign-in/email',
-  '/api/auth/sign-in/social',
-  '/api/auth/sign-up/email',
-  '/api/auth/change-password',
+  `${authMount}${sessionEndpoint}`,
+  `${authMount}/list-sessions`,
+  `${authMount}/update-session`,
+  `${authMount}/sign-in/email`,
+  `${authMount}/sign-in/social`,
+  `${authMount}/sign-up/email`,
+  `${authMount}/change-password`,
 ])
 
 function removeSessionTokens(value: unknown): boolean {
@@ -62,11 +66,11 @@ export async function restrictBearerTokenResponse(response: Response, origin: st
   }
 
   const headers = new Headers(response.headers)
-  let changed = headers.has('set-auth-token')
-  headers.delete('set-auth-token')
+  let changed = headers.has(sessionTokenHeader)
+  headers.delete(sessionTokenHeader)
   const exposed = headers.get('access-control-expose-headers')
   if (exposed) {
-    const remaining = exposed.split(',').map(header => header.trim()).filter(header => header.toLowerCase() !== 'set-auth-token')
+    const remaining = exposed.split(',').map(header => header.trim()).filter(header => header.toLowerCase() !== sessionTokenHeader)
     if (remaining.length !== exposed.split(',').length) {
       changed = true
     }

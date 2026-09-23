@@ -1,21 +1,8 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { navigateTo, useAuth, useHead } from '#imports'
+import { useAuth, useHead, useSignOut } from '#imports'
 
-const { actor, signOut: signOutAction } = useAuth()
-const isSigningOut = ref(false)
-
-async function signOut() {
-  isSigningOut.value = true
-
-  try {
-    await signOutAction()
-    await navigateTo('/login')
-  }
-  finally {
-    isSigningOut.value = false
-  }
-}
+const { actor } = useAuth()
+const { signOut, isSigningOut } = useSignOut('/login')
 
 useHead({ title: 'Admin · nuxt-app' })
 </script>

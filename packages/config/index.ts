@@ -1,3 +1,6 @@
+import type { VersionedOperation } from '@nuxt-app/types'
+import { v1 } from '@nuxt-app/types'
+
 // Browser-facing sites share this port table with the API. Localhost URLs
 // derive from it; each app adds its own `appName` in its Nuxt config.
 export const appPorts = {
@@ -31,6 +34,18 @@ export function sessionTransportFor(env: string | undefined): SessionTransport {
 export function isBearerTransport(transport: string | undefined): boolean {
   return transport === 'bearer'
 }
+
+// Better Auth hands a freshly issued session token back in this header. The
+// client stores it; the API exposes it only to configured native origins.
+export const sessionTokenHeader = 'set-auth-token'
+
+// The session endpoint whose 401 means the stored bearer token is dead. The
+// client clears its copy; the API strips the token from this response's JSON.
+export const sessionEndpoint = '/get-session'
+
+// The Better Auth mount. Infra routes are unversioned, so the API, its rate
+// limit exemption, and the token-stripping path set all derive from it.
+export const authMount = '/api/auth'
 
 // Localhost-defaulted cross-site URLs for `runtimeConfig.public`. Each app
 // spreads these and adds its own `appName`; `NUXT_PUBLIC_*` env vars override
@@ -87,4 +102,11 @@ export function versionMeta(version: ApiVersion, deprecated: DeprecatedApiVersio
     deprecated: Boolean(meta),
     ...(meta ? { sunset: meta.sunset } : {}),
   }
+}
+
+// One entry per registered version, so the OpenAPI builder, the parity check,
+// and the route wrapper read one table. `Record<ApiVersion, ...>` makes a
+// version without registered operations a type error.
+export const versionedOperations: Record<ApiVersion, readonly VersionedOperation[]> = {
+  v1: v1.operations,
 }

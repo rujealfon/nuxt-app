@@ -442,7 +442,11 @@ importers:
         specifier: ^0.0.11
         version: 0.0.11(@stylistic/eslint-plugin@5.10.0(eslint@10.11.0(jiti@2.7.0)(supports-color@10.2.2)))(chokidar@5.0.0)(dotenv@17.4.2)(giget@3.3.1)(jiti@2.7.0)(magicast@0.5.5)(nuxt@4.5.2(dd37ee8511fcf9669626e36453a2ad71))(supports-color@10.2.2)(vite@8.3.0(@types/node@22.20.4)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))
 
-  packages/config: {}
+  packages/config:
+    dependencies:
+      '@nuxt-app/types':
+        specifier: workspace:*
+        version: link:../types
 
   packages/logger:
     dependencies:

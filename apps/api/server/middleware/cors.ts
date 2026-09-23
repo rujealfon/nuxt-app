@@ -1,4 +1,4 @@
-import { parseOrigins } from '@nuxt-app/config'
+import { parseOrigins, sessionTokenHeader } from '@nuxt-app/config'
 import { defineEventHandler, getHeader, setHeader, setResponseStatus } from 'h3'
 import { useRuntimeConfig } from 'nitropack/runtime'
 import { canExposeBearerToken } from '../utils/bearer-origin'
@@ -22,7 +22,7 @@ export default defineEventHandler((event) => {
   setHeader(event, 'access-control-allow-methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS')
   setHeader(event, 'access-control-allow-headers', 'content-type, authorization')
   if (canExposeBearerToken(origin, config)) {
-    setHeader(event, 'access-control-expose-headers', 'set-auth-token')
+    setHeader(event, 'access-control-expose-headers', sessionTokenHeader)
   }
 
   if (event.method === 'OPTIONS') {

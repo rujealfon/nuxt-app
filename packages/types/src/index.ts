@@ -115,6 +115,12 @@ export function parseApiError(data: unknown): ApiError | null {
   return parsed.success ? parsed.data : null
 }
 
+// The input details a client may act on. The schema already forbids details on
+// any other code, so this only narrows the union for readers.
+export function invalidInputDetails(error: ApiError): readonly InputDetail[] {
+  return error.error === 'invalid_input' ? error.details ?? [] : []
+}
+
 // Actor contract. Derived client- and server-side from the Better Auth
 // session: the authenticated identity a request acts as, with the role the UI
 // and middleware gate on. An unknown role normalizes to `user`, never up.
@@ -144,3 +150,4 @@ export function actorFromSession(data: unknown): Actor | null {
 
 // Versioned API contracts, namespaced by version (`v1.helloResponseSchema`).
 export * as v1 from './v1'
+export type { VersionedOperation } from './v1'

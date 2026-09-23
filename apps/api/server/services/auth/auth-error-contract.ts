@@ -1,6 +1,7 @@
 import type { ApiErrorCode } from '@nuxt-app/types'
 import type { DomainFailure } from '../../utils/domain-failure'
 import { domainFailure } from '../../utils/domain-failure'
+import { concealedErrorFromStatus } from '../../utils/failure-contract'
 
 // Better Auth raises a fixed vocabulary of `code`s. Only the ones whose meaning
 // the HTTP status does not imply need an entry; everything else falls back to
@@ -36,26 +37,6 @@ const errorByCode: Record<string, ApiErrorCode> = {
   BODY_MUST_BE_AN_OBJECT: 'invalid_input',
 }
 
-const errorByStatus: Record<number, ApiErrorCode> = {
-  400: 'invalid_input',
-  401: 'unauthenticated',
-  403: 'forbidden',
-  404: 'not_found',
-  405: 'not_found',
-  409: 'conflict',
-  422: 'conflict',
-  429: 'rate_limited',
-}
-
-function statusFallback(status: number): ApiErrorCode {
-  if (status >= 500) {
-    return 'internal_error'
-  }
-
-  // Unknown 4xx conceal as `not_found`, matching the error adapter.
-  return errorByStatus[status] ?? 'not_found'
-}
-
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
@@ -70,7 +51,7 @@ function text(value: unknown): string | undefined {
 export function authFailureFromResponse(status: number, body: unknown): DomainFailure {
   const record = isRecord(body) ? body : {}
   const mapped = typeof record.code === 'string' ? errorByCode[record.code] : undefined
-  const error = mapped ?? statusFallback(status)
+  const error = mapped ?? concealedErrorFromStatus(status)
 
   // A 5xx message can name internal failures; the contract uses the canned
   // message for `internal_error`. Every other code keeps Better Auth's safe,

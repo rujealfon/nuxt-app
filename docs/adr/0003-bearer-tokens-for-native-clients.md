@@ -4,9 +4,9 @@ Each app configures its session transport. `@nuxt-app/config` exports
 `sessionTransportFor()`, and `@nuxt-app/client` defaults
 `runtimeConfig.public.sessionTransport` to `'cookie'`. With
 `NUXT_PUBLIC_SESSION_TRANSPORT=bearer`, the app sends its opaque session token
-in an `Authorization` header. `useAuth()` builds the auth client with
-`authFetchOptions()`, and `useApi()` attaches the header to versioned-route
-requests. Both use `credentials: 'omit'`. `getActor` and `requireActor` already
+in an `Authorization` header. `useAuth()` builds the auth client from
+`createSessionTransport()`, and `useApi()` attaches the header to
+versioned-route requests. Both use `credentials: 'omit'`. `getActor` and `requireActor` already
 forward request headers to `auth.getSession()`, so protected routes need no
 transport-specific changes.
 

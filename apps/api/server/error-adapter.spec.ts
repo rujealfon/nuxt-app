@@ -28,7 +28,8 @@ vi.mock('nitropack/runtime', () => ({
 
 vi.mock('./utils/logger', () => ({ useLogger: mocks.useLogger }))
 
-const { default: errorHandler, statusByError: statuses } = await import('./error-adapter')
+const { default: errorHandler } = await import('./error-adapter')
+const { statusByError: statuses } = await import('./utils/failure-contract')
 const { domainFailure } = await import('./utils/domain-failure')
 
 const {

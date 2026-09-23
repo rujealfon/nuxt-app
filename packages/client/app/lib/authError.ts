@@ -1,5 +1,5 @@
-import type { ApiError, InputDetail } from '@nuxt-app/types'
-import { parseApiError } from '@nuxt-app/types'
+import type { ApiError } from '@nuxt-app/types'
+import { invalidInputDetails, parseApiError } from '@nuxt-app/types'
 
 // A server field error, shaped for a form's field names.
 export interface AuthFieldError {
@@ -22,14 +22,26 @@ export class AuthRequestError extends Error {
   // with an empty path describes the whole body, which no field can own; the
   // caller keeps its message as the catch-all instead.
   get fieldErrors(): AuthFieldError[] {
-    const details: readonly InputDetail[] = this.apiError?.error === 'invalid_input'
-      ? this.apiError.details ?? []
-      : []
+    const details = this.apiError ? invalidInputDetails(this.apiError) : []
 
     return details.flatMap(detail => detail.path.length === 0
       ? []
       : [{ name: detail.path.join('.'), message: detail.message }])
   }
+}
+
+// The API error contract from any caught failure. An ofetch `FetchError`
+// carries the body on `data`; the Better Auth client spreads the body onto the
+// error object itself. Both readers cross this one seam.
+export function readApiErrorFrom(error: unknown): ApiError | null {
+  if (error && typeof error === 'object' && 'data' in error) {
+    const fromBody = parseApiError(error.data)
+    if (fromBody) {
+      return fromBody
+    }
+  }
+
+  return parseApiError(error)
 }
 
 function messageOf(error: unknown): string | undefined {
@@ -50,7 +62,7 @@ function messageOf(error: unknown): string | undefined {
 // body spread in. `/api/auth/*` normalizes every failure to the API error
 // contract, so read it first and fall back to the thrown message otherwise.
 export function authRequestError(error: unknown): AuthRequestError {
-  const apiError = parseApiError(error)
+  const apiError = readApiErrorFrom(error)
 
   return apiError
     ? new AuthRequestError(apiError.message, apiError)
