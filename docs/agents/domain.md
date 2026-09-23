@@ -1,36 +1,7 @@
 # Domain docs
 
-How the engineering skills should consume this repo's domain documentation when exploring the codebase.
+Read the root `CONTEXT.md` before working with domain terms. Read the relevant decisions in `docs/adr/` before changing behavior they cover. If either document is absent, continue without creating it solely for this step.
 
-## Before exploring, read these
+Use the terms in `CONTEXT.md` in issues, proposals, and tests. If a concept is missing, check the code for the project's existing term before adding one to the glossary.
 
-- **`CONTEXT.md`** at the repo root.
-- **`docs/adr/`**: read ADRs that touch the area you're about to work in.
-
-If any of these files don't exist, **proceed silently**. Don't flag their absence; don't suggest creating them upfront. The `/domain-modeling` skill (reached via `/grill-with-docs` and `/improve-codebase-architecture`) creates them lazily when terms or decisions get resolved.
-
-## File structure
-
-Single-context repo:
-
-```
-/
-├── CONTEXT.md
-├── docs/adr/
-│   ├── 0001-better-auth-for-sessions.md
-│   └── 0002-drizzle-for-persistence.md
-├── apps/
-└── packages/
-```
-
-## Use the glossary's vocabulary
-
-When your output names a domain concept (in an issue title, a refactor proposal, a hypothesis, a test name), use the term as defined in `CONTEXT.md`. Don't drift to synonyms the glossary explicitly avoids.
-
-If the concept you need isn't in the glossary yet, that's a signal: either you're inventing language the project doesn't use (reconsider) or there's a real gap (note it for `/domain-modeling`).
-
-## Flag ADR conflicts
-
-If your output contradicts an existing ADR, say so explicitly rather than silently overriding:
-
-> _Contradicts ADR-0002 (Drizzle for persistence), but worth reopening because..._
+If a proposal conflicts with an ADR, name the decision and explain the conflict. For example, a proposal to call `.transaction()` on a `Database` value conflicts with [ADR 0002](../adr/0002-database-capability-seam.md).

@@ -2,15 +2,15 @@
 
 ## Organization and ownership
 
-Keep the four Nuxt applications independently deployable. The API remains a
-single application with domain-oriented services. Group substantial frontend
+Keep the four Nuxt applications independently deployable. Keep the API as one
+application with services grouped by domain. Group substantial frontend
 behavior under `app/features/<feature>/`; keep small pages and route metadata
 in Nuxt's `app/pages/` directory.
 
-The existing examples are `apps/app/app/features/auth` (sign-in and registration),
+Current examples are `apps/app/app/features/auth` (sign-in and registration),
 `apps/admin/app/features/auth` (administrator sign-in), and
 `apps/api/server/services/hello` (the greeting operation). Auth transport and
-session state remain in `packages/client`, and validation contracts remain in
+session state live in `packages/client`; validation contracts live in
 `packages/types`.
 
 ## Public interfaces and imports
@@ -29,14 +29,13 @@ import { getHelloMessage } from '../../services/hello'
 Inside the module, use relative imports to implementation files. Keep tests
 beside the implementation when they exercise internal behavior; route-level
 integration tests can remain in an app's `test/` directory and mount the real
-route. Avoid importing a module's own barrel from production implementation
-files, which can introduce cycles.
+route. Implementation files should import one another by relative path to avoid
+cycles through their own `index.ts`.
 
-Nuxt registers pages and middleware by convention. Auto-imports are disabled
-repo-wide (`imports.autoImport: false` and `components.dirs: []`), so Vue APIs,
-Nuxt and shared composables, and components are all imported explicitly. Feature
-folders and API services are explicitly imported too, so their private exports
-never become application-wide globals.
+Nuxt registers pages and middleware by convention. This repository disables
+auto-imports (`imports.autoImport: false` and `components.dirs: []`). Import Vue
+APIs, Nuxt and shared composables, components, features, and API services
+explicitly.
 
 ## Dependency rules
 
@@ -56,13 +55,13 @@ The rules resolve relative imports and the existing Nuxt aliases per workspace,
 including static dynamic imports and re-exports. `test/architecture.spec.ts`
 checks accepted and rejected dependencies against the actual ESLint config.
 Keep that coverage current when adding aliases or changing module conventions.
-These import rules do not provide a general dependency-cycle detector; keep
-imports inside each module directional and review new shared-package dependencies.
+These rules do not detect every dependency cycle. Review imports within each
+module and new dependencies between shared packages.
 
 ## Growing a feature
 
 Start with the files the behavior needs. Add `ui/`, `api/`, and `model/`
-subdirectories as they become useful; avoid empty scaffolding. Keep screen
+subdirectories when they contain code. Keep screen
 behavior in the feature, routing and page metadata in the route, and authoritative
 permissions and business decisions on the server.
 
@@ -82,9 +81,8 @@ not need their own layer.
 
 For protected business operations, API error contracts, persistence,
 multi-write transactions, and durable external effects, follow
-[Backend Patterns and Growth Plan](backend-patterns.md). It distinguishes current
-runtime behavior from implementation conventions and defines adoption triggers
-and verification requirements for each pattern.
+[backend patterns](backend-patterns.md). It distinguishes implemented behavior
+from guidance for future work and states when to adopt each pattern.
 
 ## Verification
 

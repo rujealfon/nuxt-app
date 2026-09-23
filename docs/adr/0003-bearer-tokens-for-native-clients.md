@@ -1,19 +1,50 @@
 # Bearer tokens for native clients
 
-Session transport is per-app configuration rather than a fork in the auth code. `@nuxt-app/config` exports `sessionTransportFor()`, the `@nuxt-app/client` layer defaults `runtimeConfig.public.sessionTransport` to `'cookie'`, and an app that sets `NUXT_PUBLIC_SESSION_TRANSPORT=bearer` carries the opaque session token in an `Authorization` header instead: `useAuth()` builds the auth client from `authFetchOptions()`, `useApi()` attaches the same header to versioned-route calls, and both stop relying on cookies (`credentials: 'omit'`). `getActor`/`requireActor` and every protected route are unchanged, because the session gate already forwards raw request headers to `auth.getSession()`.
+Each app configures its session transport. `@nuxt-app/config` exports
+`sessionTransportFor()`, and `@nuxt-app/client` defaults
+`runtimeConfig.public.sessionTransport` to `'cookie'`. With
+`NUXT_PUBLIC_SESSION_TRANSPORT=bearer`, the app sends its opaque session token
+in an `Authorization` header. `useAuth()` builds the auth client with
+`authFetchOptions()`, and `useApi()` attaches the header to versioned-route
+requests. Both use `credentials: 'omit'`. `getActor` and `requireActor` already
+forward request headers to `auth.getSession()`, so protected routes need no
+transport-specific changes.
 
-The API side is opt-in. Better Auth's `bearer()` plugin accepts the token from the header, but its after-hook also emits `set-auth-token` on any response that sets a session cookie. Better Auth also includes the session token in several auth JSON responses. Either representation would hand cookie-mode browser clients a replayable token in JavaScript, discarding their HttpOnly protection. `AUTH_BEARER_ENABLED=true` enables the plugin, while `AUTH_BEARER_ORIGINS` explicitly names the native WebView origins allowed to receive bearer credentials. The auth route strips the header and session token JSON from responses to every other or missing origin, and CORS exposes the header only to the named origins. Those origins must also appear in `CORS_ORIGINS`; startup validation rejects a missing or wildcard bearer-origin list. Browser app origins must remain outside the bearer-origin list. The `createAuth` gate, the response boundary, the header forwarding in `getActor`, and the real client's request shape are covered by tests; a full token → session → actor round trip needs a database and is not part of the suite.
+The API enables Better Auth's `bearer()` plugin only with
+`AUTH_BEARER_ENABLED=true`. The plugin accepts the header token but also emits
+`set-auth-token` on responses that set a session cookie. Better Auth includes
+the session token in some auth JSON responses. Exposing either to browser app
+JavaScript would weaken its HttpOnly cookie protection.
 
-The WebView origin is the reason. A Capacitor app is served from `capacitor://localhost` (iOS) or `https://localhost` (Android), so every API call is cross-origin, and WKWebView, Android WebView, and Safari's ITP refuse cross-origin `Set-Cookie`. The cookie-mode symptom is not a failed sign-in: the request succeeds, the header is ignored, and the user is signed out again on the next navigation. Neither of Better Auth's documented cookie remedies applies, because a WebView has no registrable domain for a reverse proxy or a shared parent domain to hang off.
+`AUTH_BEARER_ORIGINS` names the native WebView origins that may receive bearer
+credentials. The auth route removes the header and session token JSON for any
+other or missing origin. CORS exposes the header only to named origins. Those
+origins must also appear in `CORS_ORIGINS`; startup validation rejects a missing
+or wildcard bearer-origin list. Browser app origins stay outside that list.
+Tests cover plugin registration, response filtering, header forwarding in
+`getActor`, and the client's request shape. A full token-to-session-to-actor
+test needs a database and is outside the current suite.
 
-Two consequences are deliberate. The token sits in client storage, which is weaker than an HttpOnly cookie — but only deployments that opt into bearer incur it, and `useAuthTokenStore()` lets a shell back the store with `@capacitor/preferences` or a Keychain/Keystore plugin. Social sign-in is not solved here: `signIn.social()` cannot complete inside a WebView, so it needs the provider's native SDK with the ID token forwarded, or a custom-scheme callback. Email + password is covered.
+A Capacitor app runs from `capacitor://localhost` on iOS or
+`https://localhost` on Android. API calls are cross-origin. WKWebView, Android
+WebView, and Safari's ITP refuse the cross-origin `Set-Cookie` response. Sign-in
+then succeeds, but the WebView drops the cookie and the next navigation finds
+no session. Better Auth's cookie remedies require a reverse proxy or a shared
+parent domain, neither of which the bundled WebView has.
+
+Bearer mode stores the token on the client, which is weaker than an HttpOnly
+cookie. Only deployments that enable bearer mode take on that risk.
+`useAuthTokenStore()` lets a native shell use `@capacitor/preferences` or a
+Keychain/Keystore plugin. `signIn.social()` cannot complete inside a WebView;
+social sign-in needs the provider's native SDK and ID token forwarding, or a
+custom-scheme callback. Email and password sign-in works.
 
 ## Considered options
 
 - Pointing the WebView at the hosted SPA (`server.url`) so cookies are first-party: rejected. It needs no auth work, but it makes the native bundle a remote page whose launch depends on the network, discarding the bundled assets that are the reason to ship a shell at all.
-- The JWT plugin instead of bearer: rejected. The docs scope JWTs to services that cannot use the session, while the bearer token *is* the session — one credential, one expiry, one revocation path. `session.cookieCache` is not enabled, so no JWT exists to reuse.
+- The JWT plugin instead of bearer: rejected. JWTs are for services that cannot use the session. The bearer token is the session and has one credential, expiry, and revocation path. `session.cookieCache` is not enabled, so no JWT exists to reuse.
 - Bearer for every app, dropping cookies: rejected. It would move three working browser apps onto a transport they do not need, and put a token in `localStorage` where an HttpOnly cookie was strictly better.
 - A second auth composable inside the Capacitor app: rejected. Only the transport differs; duplicating `getActor`/`signIn`/`signUp`/`signOut` would fork the session logic the layer exists to hold.
 - Adding Capacitor's origins to `parseOrigins`' default list: rejected. That default also applies in production when `CORS_ORIGINS` is unset, and the real origin is `server.iosScheme`/`server.androidScheme` + `server.hostname`, so deployments opt in through `CORS_ORIGINS` instead.
-- Registering the bearer plugin unconditionally: rejected. It is *not* inert for cookie clients — it emits `set-auth-token` on cookie sign-ins — so it would put a replayable credential in page JS for every browser app. Gated behind `AUTH_BEARER_ENABLED` instead.
+- Registering the bearer plugin unconditionally: rejected. It emits `set-auth-token` on cookie sign-ins and would expose a replayable credential to every browser app's JavaScript. `AUTH_BEARER_ENABLED` gates registration.
 - Sending `set-auth-token` to every CORS origin: rejected. A native WebView supplies an origin distinct from the browser apps in this deployment, so the API only retains and exposes the header for explicitly configured native origins.

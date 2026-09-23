@@ -1,17 +1,16 @@
-# Backend patterns and growth plan
+# Backend patterns
 
 ## Status and scope
 
-This guide establishes conventions for new backend features. The feature modules,
-service entrypoints, and import rules in [the architecture guide](architecture.md)
-are implemented. The API error contract is implemented; the policies,
-repositories, and jobs described below are implementation guidance,
-not existing runtime helpers.
+Use this guide when adding backend behavior. Feature modules, service
+entrypoints, import rules, and the API error contract are implemented. The
+policies, repositories, and jobs below are guidance for future work. They are
+not runtime helpers yet.
 
 The current versioned route is a greeting. Better Auth owns authentication and
-its persistence adapter. Introduce the following patterns as real domain
-operations appear, keeping the API one deployable application until there is a
-concrete need for independent deployment.
+its persistence adapter. Add the other patterns when domain operations need
+them. Keep the API as one deployable application until separate deployment has
+a concrete benefit.
 
 ## Adoption order
 
@@ -66,7 +65,12 @@ Preserve this API error contract shape:
 { "error": "not_found", "message": "The requested resource was not found" }
 ```
 
-`invalid_input` may also include `details: { path, message }[]` when at least one input detail is usable. The key is omitted otherwise. Clients branch on `error`, never on message text; they use input details only to recover fields. The error adapter reads domain failures only. A thrown `ZodError` stays `internal_error`. A blank message override keeps `error` and the default safe message; `message` is never joined from details.
+`invalid_input` may include `details: { path, message }[]` when it has a usable
+input detail. Otherwise, omit the key. Clients branch on `error`, not message
+text, and use details to identify invalid fields. The error adapter reads domain
+failures only. A thrown `ZodError` stays `internal_error`. A blank message
+override keeps `error` and the default safe message. Never join detail messages
+into `message`.
 Define the shared schema and inferred types in `packages/types`. Keep
 transport-independent business failures private to the server, and translate
 them at the error adapter. The mapping is:
@@ -85,16 +89,14 @@ Log unexpected failures with a correlation ID and return a safe generic message.
 Keep stack traces, SQL details, credentials, and internal provider errors out of
 responses. Preserve existing rate-limit status and retry headers.
 
-The error adapter is implemented. Domain code raises a domain failure, and the
-error adapter (`server/error-adapter.ts`) renders the contract and normalizes unexpected
-failures to `internal_error`. `useApi().parseApiError` reads a caught
-versioned-route failure through the API error contract; screens that call those
-routes consume `error` and, for `invalid_input`, input details. `X-Api-Version`
-headers set before a failure survive onto the API error contract; assess
-compatibility before changing an established version. Better Auth failures are
-normalized onto this contract at `/api/auth/*` (see
-[ADR 0004](adr/0004-auth-error-contract.md)); `invalid_input` carries `details`
-for the two password flows. Health 200s are custom; health failures use the API error contract.
+Domain code raises a domain failure. `server/error-adapter.ts` renders the
+contract and maps unexpected failures to `internal_error`.
+`useApi().parseApiError` reads caught versioned-route failures; screens use
+`error` and, for `invalid_input`, input details. `X-Api-Version` headers set
+before a failure remain on the response. Assess compatibility before changing
+an established version. `/api/auth/*` also uses this contract, with `details`
+for the two password flows ([ADR 0004](adr/0004-auth-error-contract.md)). Health
+200 responses have their own bodies; health failures use the API error contract.
 
 ## Persistence, transactions, and adapters
 
@@ -108,11 +110,9 @@ constraints to enforce uniqueness and relationships; use conditional updates or
 version checks when concurrent edits must be detected. Avoid external network
 calls inside database transactions.
 
-The capability mismatch in `server/utils/db.ts` is resolved. The `Database` type
-omits `.transaction()`, and `withTransaction(fn)` is the only way to run a
-transaction. It throws on the neon-http driver. Before implementing
-a multi-write workflow, verify rollback against the supported database
-configuration.
+The `Database` type omits `.transaction()`. Use `withTransaction(fn)` for
+transactions; it throws on the neon-http driver. Before implementing a workflow
+with several writes, verify rollback with the database configuration it will use.
 
 Keep vendor SDK calls inside adapters for email, payments, or storage. Inject
 the small interface needed by the business operation through function arguments
@@ -157,9 +157,8 @@ atomic writes, and external effects. Then deliver one complete path:
    suite needs no external services; keep that distinction explicit.
 6. Run lint, type checks, relevant tests, and the production build.
 
-Introduce separate read models (CQRS) when read/write requirements diverge enough
-to justify their maintenance. Introduce separate services when deployment,
-scaling, or failure-isolation requirements warrant them. Evaluate event sourcing
-only when replaying an authoritative event history is a product requirement.
-These remain conditional choices; basic CQRS itself can use one database.
+Add separate read models (CQRS) when different read and write requirements
+justify maintaining both models. Split services when deployment, scaling, or
+failure isolation requires it. Consider event sourcing only if the product
+requires replaying its event history. CQRS can still use one database.
 See [Microsoft's CQRS guidance](https://learn.microsoft.com/en-us/azure/architecture/patterns/cqrs).

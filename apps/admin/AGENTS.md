@@ -1,30 +1,33 @@
-# Repository Guidelines
+# Repository guidelines
 
-## Scope & Structure
+## Scope and structure
 
-Follow the shared conventions and PR checks in [the root guide](../../AGENTS.md). This directory contains the administrator SPA, running on port 3002 with `ssr: false`. It extends `@nuxt-app/ui` and `@nuxt-app/client`; reusable components and authentication helpers belong in those packages.
+This admin SPA extends `@nuxt-app/ui` and `@nuxt-app/client`. Put reusable
+components and authentication helpers in those packages.
 
-Pages live in `app/pages/`; the login route composes `AdminLoginScreen` from `app/features/auth/index.ts`. Keep login UI and submission behavior in that feature. `app/middleware/auth.global.ts` controls route access. The Nuxt configuration adds `noindex, nofollow` metadata; preserve it when changing app metadata.
+Pages live in `app/pages/`. The login route imports `AdminLoginScreen` from
+`app/features/auth/index.ts`; keep login UI and submission behavior there.
+`app/middleware/auth.global.ts` controls route access. Preserve the Nuxt
+configuration's `noindex, nofollow` metadata when changing app metadata.
 
-## Development Commands
+## Access and authentication
 
-Run from the repository root:
+Keep `/login` accessible without a session. Other routes call
+`useAuth().getActor()` and require `actor.role === 'admin'`. When redirecting to
+login, keep the requested path in the query. Test redirect handling when
+changing sign-in.
 
-- `pnpm dev:admin`: start the admin interface.
-- `pnpm dev:api`: start the backend for manual sign-in checks.
-- `pnpm --filter @nuxt-app/admin build`: build this app.
-- `pnpm --filter @nuxt-app/admin type-check`: check app types.
-- `pnpm test --project admin`: run middleware and page tests.
-- `pnpm lint`: check repository style and accessibility.
+Use `useAuth()` and the shared `loginSchema` for login forms. Client route
+checks control navigation. Privileged API operations also need server
+authorization. Use the README's seed workflow to create a local admin account.
 
-## Access & Authentication
+## Testing and configuration
 
-Keep `/login` accessible without a session. Other routes fetch the actor with `useAuth().getActor()` and require `actor.role === 'admin'`. Preserve the redirect query containing the requested path when sending a user to login, and validate redirect handling when changing the sign-in flow.
+Run `pnpm test --project admin` for this app. Place `*.spec.ts` tests under
+`test/` or `app/`. Follow
+`test/auth-middleware.spec.ts` to cover public login, missing sessions,
+non-admin users, and admins. Test page submission success and failure with
+mocked auth actions and `mountSuspended`.
 
-Use `useAuth()` and the shared `loginSchema` for login forms. Client route checks control navigation; privileged API operations must also enforce authorization on the server. Use the root README's seed workflow when a local administrator account is needed.
-
-## Testing & Configuration
-
-Place `*.spec.ts` tests under `test/` or `app/`. Follow `test/auth-middleware.spec.ts` to cover the login exemption, missing sessions, non-admin users, and authorized admins. Page tests should cover submission success and failure using mocked auth actions and `mountSuspended`.
-
-Copy `.env.example` to `.env` for public API and cross-app URLs. Keep secrets in server configuration. Run the `client` test project when modifying shared auth behavior, and include screenshots for visible admin interface changes.
+Keep secrets in server configuration. Run the `client` test project when changing shared auth
+behavior. Include screenshots for visible admin interface changes.
