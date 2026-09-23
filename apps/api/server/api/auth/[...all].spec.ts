@@ -11,6 +11,10 @@ const mocks = vi.hoisted(() => {
     setResponseHeader: vi.fn(),
     appendResponseHeader: vi.fn(),
     useAuth: vi.fn(() => ({ handler })),
+    config: {
+      authBearerEnabled: true,
+      authBearerOrigins: 'capacitor://localhost',
+    },
   }
 })
 
@@ -20,6 +24,8 @@ vi.mock('h3', () => ({
   setResponseHeader: mocks.setResponseHeader,
   appendResponseHeader: mocks.appendResponseHeader,
 }))
+
+vi.mock('nitropack/runtime', () => ({ useRuntimeConfig: () => mocks.config }))
 vi.mock('../../utils/auth', () => ({ useAuth: mocks.useAuth }))
 
 const route = (await import('./[...all]')).default as unknown as (event: unknown) => Promise<unknown>
@@ -30,6 +36,16 @@ function caughtFrom(event: unknown): Promise<unknown> {
 
 function request(path: string, init?: RequestInit): Request {
   return new Request(`http://localhost${path}`, init)
+}
+
+function sessionResponse() {
+  return new Response('{"session":true}', {
+    headers: {
+      'set-cookie': 'better-auth.session_token=secret; HttpOnly; Path=/',
+      'set-auth-token': 'secret',
+      'access-control-expose-headers': 'set-auth-token',
+    },
+  })
 }
 
 describe('auth mount', () => {
@@ -127,5 +143,31 @@ describe('auth mount', () => {
 
     expect(mocks.appendResponseHeader).not.toHaveBeenCalled()
     expect((caught as DomainFailure).error).toBe('forbidden')
+  })
+
+  it('keeps a cookie session but removes the bearer token for a browser origin', async () => {
+    mocks.toWebRequest.mockReturnValue(request('/api/auth/get-session', {
+      headers: { origin: 'https://app.example.com' },
+    }))
+    mocks.handler.mockResolvedValue(sessionResponse())
+
+    const response = await route({ path: '/api/auth/get-session' }) as Response
+
+    expect(response.headers.get('set-cookie')).toContain('HttpOnly')
+    expect(response.headers.get('set-auth-token')).toBeNull()
+    expect(response.headers.get('access-control-expose-headers')).toBeNull()
+    await expect(response.text()).resolves.toBe('{"session":true}')
+  })
+
+  it('keeps the bearer token for the configured native origin', async () => {
+    mocks.toWebRequest.mockReturnValue(request('/api/auth/get-session', {
+      headers: { origin: 'capacitor://localhost' },
+    }))
+    mocks.handler.mockResolvedValue(sessionResponse())
+
+    const response = await route({ path: '/api/auth/get-session' }) as Response
+
+    expect(response.headers.get('set-auth-token')).toBe('secret')
+    expect(response.headers.get('access-control-expose-headers')).toBe('set-auth-token')
   })
 })

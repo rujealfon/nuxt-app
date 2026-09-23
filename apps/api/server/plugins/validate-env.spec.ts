@@ -20,6 +20,7 @@ const valid = {
   betterAuthUrl: 'http://localhost:3003',
   redisUrl: 'redis://localhost:6379',
   corsOrigins: '',
+  authBearerOrigins: '',
 }
 
 describe('validate-env plugin', () => {
@@ -51,6 +52,33 @@ describe('validate-env plugin', () => {
 
     expect(() => plugin()).toThrow(/databaseUrl: DATABASE_URL is required/)
     expect(() => plugin()).toThrow(/redisUrl: REDIS_URL is required/)
+  })
+
+  it('requires a CORS-allowed native origin when bearer auth is enabled', () => {
+    Object.assign(mocks.state, { authBearerEnabled: true })
+    expect(() => plugin()).toThrow(/AUTH_BEARER_ORIGINS is required/)
+
+    Object.assign(mocks.state, { authBearerOrigins: 'capacitor://localhost' })
+    expect(() => plugin()).toThrow(/allowed by CORS_ORIGINS/)
+
+    Object.assign(mocks.state, { corsOrigins: 'https://app.example.com,capacitor://localhost' })
+    expect(() => plugin()).not.toThrow()
+  })
+
+  it('rejects a wildcard bearer origin', () => {
+    Object.assign(mocks.state, { authBearerEnabled: true, corsOrigins: '*', authBearerOrigins: '*' })
+
+    expect(() => plugin()).toThrow(/explicit origin/)
+  })
+
+  it('rejects an empty parsed list and opaque browser origins', () => {
+    Object.assign(mocks.state, { authBearerEnabled: true, corsOrigins: 'null' })
+
+    mocks.state.authBearerOrigins = ', ,'
+    expect(() => plugin()).toThrow(/AUTH_BEARER_ORIGINS is required/)
+
+    mocks.state.authBearerOrigins = 'null'
+    expect(() => plugin()).toThrow(/explicit origin/)
   })
 })
 

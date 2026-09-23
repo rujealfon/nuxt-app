@@ -412,11 +412,12 @@ succeeds, the cookie is dropped, and the user is signed out again on the next
 navigation. The shell uses the bearer transport instead ([ADR-0003](docs/adr/0003-bearer-tokens-for-native-clients.md)).
 
 1. Set `AUTH_BEARER_ENABLED=true` on the API deployment. Only then does Better
-   Auth register its bearer plugin and the CORS middleware expose
-   `set-auth-token`. This is opt-in because the plugin also hands the session
-   token to JavaScript on cookie sign-ins, which undoes HttpOnly; a deployment
-   that serves browser apps should leave it off unless it also serves a native
-   client.
+   Auth register its bearer plugin. Set `AUTH_BEARER_ORIGINS` to the native
+   WebView origins, for example `capacitor://localhost,https://localhost`, and
+   include those origins in `CORS_ORIGINS`. The API issues and exposes
+   `set-auth-token` only for those explicit origins. Leave browser app origins
+   out of `AUTH_BEARER_ORIGINS` so their cookie sign-ins retain HttpOnly
+   protection. Bearer mode remains off by default.
 2. Set `NUXT_PUBLIC_SESSION_TRANSPORT=bearer` in the app's environment.
    `useAuth()` and `useApi()` then send the session token in an `Authorization`
    header and stop using cookies. Unset — or any other value — keeps cookies,
