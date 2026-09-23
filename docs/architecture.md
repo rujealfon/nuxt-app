@@ -1,5 +1,14 @@
 # Architecture
 
+Use the [Feature-Sliced Design skill](../.agents/skills/feature-sliced-design/SKILL.md)
+to decide where frontend code belongs. It adapts
+[feature-sliced/skills at fd71da4](https://github.com/feature-sliced/skills/tree/fd71da42a89e916f2ced63e5349fd865c87070a6/feature-sliced-design)
+to this Nuxt 4 monorepo. Follow this guide and each app's `AGENTS.md` for paths
+and import rules. Keep route files in `app/pages/`. Put substantial screen
+behavior in `app/features/` even when one route uses it. Keep peer features
+independent and share code through `packages/`. Run `pnpm lint:structure` for
+Steiger.
+
 ## Organization and ownership
 
 Keep the four Nuxt applications independently deployable. Keep the API as one
@@ -39,7 +48,8 @@ explicitly.
 
 ## Dependency rules
 
-`pnpm lint` enforces these rules through `eslint.architecture.mjs`:
+ESLint applies `eslint.architecture.mjs` to TypeScript and Vue files in `apps/`
+and `packages/`. It enforces these import rules:
 
 - Consumers access feature and service modules through `index.ts`.
 - Features are independent of peer features and application composition code.
@@ -51,7 +61,19 @@ explicitly.
 - Shared packages remain independent of applications.
 - Frontend code accesses server operations through HTTP and shared contracts.
 
-The rules resolve relative imports and the existing Nuxt aliases per workspace,
+`pnpm lint` runs ESLint, then Steiger for the three frontend app roots. Steiger
+checks that each feature slice has an index file, that `features/` has no
+layer-level entrypoint, and that segment folders such as `ui/` sit inside a
+feature. Use `index.ts` for entrypoints in this TypeScript repository. Run
+`pnpm lint:structure` for these Steiger checks alone. `pnpm lint:fix` fixes
+ESLint findings only.
+
+Steiger does not inspect API services. ESLint rejects external imports into
+service implementation files, but neither linter requires an unused service
+directory to have an entrypoint. [Backend patterns](backend-patterns.md)
+requires `index.ts` for every service; check new service directories in review.
+
+The ESLint rules resolve relative imports and the existing Nuxt aliases per workspace,
 including static dynamic imports and re-exports. `test/architecture.spec.ts`
 checks accepted and rejected dependencies against the actual ESLint config.
 Keep that coverage current when adding aliases or changing module conventions.

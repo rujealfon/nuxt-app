@@ -6,6 +6,8 @@ This monorepo has four Nuxt apps: `apps/web` (public site), `apps/app` (user SPA
 
 For frontend features, new API domains, or code shared by multiple consumers, follow [the architecture guide](docs/architecture.md). Keep substantial frontend behavior in `app/features/<feature>/` and small pages in `app/pages/`. Import a feature through its selected `index.ts` exports. Keep versioned API handlers in `apps/api/server/api/` thin; put domain logic in `server/services/<domain>/` and import its entrypoint.
 
+When deciding where frontend code belongs or reorganizing it, read the [Feature-Sliced Design skill](.agents/skills/feature-sliced-design/SKILL.md). Use the architecture guide and app `AGENTS.md` for this repository's paths and import rules.
+
 For protected operations, the API error contract, transactions, or durable jobs, read [backend patterns](docs/backend-patterns.md) before changing the API. That guide distinguishes existing behavior from patterns that still need implementation.
 
 ## Code and imports
@@ -18,7 +20,7 @@ Nuxt auto-imports are disabled (`imports.autoImport: false`, `components.dirs: [
 
 ## Tests and review
 
-Run commands from the repository root with Node.js 22 and the pnpm version in `package.json`. Before review, run `pnpm lint`, `pnpm type-check`, and `pnpm test`. Run `pnpm build` when changing exports, Nuxt configuration, or routing. See the [README](README.md) for setup, database, and deployment commands.
+Run commands from the repository root with Node.js 22 and the pnpm version in `package.json`. Before review, run `pnpm lint`, `pnpm type-check`, and `pnpm test`. `pnpm lint` runs ESLint and Steiger for frontend feature structure. Run `pnpm build` when changing exports, Nuxt configuration, or routing. See the [README](README.md) for setup, database, and deployment commands.
 
 Use `*.spec.ts` for tests. Put frontend tests under `app/` or `test/`, API unit tests beside server code, and API HTTP tests in `apps/api/test/e2e/`. Run a subset with a command such as `pnpm test --project app`; project names are in `vitest.config.ts`. Tests require no external services. Cover changed behavior and regressions. Extend the root coverage `include` globs when adding a source root; `pnpm test:coverage:ci` enforces thresholds.
 

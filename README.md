@@ -114,7 +114,8 @@ Turborepo (`turbo.json`) runs each app's scripts. `pnpm install` runs the
 ```bash
 pnpm build       # turbo run build
 pnpm type-check  # turbo run type-check (vue-tsc per app)
-pnpm lint        # eslint across the repo
+pnpm lint           # ESLint across the repo, then Steiger for frontend features
+pnpm lint:structure # Steiger feature structure checks
 pnpm vite-doctor # turbo run vite-doctor (Vite Doctor framework diagnostics)
 pnpm clean       # turbo run clean (nuxt cleanup)
 ```
@@ -187,11 +188,14 @@ Add to `/etc/hosts`:
 ## Lint
 
 ESLint with [`@antfu/eslint-config`](https://github.com/antfu/eslint-config) is configured at the
-workspace root and covers every app and package.
+workspace root and covers every app and package. `pnpm lint` also runs
+[Steiger](https://github.com/feature-sliced/steiger) for frontend feature
+structure after ESLint passes.
 
 ```bash
 pnpm lint
 pnpm lint:fix
+pnpm lint:structure
 ```
 
 `ts/no-deprecated` rejects APIs marked `@deprecated` in app TypeScript source and
@@ -203,9 +207,11 @@ this type-aware rule.
 Type-aware linting loads a Nuxt TypeScript project per app and layer. Linting the
 whole repository in one process peaks near 3.7 GB of heap, above Node's CI
 default of about 2 GB. `pnpm lint` and `pnpm lint:fix` run ESLint once per
-workspace through `scripts/lint.mjs`. The lint-staged hook uses
+workspace through `scripts/lint.mjs`. After ESLint, `pnpm lint` runs Steiger
+against each frontend app. `pnpm lint:structure` runs Steiger alone, and
+`pnpm lint:fix` fixes ESLint findings only. The lint-staged hook uses
 `--max-old-space-size=6144` when it checks staged files in one process. Add new
-lint entrypoints through the runner.
+ESLint workspace entrypoints through the runner.
 
 For auto-fix on save, install the VS Code ESLint extension and add the
 recommended settings from the config's README.
