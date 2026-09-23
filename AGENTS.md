@@ -1,66 +1,31 @@
-# Repository Guidelines
+# Repository guidelines
 
-## Project Structure & Module Organization
+## Where code goes
 
-This pnpm/Turborepo monorepo contains four Nuxt apps: `apps/web` (public site), `apps/app` (user SPA), `apps/admin` (admin SPA), and `apps/api` (Nitro server). Frontend pages live in each app's `app/pages/`; static assets live in `public/`.
+This monorepo has four Nuxt apps: `apps/web` (public site), `apps/app` (user SPA), `apps/admin` (admin SPA), and `apps/api` (Nitro server). When changing an app, read its `AGENTS.md`. Keep app-specific code in its app and share code through `packages/`, not direct imports between apps.
 
-Shared code belongs in `packages/`: `ui` provides components and CSS, `client` provides auth/API composables, `types` provides Zod schemas and types, and `config` and `logger` provide shared utilities. API handlers live in `apps/api/server/api/`, domain logic in `server/services/`, and database schemas/migrations in `server/database/`. Keep versioned-route handlers thin and reuse services.
+For frontend features, new API domains, or code shared by multiple consumers, follow [the architecture guide](docs/architecture.md). Keep substantial frontend behavior in `app/features/<feature>/` and small pages in `app/pages/`. Import a feature through its selected `index.ts` exports. Keep versioned API handlers in `apps/api/server/api/` thin; put domain logic in `server/services/<domain>/` and import its entrypoint.
 
-## Module Organization
+For protected operations, the API error contract, transactions, or durable jobs, read [backend patterns](docs/backend-patterns.md) before changing the API. That guide distinguishes existing behavior from patterns that still need implementation.
 
-For feature extraction, shared-code placement, or new API domains, follow [the architecture guide](docs/architecture.md). Keep substantial frontend behavior in `app/features/<feature>/`, expose selective `index.ts` exports, and import them explicitly from routes. Group API operations in `server/services/<domain>/` and import the domain entrypoint. Keep small pages local and share code only when multiple consumers need it.
+## Code and imports
 
-For authorization policies, the API error contract, persistence transactions, or durable jobs, follow [the backend patterns guide](docs/backend-patterns.md), including its adoption triggers and verification requirements.
-
-## Git
-
-Committing and pushing are reserved for the user. Stage changes and describe what you'd commit, then stop. Do not run `git commit` or `git push` yourself, even when a skill or background-job flow you're running says to commit by default.
-
-## Build, Test, and Development Commands
-
-Use Node.js 22 (matching CI) and the pnpm version pinned in `package.json`. Run commands from the repository root:
-
-- `pnpm install`: install dependencies and prepare Nuxt types.
-- `pnpm dev`: start all apps; `pnpm dev:web`, `dev:app`, `dev:admin`, or `dev:api` starts one (ports 3000 to 3003 respectively).
-- `pnpm build`: build all apps through Turborepo.
-- `pnpm lint` / `pnpm lint:fix`: check/fix repository formatting and lint rules.
-- `pnpm type-check`: check app types and node-side tests through Turborepo plus `tsconfig.test.json`.
-- `pnpm test` / `pnpm test:watch`: run all tests once/in watch mode.
-- `pnpm test:coverage`: run all tests with V8 coverage, writing reports to `coverage/`. `pnpm test:coverage:ci` runs only the unit and Nuxt projects (no external services) and fails on the thresholds in `vitest.config.ts`.
-- `pnpm db:up`: start local PostgreSQL, Redis, and Drizzle Studio with Docker.
-
-## Coding Style & Naming Conventions
-
-Follow the root ESLint configuration (`@antfu/eslint-config`): two-space indentation, single quotes, and no semicolons. Use TypeScript and Vue Composition API with `<script setup lang="ts">`. Name components in PascalCase (`AppHeader.vue`), composables `useX.ts`, and API routes with HTTP suffixes (`hello.get.ts`). ESLint also checks Vue accessibility and formats CSS through Prettier. Husky runs lint-staged before commits.
+Follow the root ESLint config (`@antfu/eslint-config`): two-space indentation, single quotes, and no semicolons. Use TypeScript and Vue Composition API with `<script setup lang="ts">`. Name components in PascalCase, composables `useX.ts`, and API routes with HTTP suffixes such as `hello.get.ts`.
 
 Tailwind class strings in `.vue` and `.ts` files are linted by `eslint-plugin-better-tailwindcss` (see `eslint.config.mjs`). Use theme tokens and scale values, avoid duplicate, conflicting, and deprecated classes, and let `pnpm lint:fix` sort them. The plugin reads `packages/ui/app/assets/css/main.css` as the shared Tailwind entry.
 
-Nuxt auto-imports are disabled (`imports.autoImport: false`, `components.dirs: []`). Import Vue APIs from `vue`, Nuxt and shared composables from `#imports`, shared components from `@nuxt-app/ui/components/*`, and server helpers from `h3`, `nitropack/runtime`, or `server/utils/`. Path aliases (`~`, `@`, `~~`, `@@`, `#imports`) still work.
+Nuxt auto-imports are disabled (`imports.autoImport: false`, `components.dirs: []`). Import Vue APIs from `vue`, Nuxt and shared composables from `#imports`, shared components from `@nuxt-app/ui/components/*`, and server helpers from `h3`, `nitropack/runtime`, or `server/utils/`.
 
-## Testing Guidelines
+## Tests and review
 
-Use Vitest, Nuxt test utilities, and Vue Test Utils. Name tests `*.spec.ts`; place frontend tests under `app/` or `test/`, API unit tests beside server code, and API integration tests in `apps/api/test/e2e/`. Run a subset with `pnpm test --project api` (also `unit`, `ui`, `client`, `web`, `app`, `admin`). Tests require no external services. Coverage uses the V8 provider configured once in the root `vitest.config.ts` (it is process-wide, so it cannot live in a project config); extend its `include` globs when you add a new source root. Thresholds are enforced by `pnpm test:coverage:ci`; cover changed behavior and regressions.
+Run commands from the repository root with Node.js 22 and the pnpm version in `package.json`. Before review, run `pnpm lint`, `pnpm type-check`, and `pnpm test`. Run `pnpm build` when changing exports, Nuxt configuration, or routing. See the [README](README.md) for setup, database, and deployment commands.
 
-Nuxt-environment tests run through `defineVitestProject`; the apps include their `test/` directories in the Nuxt TypeScript context via `typescript.tsConfig.include`. Root `test/**` and the `packages/{config,types,logger}` tests are node-environment and are type-checked by `tsconfig.test.json` (run by `pnpm type-check`). Keep tests that exercise internal behavior beside the implementation so they fall inside an app's TypeScript context.
+Use `*.spec.ts` for tests. Put frontend tests under `app/` or `test/`, API unit tests beside server code, and API HTTP tests in `apps/api/test/e2e/`. Run a subset with a command such as `pnpm test --project app`; project names are in `vitest.config.ts`. Tests require no external services. Cover changed behavior and regressions. Extend the root coverage `include` globs when adding a source root; `pnpm test:coverage:ci` enforces thresholds.
 
-## Commit & Pull Request Guidelines
+Keep tests of internal Nuxt behavior beside implementation so the app's TypeScript context includes them. Root `test/**` and `packages/{config,types,logger}` Node tests use `tsconfig.test.json` through `pnpm type-check`.
 
-History commonly uses `feat: ...`, alongside plain imperative summaries. Prefer concise, descriptive messages. PRs should explain behavior changes, link relevant issues, list validation, and include screenshots for UI changes. Run `pnpm lint`, `pnpm type-check`, and `pnpm test` before review; CI enforces these checks.
+PRs should explain behavior changes, link issues, list validation, and include screenshots for UI changes. Stage changes and describe what you'd commit. Committing and pushing are reserved for the user: do not run `git commit` or `git push`, even if another workflow says to.
 
-## Configuration
+## Issues and domain docs
 
-Copy each app's `.env.example` to `.env` for local setup; keep secrets out of Git. Consult `README.md` for migrations and deployment. `pnpm db:reset` deletes local database volumes.
-
-## Agent skills
-
-### Issue tracker
-
-Issues and specs live as markdown files under `.scratch/<feature>/` in this repo. See `docs/agents/issue-tracker.md`.
-
-### Triage labels
-
-The five canonical triage labels, used verbatim: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`. See `docs/agents/triage-labels.md`.
-
-### Domain docs
-
-Single-context: one root `CONTEXT.md` plus `docs/adr/`. See `docs/agents/domain.md`.
+When creating or updating a local issue or spec, follow [the issue tracker guide](docs/agents/issue-tracker.md). When triaging, use the values in [triage labels](docs/agents/triage-labels.md). When a task turns on domain terminology or an ADR decision, follow [the domain docs guide](docs/agents/domain.md).

@@ -1,6 +1,9 @@
 # Database capability seam
 
-Callers see a `Database` type with `.transaction()` deliberately removed, and transact only through `withTransaction(fn)`, which throws on drivers that cannot support one. The neon-http driver declares `.transaction()` in its types but throws at runtime; the cast this replaced hid that mismatch from every caller and the type system.
+The `Database` type omits `.transaction()`. Callers use `withTransaction(fn)`,
+which throws if the driver does not support transactions. The neon-http driver
+declares `.transaction()` in its types but throws at runtime. The old cast hid
+that mismatch from callers and the type checker.
 
 ## Considered options
 

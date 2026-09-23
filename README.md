@@ -1,6 +1,6 @@
 # nuxt-app
 
-pnpm monorepo with four independently deployable Nuxt apps sharing common packages.
+This pnpm monorepo has four Nuxt apps that deploy separately and share workspace packages.
 
 | App | Subdomain | Local port | Source |
 | --- | --- | --- | --- |
@@ -42,10 +42,8 @@ conventions. When changing an app, also read its guide:
 - [Admin](apps/admin/AGENTS.md): role-based routing and admin interface tests.
 - [API](apps/api/AGENTS.md): versioned routes, services, and database changes.
 
-The root guide applies throughout the repository; app guides add guidance for
-their directories. Keep contributor rules in these guides and setup, operation,
-and deployment instructions in this README. Update the relevant documentation
-when changing those workflows.
+The root guide applies throughout the repository. App guides cover their own
+directories. This README covers setup, operation, and deployment.
 
 ## Architecture
 
@@ -55,9 +53,9 @@ foundations remain in `packages/`. API handlers call explicitly imported
 `server/services/<domain>/` entrypoints. See [the architecture guide](docs/architecture.md)
 for dependency rules, current examples, and when to extract shared code.
 
-For use cases, authorization policies, API errors, transactions, and background
-work, see [Backend Patterns and Growth Plan](docs/backend-patterns.md). It records
-what to introduce as features grow and how to verify each pattern.
+For business operations, authorization policies, API errors, transactions, and
+background work, see [backend patterns](docs/backend-patterns.md). That guide
+marks which patterns exist now and when to add the others.
 
 ## Setup
 
@@ -78,8 +76,9 @@ cp apps/admin/.env.example apps/admin/.env
 ```
 
 The frontend examples use production URLs. For local development, set the
-`NUXT_PUBLIC_*_URL` values to the corresponding `http://localhost:3000` to
-`3002` origins and `NUXT_PUBLIC_API_BASE` in app/admin to `http://localhost:3003`.
+`NUXT_PUBLIC_*_URL` values to the matching origins on `localhost` ports 3000,
+3001, and 3002. Set `NUXT_PUBLIC_API_BASE` in app and admin to
+`http://localhost:3003`.
 
 ## Development
 
@@ -99,8 +98,7 @@ pnpm dev
 ```
 
 `turbo run dev` supervises the four dev servers and stops them on Ctrl+C. If a
-dev server ever survives a forced stop (Nuxt can be reparented), reap whatever
-is still bound to the app ports:
+server survives a forced stop, run:
 
 ```bash
 pnpm dev:stop
@@ -121,10 +119,9 @@ pnpm vite-doctor # turbo run vite-doctor (Vite Doctor framework diagnostics)
 pnpm clean       # turbo run clean (nuxt cleanup)
 ```
 
-Each app and shared Nuxt layer registers the `vite-doctor/nuxt` module, so
-`nuxt doctor` runs Vite, Vue, Nuxt, and Nitro diagnostics against that project's
-source. Doctor is pre-1.0: its CI job is advisory (`continue-on-error`) and its
-findings do not block a pull request yet. Configure per-project rules through
+Each app and shared Nuxt layer registers the `vite-doctor/nuxt` module. Its CI
+job is advisory (`continue-on-error`), so findings do not block a pull request.
+Configure per-project rules through
 the `doctor` key in each `nuxt.config.ts`; see the
 [Nuxt guide](https://vite-doctor.onmax.me/nuxt).
 
@@ -145,17 +142,16 @@ pnpm db:reset  # DESTRUCTIVE: down -v (wipes data) then rebuild + up
 - Postgres: `postgres://nuxt_app_user:nuxt_app_password@localhost:55432/nuxt_app_db`
 - Redis: `redis://localhost:6381`
 
-Drizzle Studio is part of the same compose project (host port `4984`), so
-`db:up` starts it too. Use `db:studio:docker` to rebuild its image after
-dependency changes:
+Drizzle Studio runs on host port `4984`; `db:up` starts it with the other
+containers. Rebuild its image after dependency changes:
 
 ```bash
 pnpm db:studio:docker   # rebuild + start drizzle-studio
 ```
 
-Open <https://local.drizzle.studio?port=4984> to browse the database. (The
-container logs a `?host=0.0.0.0` URL. Ignore it; the browser must target the
-host-mapped port via `?port=4984`.)
+Open <https://local.drizzle.studio?port=4984> to browse the database. The
+container logs a `?host=0.0.0.0` URL, but the browser needs the host-mapped
+port in `?port=4984`.
 
 The API uses [Drizzle ORM](https://orm.drizzle.team) with
 [Better Auth](https://better-auth.com) tables (`user`, `session`, `account`,
@@ -199,30 +195,26 @@ pnpm lint:fix
 ```
 
 `ts/no-deprecated` rejects APIs marked `@deprecated` in app TypeScript source and
-tests, root tests, `packages/{config,types,logger}`, and the Nuxt layer packages
-`client` and `ui`. This runs in CI and the pre-commit lint hook; TypeScript's type
-checker alone does not reject deprecated APIs. It requires the generated Nuxt
-types from `pnpm install`: every app and layer has a committed `tsconfig.json`
-over its `nuxt prepare` output. Vue files and configuration files are not yet
-covered by this type-aware rule.
+tests, root tests, `packages/{config,types,logger}`, and the `client` and `ui`
+layers. CI and the pre-commit hook run this rule. It needs the Nuxt types
+generated by `pnpm install`. Vue files and configuration files are outside
+this type-aware rule.
 
-Type-aware linting loads a generated Nuxt TypeScript project per app and layer;
-every project binds ~2,000 declaration files and costs roughly 0.5 GB of heap, so
-linting the whole repository in one process peaks near 3.7 GB, above Node's
-default ~2 GB on CI. `pnpm lint` and `pnpm lint:fix` therefore run ESLint once per
-workspace through `scripts/lint.mjs`, keeping each process to a single project.
-The lint-staged hook still lints arbitrary staged files in one process, so it
-keeps a `--max-old-space-size=6144` cap. Add new lint entrypoints through the
-runner rather than a bare `eslint`.
+Type-aware linting loads a Nuxt TypeScript project per app and layer. Linting the
+whole repository in one process peaks near 3.7 GB of heap, above Node's CI
+default of about 2 GB. `pnpm lint` and `pnpm lint:fix` run ESLint once per
+workspace through `scripts/lint.mjs`. The lint-staged hook uses
+`--max-old-space-size=6144` when it checks staged files in one process. Add new
+lint entrypoints through the runner.
 
 For auto-fix on save, install the VS Code ESLint extension and add the
 recommended settings from the config's README.
 
 ## Testing
 
-Hermetic [Vitest](https://vitest.dev) + [`@nuxt/test-utils`](https://nuxt.com/docs/4.x/getting-started/testing),
-run from a single root config (`vitest.config.ts`) using projects, with no Docker or
-external services required.
+[Vitest](https://vitest.dev) and [`@nuxt/test-utils`](https://nuxt.com/docs/4.x/getting-started/testing)
+run through projects in the root `vitest.config.ts`. Tests need no Docker or
+external services.
 
 ```bash
 pnpm test                 # run everything once
@@ -230,12 +222,12 @@ pnpm test:watch           # watch mode
 pnpm test --project api   # one project (unit | api | ui | client | web | app | admin)
 ```
 
-- `unit` (node env): architecture checks in `test/`, pure logic in
+- `unit` (Node environment): architecture checks in `test/`, pure logic in
   `packages/{config,types,logger}`, and colocated tests under `apps/api/server/`.
-- `api` (e2e): boots the real Nitro server for `apps/api` and asserts the
+- `api` (HTTP integration): boots the Nitro server for `apps/api` and checks the
   versioning contract: discovery, `X-Api-Version`, and JSON 404s. The rate
   limiter is disabled with `RATE_LIMIT_ENABLED=false`.
-- `ui`, `client`, `web`, `app`, `admin` (Nuxt env): composables, components,
+- `ui`, `client`, `web`, `app`, `admin` (Nuxt environment): composables, components,
   route middleware, and pages via `mockNuxtImport` / `mountSuspended`.
 
 Name tests `*.spec.ts`. Frontend and Nuxt-layer tests may live under `app/`
@@ -248,8 +240,7 @@ CI ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs install, lint,
 type-check, and test on pushes to `main` and on pull requests. A separate
 `coverage` job runs `pnpm test:coverage:ci`; Vitest enforces the thresholds in
 [`vitest.config.ts`](vitest.config.ts) (90% lines/functions/branches/statements)
-and fails the job if they drop. Coverage is not uploaded anywhere — the
-thresholds are the gate. An advisory `vite-doctor` job runs `pnpm vite-doctor`;
+and fails the job if coverage falls below them. Coverage is not uploaded. An advisory `vite-doctor` job runs `pnpm vite-doctor`;
 it reports framework diagnostics without failing the run until its findings are
 triaged.
 
@@ -261,7 +252,7 @@ pnpm build
 
 ## Deployment
 
-All four apps deploy to Vercel as **separate projects** (one per subdomain).
+All four apps deploy to Vercel as separate projects, one per subdomain.
 Each app ships a `vercel.json`; Nitro auto-selects the `vercel` preset when
 `VERCEL=1`.
 
@@ -270,8 +261,8 @@ For every project:
 1. Create a Vercel project and set **Root Directory** to `apps/<name>`.
 2. Enable **Include source files outside of the Root Directory in the Build
    Step** (needed for the `packages/*` workspace layers).
-3. Framework preset: **Nuxt**. Regions default to `iad1` in `vercel.json`; set
-   them to match your database region.
+3. Set the framework preset to Nuxt. Regions default to `iad1` in `vercel.json`;
+   change them to match your database region.
 
 ### Environment variables
 
@@ -301,22 +292,22 @@ CORS_ORIGINS=https://web.nuxt-app.com,https://app.nuxt-app.com,https://admin.nux
 
 ### Managed services
 
-- **Postgres: Neon.** Use the **pooled** connection string. `useDb()` selects
+- **Postgres on Neon.** Use the pooled connection string. `useDb()` selects
   `drizzle-orm/neon-http` when `DATABASE_DRIVER` is `neon` or, if unset, when
   the URL hostname is `*.neon.tech`. An explicit `DATABASE_DRIVER=pg` keeps the
   TCP driver even on a Neon host. neon-http has no TCP pool and is
-  serverless-friendly. App code cannot call `.transaction()` directly;
-  `withTransaction()` throws on this driver. Better Auth still receives the raw
-  drizzle handle and creates the user + credential
-  account in a transaction on sign-up. Use a TCP/`pg` service (or the pooled
-  websocket driver) if you rely on sign-up in production.
-- **Redis: rate limiting only.** `useRedis()` (ioredis) backs the Better Auth
+  suited to serverless requests. App code cannot call `.transaction()` directly;
+  `withTransaction()` throws on this driver. Better Auth receives the raw Drizzle
+  handle and creates the user and credential account in a transaction on sign-up.
+  Use a TCP/`pg` service or the pooled WebSocket driver if production sign-up
+  depends on this transaction.
+- **Redis for rate limiting.** `useRedis()` (ioredis) backs the Better Auth
   rate limiter through a custom `consume` implementation in
   `apps/api/server/utils/rate-limit.ts` (atomic `INCR` + `PEXPIRE` via Lua).
   Sessions are **not** stored in Redis. Point `REDIS_URL` at any TCP Redis;
   managed providers expose a TLS URL (`rediss://...`).
 
-Local dev is unchanged: `useDb()` uses `pg` and `useRedis()` uses `ioredis`,
+In local development, `useDb()` uses `pg` and `useRedis()` uses `ioredis`,
 both pointed at the Docker containers from `docker-compose.yml`. The DB seam
 returns a `Database` type without `.transaction()`; use `withTransaction(fn)`
 for atomic writes; it throws when the configured driver cannot transact.
@@ -344,7 +335,7 @@ Config is in `apps/api/server/database/auth.ts` (shared with the CLI and seed),
 and server guards (`getActor`, `requireActor`) are in
 `apps/api/server/utils/session.ts`.
 
-Rate limiting is enabled (60s window / 100 requests, with Better Auth's stricter
+Rate limiting is enabled (60-second window, 100 requests, with Better Auth's stricter
 built-in rules for sensitive paths such as `/sign-in/email`) and its counters are
 stored in Redis via the custom `consume` storage, so there is no rate-limit table
 and no sessions in Redis. The API's own routes get the same Redis-backed limiter
@@ -358,8 +349,8 @@ route middleware requiring `actor.role === 'admin'`. `app` exposes open
 registration at `/register` (new users get `role: 'user'`; only the seed user is
 an admin).
 
-`web.nuxt-app.com` → `api.nuxt-app.com` is same-site, so `SameSite=Lax` cookies are
-sent. `CORS_ORIGINS` lists the frontend origins for CORS *and* feeds Better
+`web.nuxt-app.com` and `api.nuxt-app.com` are same-site, so `SameSite=Lax` cookies are
+sent. `CORS_ORIGINS` lists the frontend origins for CORS and feeds Better
 Auth's `trustedOrigins` (the API sends `Access-Control-Allow-Credentials: true`).
 Set `BETTER_AUTH_URL` to the API's public origin. Add each subdomain in your
 Vercel project's Domains settings and point DNS (`A`/`CNAME`).
@@ -411,23 +402,20 @@ and WebViews refuse the API's cross-origin `Set-Cookie`: the sign-in request
 succeeds, the cookie is dropped, and the user is signed out again on the next
 navigation. The shell uses the bearer transport instead ([ADR-0003](docs/adr/0003-bearer-tokens-for-native-clients.md)).
 
-1. Set `AUTH_BEARER_ENABLED=true` on the API deployment. Only then does Better
-   Auth register its bearer plugin. Set `AUTH_BEARER_ORIGINS` to the native
-   WebView origins, for example `capacitor://localhost,https://localhost`, and
-   include those origins in `CORS_ORIGINS`. The API issues and exposes
-   the bearer header and session token JSON only for those explicit origins.
-   Leave browser app origins out of `AUTH_BEARER_ORIGINS` so their cookie
-   sign-ins retain HttpOnly protection. Bearer mode remains off by default.
+1. Set `AUTH_BEARER_ENABLED=true` on the API deployment. Set
+   `AUTH_BEARER_ORIGINS` to the native WebView origins, for example
+   `capacitor://localhost,https://localhost`, and add them to `CORS_ORIGINS`.
+   The API exposes bearer credentials only to these origins. Leave browser app
+   origins out of `AUTH_BEARER_ORIGINS` to retain their HttpOnly cookies.
 2. Set `NUXT_PUBLIC_SESSION_TRANSPORT=bearer` in the app's environment.
    `useAuth()` and `useApi()` then send the session token in an `Authorization`
-   header and stop using cookies. Unset — or any other value — keeps cookies,
-   per `sessionTransportFor()`.
-3. Add the WebView origin to `CORS_ORIGINS` on the API. The origin is
-   `server.iosScheme` / `server.androidScheme` + `server.hostname`, i.e.
-   `capacitor://localhost` on iOS and `https://localhost` on Android by default;
-   log `window.location.origin` from the device to confirm rather than trusting
-   that. The same list feeds Better Auth's `trustedOrigins`, so a missing origin
-   fails sign-in with a `403` rather than a CORS error.
+   header and stop using cookies. `sessionTransportFor()` keeps cookies for any
+   other value.
+3. Confirm the WebView origin on the device by logging `window.location.origin`.
+   It comes from `server.iosScheme` or `server.androidScheme` and
+   `server.hostname`. The defaults are `capacitor://localhost` on iOS and
+   `https://localhost` on Android. `CORS_ORIGINS` also feeds Better Auth's
+   `trustedOrigins`; a missing origin makes sign-in fail with `403`.
 4. Optionally replace token storage. The default is `localStorage`; call
    `useAuthTokenStore()` once at startup with a store backed by
    `@capacitor/preferences` (or a Keychain/Keystore plugin), which can persist

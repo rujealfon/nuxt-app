@@ -1,30 +1,37 @@
-# Repository Guidelines
+# Repository guidelines
 
-## Scope & Structure
+## Scope and structure
 
-Follow the shared style and PR guidance in [the root guide](../../AGENTS.md). This directory contains the user-facing SPA, running on port 3001 with `ssr: false`. It extends `@nuxt-app/ui` and `@nuxt-app/client`.
+This user SPA extends `@nuxt-app/ui` and `@nuxt-app/client`.
 
-Routes live in `app/pages/`: `index.vue` displays session state; login and registration routes compose screens exported by `app/features/auth/index.ts`. Auth UI and submission behavior live in that feature's `ui/` directory. Keep reusable UI in `packages/ui`, auth/API composables in `packages/client`, and shared validation schemas in `packages/types`.
+Routes live in `app/pages/`. `index.vue` displays session state. Login and
+registration routes import screens from `app/features/auth/index.ts`. Keep auth
+UI and submission behavior in that feature's `ui/` directory, reusable UI in
+`packages/ui`, auth and API composables in `packages/client`, and shared
+validation schemas in `packages/types`.
 
-## Development Commands
+## Authentication and API conventions
 
-Run from the repository root:
+Use `useAuth()` for session state, sign-in, sign-up, and sign-out. Use
+`loginSchema` and `registerSchema` from `@nuxt-app/types` in typed Nuxt UI
+forms. Show loading state and submission errors, then navigate on success.
 
-- `pnpm dev:app`: start the SPA.
-- `pnpm dev:api`: start the backend for interactive authentication testing.
-- `pnpm --filter @nuxt-app/app build`: build this app.
-- `pnpm --filter @nuxt-app/app type-check`: check app types.
-- `pnpm test --project app`: run page tests.
-- `pnpm lint`: check repository style.
+Use `useApi()` for versioned-route requests. For a failed request, call
+`parseApiError`, branch on `error`, display `message` for general failures, and
+map `invalid_input` details to form fields. Better Auth uses a separate client,
+but its failures follow the same contract. `useAuth` throws
+`AuthRequestError`, and `useAuthForm` converts its `fieldErrors` to form errors.
+Registration and login are public. The home page supports both signed-in and
+signed-out users.
 
-## Authentication & API Conventions
+## Testing and configuration
 
-Use `useAuth()` for session state, sign-in, sign-up, and sign-out. Reuse `loginSchema` and `registerSchema` from `@nuxt-app/types` with typed Nuxt UI forms. Keep loading indicators, submission errors, and successful navigation explicit in page behavior.
+Run `pnpm test --project app` for this app. Add `*.spec.ts` files under `test/`
+or `app/`. Existing tests use
+`mountSuspended`, `mockNuxtImport`, and mocked auth actions. Cover successful
+submissions, rejected requests, navigation, and session-dependent rendering.
+Run the `client` or `unit` project when changing shared client logic or schemas.
 
-Use the shared `useApi()` composable for versioned-route requests. Parse a caught versioned-route failure with `parseApiError`: branch on `error`, show `message` as the catch-all, and map `details` onto fields for `invalid_input`. Better Auth uses its own client but its failures are normalized to the same contract: `useAuth` throws `AuthRequestError`, and `useAuthForm` turns its `fieldErrors` into form errors. Preserve the current distinction between the public registration/login pages and session-dependent content. The home page currently supports both signed-in and signed-out users.
-
-## Testing & Configuration
-
-Add `*.spec.ts` files under `test/` or `app/`. Existing tests use `mountSuspended`, `mockNuxtImport`, and mocked authentication actions. Cover successful submissions, rejected requests, navigation, and session-dependent rendering. Run the `client` or `unit` project when changing shared client logic or schemas.
-
-Copy `.env.example` to `.env` and configure public API and app URLs for local development. Keep credentials and backend secrets in the API's server configuration. For manual auth checks, follow the root README's database setup and migration instructions.
+Keep credentials and backend secrets in the API's server configuration. For
+manual auth checks, follow the README's database setup and migration
+instructions.

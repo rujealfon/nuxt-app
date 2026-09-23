@@ -1,23 +1,56 @@
-# Scalable codebase patterns: Nuxt 4 and feature-first organization
+# Nuxt 4 and feature organization research
 
-**Status:** Research background. The initial feature and service organization is now implemented; see [the architecture guide](../architecture.md) for current conventions. Further extraction remains driven by actual product needs. Checked 2026-09-17 against current Nuxt 4 and Feature-Sliced Design documentation.
+This is research background, checked against Nuxt 4 and Feature-Sliced Design
+documentation on 2026-09-17. The feature and service structure described here
+is implemented. Use [the architecture guide](../architecture.md) for current
+conventions.
 
-## Recommendation for this repository
+## Recommendation
 
-Keep the pnpm/Turborepo monorepo and its four independently built Nuxt applications (`apps/web`, `apps/app`, `apps/admin`, `apps/api`). For frontend growth, adopt a lightweight feature-first structure inside each app: keep Nuxt route files in `app/pages/`, and put substantial business capabilities in ordinary folders such as `app/features/billing/` or `app/features/team-management/`. A slice can hold its own `ui/`, `model/`, `api/`, and `lib/`; keep small page-specific code in its page. Extract a feature when it represents meaningful behavior or is reused, rather than making every component a feature. Keep `packages/ui` and `packages/client` as shared technical packages; create shared domain packages only when multiple apps need the same business contract or behavior.
+Keep the four Nuxt apps in the pnpm/Turborepo monorepo. Keep route files in
+`app/pages/` and put substantial frontend behavior in app-local folders such as
+`app/features/billing/`. A feature can contain `ui/`, `model/`, `api/`, and
+`lib/` directories when it needs them. Leave small page-specific code in its
+page. Extract a feature for meaningful behavior or reuse, not for every
+component. Keep `packages/ui` and `packages/client` as shared packages. Add a
+shared domain package only when multiple apps need the same contract or logic.
 
-For `apps/api`, keep route handlers thin and group server-only domain logic under `server/services/<domain>/`, with database-specific code under `server/database/`. This matches the repository guide and retains Nitro's standard `server/` boundary. Keep the API a modular monolith unless deployment or ownership needs demonstrate a reason to split it.
+For `apps/api`, keep route handlers thin and put domain logic in
+`server/services/<domain>/` and database code in `server/database/`. Keep the
+API in one deployable app until deployment or ownership needs justify a split.
 
-## Useful FSD principles, applied selectively
+## Feature-Sliced Design principles
 
-FSD gives a useful vocabulary for feature-first organization: group related code by product meaning (slice), then by technical purpose (segment). Its dependency rule allows a slice to depend on lower layers, not peer or higher slices. Its public API rule asks consumers to import a slice's declared interface rather than its internal paths. These are design rules, not behavior provided by Nuxt. A small convention for this project could be: cross-feature imports go through a selective `index.ts`; imports within one feature use direct relative paths; avoid wildcard barrels and enforce boundaries with lint rules only once the convention is established. FSD itself cautions that auto-imports can bypass public APIs and that barrels can create cycles or slow large projects. See the FSD [slice rules](https://fsd.how/docs/reference/slices-segments/) and [public API guidance](https://fsd.how/docs/reference/public-api/).
+Feature-Sliced Design groups code by product meaning (a slice), then by
+technical purpose (a segment). A slice can depend on lower layers, but not peer
+or higher slices. Consumers import its declared interface, not internal files.
+Nuxt does not enforce these rules. This repository now uses selective
+`index.ts` exports, relative imports within features, and lint rules for module
+boundaries. FSD also cautions that auto-imports can bypass public interfaces
+and barrels can cause cycles or slow large projects. See its [slice rules](https://fsd.how/docs/reference/slices-segments/)
+and [public API guidance](https://fsd.how/docs/reference/public-api/).
 
-Do not adopt every FSD layer by default. In particular, the currently linked FSD layer guide discourages a generic `widgets/` layer because UI composition and user-flow logic often overlap. Use `pages`, `features`, and existing shared packages where they clarify ownership; add entity or other concepts only when the domain benefits from them. See the current [FSD layer guide](https://fsd.how/docs/reference/layers/).
+The [FSD layer guide](https://fsd.how/docs/reference/layers/) discourages a
+generic `widgets/` layer because UI composition and user-flow logic often
+overlap. Use pages, features, and shared packages where they clarify ownership.
+Add other FSD concepts only when the domain needs them.
 
-## Nuxt-specific boundaries and caveats
+## Nuxt conventions
 
-Nuxt 4 recognizes framework directories such as `app/pages/`, `app/components/`, `app/composables/`, and `app/utils/`; those conventions support routing, registration, or auto-imports. A custom `app/features/` folder is just an organizational folder unless configured (for example, via `imports.dirs`) or consumed through explicit imports. Configuring recursive auto-imports for business modules may hide dependencies and makes FSD's public-API discipline harder to see. Prefer explicit imports from feature entrypoints. This repository went further and disabled auto-imports entirely (`imports.autoImport: false`, `components.dirs: []`), importing framework APIs from `vue` and `#imports`; see [the architecture guide](../architecture.md). See Nuxt's [auto-import documentation](https://nuxt.com/docs/4.x/guide/concepts/auto-imports).
+Nuxt 4 recognizes `app/pages/`, `app/components/`, `app/composables/`, and
+`app/utils/` for routing and registration. `app/features/` has no framework
+behavior unless configured through options such as `imports.dirs`. Recursive
+auto-imports can hide business dependencies. This repository disables
+auto-imports (`imports.autoImport: false`, `components.dirs: []`) and imports
+from feature entrypoints explicitly. See [the architecture guide](../architecture.md)
+and [Nuxt's auto-import documentation](https://nuxt.com/docs/4.x/guide/concepts/auto-imports).
 
-Nuxt layers are for extending and reusing partial Nuxt applications, configuration, components, and composables. They can support DDD-style organization, but each feature does not need to be a Nuxt layer, because layers add Nuxt configuration/override semantics and complexity. Use a layer when a coherent app foundation or a reusable Nuxt preset needs composition across apps. Nuxt modules are different. They are startup/build-time integrations that extend Nuxt through hooks and configuration (for example, registering components or server routes), not the default container for ordinary business features. See Nuxt's [layers](https://nuxt.com/docs/4.x/getting-started/layers) and [modules](https://nuxt.com/docs/4.x/guide/modules) documentation.
+Nuxt layers reuse application configuration, components, and composables across
+apps. A feature does not need its own layer. Use one when several apps need the
+same Nuxt setup. Nuxt modules extend the build or startup process through hooks
+and configuration. They are not containers for ordinary business features. See
+Nuxt's [layers](https://nuxt.com/docs/4.x/getting-started/layers) and
+[modules](https://nuxt.com/docs/4.x/guide/modules) documentation.
 
-The repo already uses Nuxt's `app/` frontend and `server/` API conventions, plus shared workspace packages. The FSD Nuxt guide describes routing/configuration tradeoffs for reconciling FSD's `pages/` slices with Nuxt file routing; keeping Nuxt's `app/pages/` as routing adapters avoids moving or replacing the route system just to follow FSD folder names. See the [FSD Nuxt guide](https://fsd.how/docs/guides/tech/with-nuxtjs/).
+Nuxt's `app/pages/` remains the route directory. Pages import features instead
+of moving routes to match FSD folder names. See the [FSD Nuxt guide](https://fsd.how/docs/guides/tech/with-nuxtjs/).

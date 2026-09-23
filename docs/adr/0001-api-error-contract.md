@@ -1,16 +1,30 @@
 # API error contract and the global error adapter
 
-All domain failures render as `{ error, message }` through a single error adapter (`server/error-adapter.ts`), registered via Nitro's `errorHandler`. When `error` is `invalid_input` and there is at least one usable input detail, the body also includes `details: { path, message }[]` (`path` is a string array; `[]` is the whole body). Failures are always JSON. Setting the adapter suppresses Nuxt's built-in HTML error pages, which is correct for an API but surprising if you expect content negotiation.
+Nitro's `errorHandler` uses `server/error-adapter.ts` to render domain failures as
+JSON `{ error, message }`. For `invalid_input`, the response also includes
+`details: { path, message }[]` when it has at least one usable detail. `path` is
+a string array; `[]` names the whole body. This handler also replaces Nuxt's
+built-in HTML error pages, regardless of the request's `Accept` header.
 
-The error adapter is the last step before that body is sent. It builds the body through `apiError()` in `@nuxt-app/types`, which `safeParse`s as `apiErrorSchema` (`message` non-empty; no max length; no trim; `details` omitted when empty). A domain failure whose override message fails the schema keeps `error` and takes the default safe message for that value; the adapter warns without logging the override text. A bad input detail is dropped the same way. Only if the default message itself is unusable does the client see canned `internal_error`. The adapter reads `DomainFailure` only and does not map `ZodError`. Request validation converts issues to a domain failure at the handler; a thrown `ZodError` (including a failed response `.parse()`) stays `internal_error`. `message` is never joined from details. Unmapped H3 4xx (including 405) map to `not_found`, not `invalid_input`.
+The adapter builds the body with `apiError()` from `@nuxt-app/types`, which
+checks it against `apiErrorSchema`. The schema requires a non-empty `message`,
+sets no maximum length, does not trim, and omits empty `details`. If an override
+message fails the schema, the adapter keeps `error`, uses that code's default
+safe message, and warns without logging the override text. It drops an invalid
+input detail. Only an unusable default message becomes `internal_error`.
+
+The adapter reads `DomainFailure`, not `ZodError`. Handlers convert request
+validation issues to domain failures. A thrown `ZodError`, including one from
+response `.parse()`, becomes `internal_error`. Detail messages never become the
+general `message`. Unmapped H3 4xx errors, including 405, become `not_found`.
 
 ## Considered options
 
 - Per-route wrapper (e.g. extending `defineVersionedHandler`): rejected. Every new route would have to remember it, and thrown failures from middleware would bypass it.
 - Nuxt's default error handling: rejected. It serializes in Nitro's shape, not the API error contract, and serves HTML to `Accept: text/html`.
-- Description-only schema (OpenAPI documents `apiErrorSchema`, adapter still concatenates strings): rejected. The schema and the wire body can drift the day they are written.
+- Description-only schema (OpenAPI documents `apiErrorSchema`, adapter still concatenates strings): rejected. The schema and the response could disagree immediately.
 - Reclassify a bad override as `internal_error`: rejected. A blank message must not turn absence into an unexpected fault.
-- Refuse to construct `DomainFailure` with a bad override: deferred. A useful developer check, not the HTTP invariant.
+- Refuse to construct `DomainFailure` with a bad override: deferred. The response still needs validation at the adapter.
 - Max length or trim on `message`: rejected. A cap becomes a published OpenAPI constraint that does not stop a short leak; trim is a transform, not the contract.
 - Details on every code, or always `details: []`: rejected. Input details are field recovery for `invalid_input` only; the key is absent when there is nothing to recover.
 - Map thrown `ZodError` in the adapter: rejected. Outbound `.parse()` (hello's response schema) would become `invalid_input` and leak server shape. Handlers attach details on `DomainFailure`.
