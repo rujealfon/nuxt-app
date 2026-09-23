@@ -34,7 +34,7 @@ const fields: AuthFormField[] = [
     <template #footer>
       <p class="mt-4 text-center text-sm text-muted">
         Already have an account?
-        <NuxtLink to="/login" class="text-primary font-medium">
+        <NuxtLink to="/login" class="font-medium text-primary">
           Sign in
         </NuxtLink>
       </p>
