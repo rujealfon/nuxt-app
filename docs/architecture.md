@@ -1,5 +1,14 @@
 # Architecture
 
+Use the [Feature-Sliced Design skill](../.agents/skills/feature-sliced-design/SKILL.md)
+to decide where frontend code belongs. It adapts
+[feature-sliced/skills at fd71da4](https://github.com/feature-sliced/skills/tree/fd71da42a89e916f2ced63e5349fd865c87070a6/feature-sliced-design)
+to this Nuxt 4 monorepo. Follow this guide and each app's `AGENTS.md` for paths
+and import rules. Keep route files in `app/pages/`. Put substantial screen
+behavior in `app/features/` even when one route uses it. Keep peer features
+independent and share code through `packages/`. Run `pnpm lint:structure` for
+Steiger.
+
 ## Organization and ownership
 
 Keep the four Nuxt applications independently deployable. Keep the API as one

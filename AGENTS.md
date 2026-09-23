@@ -6,6 +6,8 @@ This monorepo has four Nuxt apps: `apps/web` (public site), `apps/app` (user SPA
 
 For frontend features, new API domains, or code shared by multiple consumers, follow [the architecture guide](docs/architecture.md). Keep substantial frontend behavior in `app/features/<feature>/` and small pages in `app/pages/`. Import a feature through its selected `index.ts` exports. Keep versioned API handlers in `apps/api/server/api/` thin; put domain logic in `server/services/<domain>/` and import its entrypoint.
 
+When deciding where frontend code belongs or reorganizing it, read the [Feature-Sliced Design skill](.agents/skills/feature-sliced-design/SKILL.md). Use the architecture guide and app `AGENTS.md` for this repository's paths and import rules.
+
 For protected operations, the API error contract, transactions, or durable jobs, read [backend patterns](docs/backend-patterns.md) before changing the API. That guide distinguishes existing behavior from patterns that still need implementation.
 
 ## Code and imports
