@@ -14,6 +14,11 @@ function nuxtProject(name: string, root: string, appName: string) {
       environment: 'nuxt',
       include: [`${root}/app/**/*.spec.ts`, `${root}/test/**/*.spec.ts`],
       exclude: ['**/*.server.spec.ts', '**/node_modules/**'],
+      // Each spec file runs in its own worker and bootstraps the Nuxt app via
+      // `@nuxt/test-utils`'s `beforeAll`, which easily exceeds Vitest's 10s
+      // default on a loaded CI runner. Give it the same headroom as the e2e
+      // projects so a slow bootstrap doesn't randomly fail the build.
+      hookTimeout: 60_000,
       environmentOptions: {
         nuxt: {
           rootDir: dir(root),

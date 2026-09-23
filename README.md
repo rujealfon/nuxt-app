@@ -117,8 +117,16 @@ Turborepo (`turbo.json`) runs each app's scripts. `pnpm install` runs the
 pnpm build       # turbo run build
 pnpm type-check  # turbo run type-check (vue-tsc per app)
 pnpm lint        # eslint across the repo
+pnpm vite-doctor # turbo run vite-doctor (Vite Doctor framework diagnostics)
 pnpm clean       # turbo run clean (nuxt cleanup)
 ```
+
+Each app and shared Nuxt layer registers the `vite-doctor/nuxt` module, so
+`nuxt doctor` runs Vite, Vue, Nuxt, and Nitro diagnostics against that project's
+source. Doctor is pre-1.0: its CI job is advisory (`continue-on-error`) and its
+findings do not block a pull request yet. Configure per-project rules through
+the `doctor` key in each `nuxt.config.ts`; see the
+[Nuxt guide](https://vite-doctor.onmax.me/nuxt).
 
 ## Database
 
@@ -241,7 +249,9 @@ type-check, and test on pushes to `main` and on pull requests. A separate
 `coverage` job runs `pnpm test:coverage:ci`; Vitest enforces the thresholds in
 [`vitest.config.ts`](vitest.config.ts) (90% lines/functions/branches/statements)
 and fails the job if they drop. Coverage is not uploaded anywhere — the
-thresholds are the gate.
+thresholds are the gate. An advisory `vite-doctor` job runs `pnpm vite-doctor`;
+it reports framework diagnostics without failing the run until its findings are
+triaged.
 
 ## Build
 

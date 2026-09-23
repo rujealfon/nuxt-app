@@ -8,16 +8,22 @@
       "computedHash": "5aff2c4f658b404184474eda554524692ea53258da559546bd1f942b27475ba0"
     },
     "nuxt": {
-      "source": "antfu/skills",
+      "source": "onmax/nuxt-skills",
       "sourceType": "github",
       "skillPath": "skills/nuxt/SKILL.md",
-      "computedHash": "96dbdbfc06bf7045aeb9a463b972d5c0b5679d6dadf196d8ef6b98dc6defed2d"
+      "computedHash": "48b941815cebc7c8057249e8c4a1caf7416c059b71dca1dd67a2f8972f4cccd6"
     },
     "nuxt-ui": {
-      "source": "nuxt/ui",
+      "source": "onmax/nuxt-skills",
       "sourceType": "github",
       "skillPath": "skills/nuxt-ui/SKILL.md",
-      "computedHash": "9724d09a8196e9c991f7afe29a38837b52b9fff80e9c31c04920b5f520e9cf2b"
+      "computedHash": "72acbf25ef51d20a455b96ec834592855b2982964fe87f7d8620291c95a53301"
+    },
+    "pinia": {
+      "source": "onmax/nuxt-skills",
+      "sourceType": "github",
+      "skillPath": "skills/pinia/SKILL.md",
+      "computedHash": "1a75383fb39f74378c69073b8d4fa893e8ed3ee330df77f9be994bdaac8294c6"
     },
     "pinia-colada": {
       "source": "rujealfon/skills",
@@ -26,10 +32,22 @@
       "computedHash": "a5cb722b58786ac5afac4d2fddb5ec831cef83f72362b5379c2c8510e67852c5"
     },
     "vue-best-practices": {
-      "source": "antfu/skills",
+      "source": "onmax/nuxt-skills",
       "sourceType": "github",
       "skillPath": "skills/vue-best-practices/SKILL.md",
-      "computedHash": "d7d22c8cb343583c3904692c4d1d7b50382945e433e4f6e053f4aabb9846cbc3"
+      "computedHash": "c293289935f0a25e63a61d081f571942bd5f67778aa3a3f562aabd74babd8be3"
+    },
+    "vue-testing-best-practices": {
+      "source": "onmax/nuxt-skills",
+      "sourceType": "github",
+      "skillPath": "skills/vue-testing-best-practices/SKILL.md",
+      "computedHash": "d2525b29d0aced62b9602c3444613120c43db89fee34f1cd7b6c60d057a97d48"
+    },
+    "vueuse-functions": {
+      "source": "onmax/nuxt-skills",
+      "sourceType": "github",
+      "skillPath": "skills/vueuse-functions/SKILL.md",
+      "computedHash": "5d35cf3b3d9dd3054242d044103bf36a3811f086503369333de3e531ff498981"
     },
     "zod": {
       "source": "rujealfon/skills",

@@ -5,6 +5,14 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   ssr: false,
   extends: ['@nuxt-app/ui', '@nuxt-app/client'],
+  modules: ['vite-doctor/nuxt'],
+  // SPA with no SEO surface; `useHead()` stays the documented convention.
+  doctor: {
+    extends: 'auto',
+    rules: {
+      'nuxt/seo/prefer-seo-composables': 'off',
+    },
+  },
   imports: { autoImport: false },
   components: { dirs: [] },
   typescript: {

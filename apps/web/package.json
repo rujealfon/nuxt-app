@@ -10,6 +10,7 @@
     "preview": "nuxt preview",
     "nuxt:prepare": "nuxt prepare",
     "type-check": "nuxt typecheck",
+    "vite-doctor": "nuxt doctor",
     "lint": "eslint .",
     "clean": "nuxt cleanup"
   },
@@ -18,12 +19,13 @@
     "@nuxt-app/ui": "workspace:*",
     "@nuxt/ui": "^4.11.1",
     "nuxt": "^4.5.2",
-    "vue": "^3.5.42",
+    "vue": "^3.5.43",
     "vue-router": "^5.3.1"
   },
   "devDependencies": {
     "@iconify-json/lucide": "^1.2.135",
-    "typescript": "^5.9.3",
+    "typescript": "^6.0.3",
+    "vite-doctor": "^0.0.11",
     "vue-tsc": "^3.3.11"
   }
 }

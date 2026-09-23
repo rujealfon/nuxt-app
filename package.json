@@ -32,6 +32,7 @@
     "test:coverage": "vitest run --coverage",
     "test:coverage:ci": "vitest run --coverage --project unit --project client --project ui --project web --project app --project admin",
     "type-check": "turbo run type-check && tsc -p tsconfig.test.json",
+    "vite-doctor": "turbo run vite-doctor --continue",
     "clean": "turbo run clean",
     "postinstall": "turbo run nuxt:prepare",
     "prepare": "husky"
@@ -39,10 +40,10 @@
   "devDependencies": {
     "@antfu/eslint-config": "^9.5.1",
     "@nuxt/test-utils": "^4.3.2",
-    "@types/node": "^22",
+    "@types/node": "^22.20.4",
     "@vitest/coverage-v8": "5.0.1",
-    "@vue/test-utils": "^2.5.0",
-    "eslint": "^10.10.0",
+    "@vue/test-utils": "^2.5.1",
+    "eslint": "^10.11.0",
     "eslint-import-resolver-typescript": "^4.4.5",
     "eslint-plugin-boundaries": "^7.2.0",
     "eslint-plugin-format": "^2.0.1",
@@ -51,12 +52,12 @@
     "husky": "^9.1.7",
     "lint-staged": "^17.5.1",
     "nuxt": "^4.5.2",
-    "prettier": "^3.9.6",
+    "prettier": "^3.9.8",
     "prettier-plugin-css-order": "^2.2.0",
-    "turbo": "^2.10.13",
-    "typescript": "^5.9.3",
+    "turbo": "^2.11.2",
+    "typescript": "^6.0.3",
     "vitest": "^5.0.1",
-    "vue": "^3.5.42",
+    "vue": "^3.5.43",
     "vue-router": "^5.3.1"
   },
   "lint-staged": {

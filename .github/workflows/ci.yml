@@ -32,6 +32,28 @@ jobs:
 
       - run: pnpm test
 
+  # Advisory: Vite Doctor is pre-1.0, so its findings are reported but do not
+  # block pull requests yet. Drop `continue-on-error` once the first findings
+  # are triaged and the rule set is settled.
+  vite-doctor:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    env:
+      HUSKY: 0
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm vite-doctor
+
   coverage:
     runs-on: ubuntu-latest
     env:
