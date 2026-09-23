@@ -51,7 +51,13 @@ explicitly.
 - Shared packages remain independent of applications.
 - Frontend code accesses server operations through HTTP and shared contracts.
 
-The rules resolve relative imports and the existing Nuxt aliases per workspace,
+Steiger also runs during `pnpm lint` for the frontend app roots. It checks that
+feature slices have `index.ts` entrypoints, that `features/` has no layer-level
+entrypoint, and that segment folders such as `ui/` sit inside a feature. Run
+`pnpm lint:structure` to check these rules on their own. Steiger does not check
+the API service structure or replace the ESLint import rules.
+
+The ESLint rules resolve relative imports and the existing Nuxt aliases per workspace,
 including static dynamic imports and re-exports. `test/architecture.spec.ts`
 checks accepted and rejected dependencies against the actual ESLint config.
 Keep that coverage current when adding aliases or changing module conventions.
