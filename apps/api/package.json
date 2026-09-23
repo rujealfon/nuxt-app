@@ -23,21 +23,21 @@
     "@nuxt-app/config": "workspace:*",
     "@nuxt-app/logger": "workspace:*",
     "@nuxt-app/types": "workspace:*",
-    "@scalar/api-reference": "^1.69.0",
-    "better-auth": "^1.7.4",
-    "drizzle-orm": "^0.45.2",
+    "@scalar/api-reference": "^1.70.0",
+    "better-auth": "^1.7.5",
+    "drizzle-orm": "^0.45.3",
     "ioredis": "^5.11.1",
     "nuxt": "^4.5.2",
     "pg": "^8.23.0",
-    "vue": "^3.5.42",
+    "vue": "^3.5.43",
     "vue-router": "^5.3.1",
-    "zod": "^4.6.1"
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@types/pg": "^8.23.1",
-    "drizzle-kit": "^0.31.10",
-    "tsx": "^4.23.13",
-    "typescript": "^5.9.3",
+    "drizzle-kit": "^0.31.11",
+    "tsx": "^4.23.15",
+    "typescript": "^6.0.3",
     "vue-tsc": "^3.3.11"
   }
 }
