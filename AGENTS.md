@@ -33,6 +33,8 @@ Use Node.js 22 (matching CI) and the pnpm version pinned in `package.json`. Run 
 
 Follow the root ESLint configuration (`@antfu/eslint-config`): two-space indentation, single quotes, and no semicolons. Use TypeScript and Vue Composition API with `<script setup lang="ts">`. Name components in PascalCase (`AppHeader.vue`), composables `useX.ts`, and API routes with HTTP suffixes (`hello.get.ts`). ESLint also checks Vue accessibility and formats CSS through Prettier. Husky runs lint-staged before commits.
 
+Tailwind class strings in `.vue` and `.ts` files are linted by `eslint-plugin-better-tailwindcss` (see `eslint.config.mjs`). Use theme tokens and scale values, avoid duplicate, conflicting, and deprecated classes, and let `pnpm lint:fix` sort them. The plugin reads `packages/ui/app/assets/css/main.css` as the shared Tailwind entry.
+
 Nuxt auto-imports are disabled (`imports.autoImport: false`, `components.dirs: []`). Import Vue APIs from `vue`, Nuxt and shared composables from `#imports`, shared components from `@nuxt-app/ui/components/*`, and server helpers from `h3`, `nitropack/runtime`, or `server/utils/`. Path aliases (`~`, `@`, `~~`, `@@`, `#imports`) still work.
 
 ## Testing Guidelines

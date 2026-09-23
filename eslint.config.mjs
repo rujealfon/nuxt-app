@@ -1,4 +1,5 @@
 import antfu from '@antfu/eslint-config'
+import betterTailwindcss from 'eslint-plugin-better-tailwindcss'
 import vuejsAccessibility from 'eslint-plugin-vuejs-accessibility'
 import { architecture, workspaceResolvers } from './eslint.architecture.mjs'
 
@@ -75,5 +76,29 @@ export default antfu({
   },
   rules: {
     'ts/no-deprecated': 'error',
+  },
+}, {
+  // Tailwind class formatting and correctness. `entryPoint` is the single
+  // Tailwind v4 stylesheet the whole monorepo shares. `cwd` lets the plugin
+  // resolve `tailwindcss` from the UI package under pnpm's strict
+  // node_modules; `entryPoint` is relative to it. Nuxt UI's virtual
+  // `#build/ui.css` import resolves through the package's Node `imports`
+  // fallback, so the semantic theme tokens are read without a generated
+  // `.nuxt` tsconfig.
+  name: 'nuxt-app/better-tailwindcss',
+  files: ['**/*.{vue,ts}'],
+  ...betterTailwindcss.configs.recommended,
+  rules: {
+    ...betterTailwindcss.configs.recommended.rules,
+    // The default 80 wraps short class lists into multi-line `class=""`
+    // blocks, which reads poorly in Vue templates. 100 matches the line
+    // length the rest of the codebase already uses.
+    'better-tailwindcss/enforce-consistent-line-wrapping': ['warn', { printWidth: 100 }],
+  },
+  settings: {
+    'better-tailwindcss': {
+      cwd: 'packages/ui',
+      entryPoint: 'app/assets/css/main.css',
+    },
   },
 }, architecture, ...workspaceResolvers)
