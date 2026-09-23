@@ -33,8 +33,8 @@ export function createAuth(
     // as from the session cookie.
     //
     // The after-hook emits `set-auth-token` on cookie sign-ins too. The auth
-    // route removes that header unless the request has an explicitly allowed
-    // native origin; see docs/adr/0003-bearer-tokens-for-native-clients.md.
+    // route removes that header and session tokens in auth JSON unless the
+    // request has an explicitly allowed native origin; see ADR-0003.
     plugins: config.bearerEnabled ? [bearer()] : [],
     rateLimit: {
       enabled: true,

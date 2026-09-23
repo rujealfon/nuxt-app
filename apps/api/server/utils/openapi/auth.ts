@@ -11,20 +11,20 @@ const authUserSchema = z.looseObject({
 
 const authSessionSchema = z.looseObject({
   id: z.string(),
-  token: z.string(),
+  token: z.string().optional(),
   userId: z.string(),
   expiresAt: z.string(),
 })
 
 const authSignInResponseSchema = z.looseObject({
   redirect: z.boolean(),
-  token: z.string(),
+  token: z.string().optional(),
   url: z.string().nullable().optional(),
   user: authUserSchema,
 })
 
 const authSignUpResponseSchema = z.looseObject({
-  token: z.string().nullable(),
+  token: z.string().nullable().optional(),
   user: authUserSchema,
 })
 
@@ -63,7 +63,7 @@ function authPaths(): Record<string, OpenApiPathItem> {
       post: {
         tags: ['auth'],
         summary: 'Sign in with email and password',
-        description: 'Better Auth email/password sign-in. Success sets the `better-auth.session_token` cookie, which the browser stores for later try-it requests on this origin.',
+        description: 'Better Auth email/password sign-in. Success sets the HttpOnly session cookie. Browser responses omit the session token from JSON; explicitly allowed native origins can receive it.',
         requestBody: authRequestBody('LoginCredentials'),
         responses: {
           200: jsonRef('AuthSignInResponse', 'Signed in; session cookie set.'),
@@ -75,7 +75,7 @@ function authPaths(): Record<string, OpenApiPathItem> {
       post: {
         tags: ['auth'],
         summary: 'Register with email and password',
-        description: 'Better Auth email/password registration. Success signs the new user in and sets the session cookie. A body that fails the shared `RegisterCredentials` schema answers `invalid_input` with `details`.',
+        description: 'Better Auth email/password registration. Success signs the new user in and sets the session cookie. Browser responses omit non-null session tokens from JSON. A body that fails the shared `RegisterCredentials` schema answers `invalid_input` with `details`.',
         requestBody: authRequestBody('RegisterCredentials'),
         responses: {
           200: jsonRef('AuthSignUpResponse', 'Registered and signed in; session cookie set.'),
@@ -87,7 +87,7 @@ function authPaths(): Record<string, OpenApiPathItem> {
       get: {
         tags: ['auth'],
         summary: 'Current session',
-        description: 'Returns the active session and user, or `null` when signed out. Useful to confirm a Scalar sign-in took effect.',
+        description: 'Returns the active session and user, or `null` when signed out. Browser responses omit `session.token`. Useful to confirm a Scalar sign-in took effect.',
         responses: {
           200: jsonRef('AuthSessionResponse', 'Active session, or `null` when signed out.'),
           default: apiErrorResponse(),

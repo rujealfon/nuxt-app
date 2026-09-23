@@ -415,9 +415,9 @@ navigation. The shell uses the bearer transport instead ([ADR-0003](docs/adr/000
    Auth register its bearer plugin. Set `AUTH_BEARER_ORIGINS` to the native
    WebView origins, for example `capacitor://localhost,https://localhost`, and
    include those origins in `CORS_ORIGINS`. The API issues and exposes
-   `set-auth-token` only for those explicit origins. Leave browser app origins
-   out of `AUTH_BEARER_ORIGINS` so their cookie sign-ins retain HttpOnly
-   protection. Bearer mode remains off by default.
+   the bearer header and session token JSON only for those explicit origins.
+   Leave browser app origins out of `AUTH_BEARER_ORIGINS` so their cookie
+   sign-ins retain HttpOnly protection. Bearer mode remains off by default.
 2. Set `NUXT_PUBLIC_SESSION_TRANSPORT=bearer` in the app's environment.
    `useAuth()` and `useApi()` then send the session token in an `Authorization`
    header and stop using cookies. Unset — or any other value — keeps cookies,

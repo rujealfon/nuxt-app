@@ -57,7 +57,7 @@ export default defineEventHandler(async (event) => {
   const response = await useAuth().handler(request)
 
   if (response.status < 400) {
-    return restrictBearerTokenResponse(response, request.headers.get('origin'), useRuntimeConfig(event))
+    return restrictBearerTokenResponse(response, request.headers.get('origin'), useRuntimeConfig(event), path)
   }
 
   preserveAuthErrorHeaders(event, response.headers)

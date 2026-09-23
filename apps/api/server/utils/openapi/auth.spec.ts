@@ -54,6 +54,8 @@ describe('buildAuthOpenApi', () => {
       type: 'object',
       properties: { redirect: { type: 'boolean' }, token: { type: 'string' } },
     })
+    expect(auth.schemas.AuthSignInResponse.required).not.toContain('token')
+    expect(auth.schemas.AuthSessionResponse).not.toBeUndefined()
     expect(auth.schemas.LoginCredentials).toMatchObject({
       type: 'object',
       properties: { email: { type: 'string' }, password: { type: 'string' } },

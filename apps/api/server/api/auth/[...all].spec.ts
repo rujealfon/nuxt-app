@@ -39,10 +39,14 @@ function request(path: string, init?: RequestInit): Request {
 }
 
 function sessionResponse() {
-  return new Response('{"session":true}', {
+  return new Response(JSON.stringify({
+    session: { id: 'session-1', token: 'session-secret', userId: 'user-1' },
+    user: { id: 'user-1' },
+  }), {
     headers: {
-      'set-cookie': 'better-auth.session_token=secret; HttpOnly; Path=/',
-      'set-auth-token': 'secret',
+      'content-type': 'application/json',
+      'set-cookie': 'better-auth.session_token=session-secret; HttpOnly; Path=/',
+      'set-auth-token': 'session-secret',
       'access-control-expose-headers': 'set-auth-token',
     },
   })
@@ -83,7 +87,10 @@ describe('auth mount', () => {
 
   it('returns the Better Auth response on success', async () => {
     mocks.toWebRequest.mockReturnValue(request('/api/auth/get-session'))
-    const response = new Response(JSON.stringify({ session: null }), { status: 200 })
+    const response = new Response(JSON.stringify({ session: null }), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    })
     mocks.handler.mockResolvedValue(response)
 
     await expect(route({ path: '/api/auth/get-session' })).resolves.toBe(response)
@@ -156,7 +163,10 @@ describe('auth mount', () => {
     expect(response.headers.get('set-cookie')).toContain('HttpOnly')
     expect(response.headers.get('set-auth-token')).toBeNull()
     expect(response.headers.get('access-control-expose-headers')).toBeNull()
-    await expect(response.text()).resolves.toBe('{"session":true}')
+    await expect(response.json()).resolves.toEqual({
+      session: { id: 'session-1', userId: 'user-1' },
+      user: { id: 'user-1' },
+    })
   })
 
   it('keeps the bearer token for the configured native origin', async () => {
@@ -167,7 +177,71 @@ describe('auth mount', () => {
 
     const response = await route({ path: '/api/auth/get-session' }) as Response
 
-    expect(response.headers.get('set-auth-token')).toBe('secret')
+    expect(response.headers.get('set-auth-token')).toBe('session-secret')
     expect(response.headers.get('access-control-expose-headers')).toBe('set-auth-token')
+    await expect(response.json()).resolves.toEqual({
+      session: { id: 'session-1', token: 'session-secret', userId: 'user-1' },
+      user: { id: 'user-1' },
+    })
+  })
+
+  it('removes the body token when a same-origin request has no Origin header', async () => {
+    mocks.toWebRequest.mockReturnValue(request('/api/auth/get-session'))
+    mocks.handler.mockResolvedValue(sessionResponse())
+
+    const response = await route({ path: '/api/auth/get-session' }) as Response
+
+    await expect(response.json()).resolves.toEqual({
+      session: { id: 'session-1', userId: 'user-1' },
+      user: { id: 'user-1' },
+    })
+  })
+
+  it('keeps a null sign-up token and user data', async () => {
+    const path = '/api/auth/sign-up/email'
+    const payload = { token: null, user: { id: 'user-1' } }
+    mocks.toWebRequest.mockReturnValue(request(path, { headers: { origin: 'https://app.example.com' } }))
+    const original = new Response(JSON.stringify(payload), { headers: { 'content-type': 'application/json' } })
+    mocks.handler.mockResolvedValue(original)
+
+    await expect(route({ path })).resolves.toBe(original)
+  })
+
+  it('preserves a social sign-in redirect without parsing it as JSON', async () => {
+    const path = '/api/auth/sign-in/social'
+    mocks.toWebRequest.mockReturnValue(request(path, { headers: { origin: 'https://app.example.com' } }))
+    const original = new Response(null, { status: 302, headers: { location: 'https://idp.example.com' } })
+    mocks.handler.mockResolvedValue(original)
+
+    await expect(route({ path })).resolves.toBe(original)
+  })
+
+  it('keeps the JSON body for a non-session auth response', async () => {
+    const path = '/api/auth/verify-email'
+    const payload = { status: true, token: 'other-token' }
+    mocks.toWebRequest.mockReturnValue(request(path, { headers: { origin: 'https://app.example.com' } }))
+    mocks.handler.mockResolvedValue(new Response(JSON.stringify(payload), { headers: { 'content-type': 'application/json' } }))
+
+    const response = await route({ path }) as Response
+
+    await expect(response.json()).resolves.toEqual(payload)
+  })
+
+  it.each([
+    ['/api/auth/sign-in/email', { redirect: false, token: 'session-secret', user: { id: 'user-1' } }, { redirect: false, user: { id: 'user-1' } }],
+    ['/api/auth/sign-up/email', { token: 'session-secret', user: { id: 'user-1' } }, { user: { id: 'user-1' } }],
+    ['/api/auth/sign-in/social', { redirect: false, token: 'session-secret', user: { id: 'user-1' } }, { redirect: false, user: { id: 'user-1' } }],
+    ['/api/auth/change-password', { token: 'session-secret', user: { id: 'user-1' } }, { user: { id: 'user-1' } }],
+    ['/api/auth/list-sessions', [{ id: 'session-1', token: 'session-secret' }, { id: 'session-2', token: 'other-secret' }], [{ id: 'session-1' }, { id: 'session-2' }]],
+    ['/api/auth/update-session', { session: { id: 'session-1', token: 'session-secret' } }, { session: { id: 'session-1' } }],
+  ] as const)('removes session tokens from %s for a browser origin', async (path, payload, expected) => {
+    mocks.toWebRequest.mockReturnValue(request(path, { headers: { origin: 'https://app.example.com' } }))
+    mocks.handler.mockResolvedValue(new Response(JSON.stringify(payload), {
+      headers: { 'content-type': 'application/json' },
+    }))
+
+    const response = await route({ path }) as Response
+
+    await expect(response.json()).resolves.toEqual(expected)
   })
 })
