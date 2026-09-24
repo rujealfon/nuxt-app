@@ -62,6 +62,13 @@ describe('authFailureFromResponse', () => {
     expect(authFailureFromResponse(418, {}).error).toBe('not_found')
   })
 
+  // Better Auth answers 422 for both conflicts and failed writes; only a known
+  // `code` makes it a conflict. An unclassified 422 conceals as `not_found`,
+  // the same rule the error adapter applies to H3 errors.
+  it('conceals an unclassified 422 as not_found', () => {
+    expect(authFailureFromResponse(422, { message: 'nope' }).error).toBe('not_found')
+  })
+
   it('falls back to the status when there is no body', () => {
     const failure = authFailureFromResponse(404, undefined)
 

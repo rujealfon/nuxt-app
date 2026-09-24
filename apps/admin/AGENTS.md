@@ -1,4 +1,6 @@
-# Repository guidelines
+# Admin app guide
+
+Read the [root guide](../../AGENTS.md) for workspace setup and verification.
 
 ## Scope and structure
 
@@ -17,9 +19,21 @@ Keep `/login` accessible without a session. Other routes call
 login, keep the requested path in the query. Test redirect handling when
 changing sign-in.
 
-Use `useAuth()` and the shared `loginSchema` for login forms. Client route
-checks control navigation. Privileged API operations also need server
-authorization. Use the README's seed workflow to create a local admin account.
+Import client composables through `#imports`. The login screen combines
+`useAuth().signIn`, `usePasswordAuthScreen()`, and the shared UI `AuthScreen`.
+Pass all `screenProps` to preserve schema validation, loading state, and field
+errors. Let `useAuthForm`, through that helper, sanitize the requested redirect
+to an in-app path. Keep coverage for external and malformed redirect targets.
+Use `useSignOut('/login')` so navigation follows a successful sign-out.
+
+Client route checks control navigation. Privileged API operations also need
+server authorization. Use the [README's seed workflow](../../README.md) to
+create a local admin account. Browser sessions use the shared client's default
+cookie transport.
+
+Use `useApi().api` for versioned API calls and `parseApiError` from `useApi()`
+for failures. Keep remote query state in the client layer's Pinia Colada cache,
+temporary form state local, and shared client state in Pinia when needed.
 
 ## Testing and configuration
 

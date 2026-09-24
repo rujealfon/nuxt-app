@@ -2,7 +2,7 @@ import { readdirSync } from 'node:fs'
 import { join, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
-import { apiVersions } from '../packages/config/index'
+import { apiVersions, versionedOperations } from '../packages/config/index'
 import * as types from '../packages/types/src/index'
 
 const apiRoot = fileURLToPath(new URL('../apps/api/server/api', import.meta.url))
@@ -60,11 +60,9 @@ describe('version parity', () => {
 
   it('documents every versioned-route handler', () => {
     const documented = new Set(
-      apiVersions.flatMap((version) => {
-        const namespace = types[version] as { operations: readonly { suffix: string, method: string }[] }
-
-        return namespace.operations.map(operation => `${version}\t${operation.method}\t${operation.suffix}`)
-      }),
+      apiVersions.flatMap(version =>
+        versionedOperations[version].map(operation => `${version}\t${operation.method}\t${operation.suffix}`),
+      ),
     )
 
     const handlers = new Set(

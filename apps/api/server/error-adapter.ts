@@ -4,23 +4,8 @@ import { apiError } from '@nuxt-app/types'
 import { getResponseHeader, send, setResponseHeaders, setResponseStatus } from 'h3'
 import { defineNitroErrorHandler } from 'nitropack/runtime'
 import { DomainFailure } from './utils/domain-failure'
+import { errorFromStatus, statusByError } from './utils/failure-contract'
 import { useLogger } from './utils/logger'
-
-// The one status table. `errorByStatus` is derived from it so the two can
-// never drift; a new code only has to be added here.
-export const statusByError: Record<ApiErrorCode, number> = {
-  invalid_input: 400,
-  unauthenticated: 401,
-  forbidden: 403,
-  not_found: 404,
-  conflict: 409,
-  rate_limited: 429,
-  internal_error: 500,
-}
-
-const errorByStatus = Object.fromEntries(
-  Object.entries(statusByError).map(([error, status]) => [status, error] as const),
-) as Partial<Record<number, ApiErrorCode>>
 
 // h3 wraps a thrown non-H3 error in a new H3Error, keeping the original as
 // `cause`; recognise a domain failure at either level.
@@ -56,8 +41,7 @@ function isUnhandled(error: unknown): boolean {
 }
 
 // Framework 4xx stay client errors. Unknown URL/method on this API-only app
-// is `not_found`, not field validation. Only statuses in `statusByError`
-// map onto a dedicated code; leftover 4xx are concealed as `not_found`.
+// is `not_found`, not field validation. Unhandled and fatal errors never map.
 function errorFromH3(error: unknown): ApiErrorCode | undefined {
   if (isUnhandled(error)) {
     return undefined
@@ -65,16 +49,7 @@ function errorFromH3(error: unknown): ApiErrorCode | undefined {
 
   const status = statusCodeOf(error)
 
-  if (status === undefined) {
-    return undefined
-  }
-
-  const mapped = errorByStatus[status]
-  if (mapped) {
-    return mapped
-  }
-
-  return status >= 400 && status < 500 ? 'not_found' : undefined
+  return status === undefined ? undefined : errorFromStatus(status)
 }
 
 function apiErrorBody(

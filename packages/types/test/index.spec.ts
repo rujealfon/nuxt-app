@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { actorFromSession, actorSchema, apiError, apiErrorMessages, apiErrorSchema, loginSchema, parseApiError, registerSchema, v1 } from '../src'
+import { actorFromSession, actorSchema, apiError, apiErrorMessages, apiErrorSchema, invalidInputDetails, loginSchema, parseApiError, registerSchema, v1 } from '../src'
 
 describe('auth schemas', () => {
   it('accepts valid login credentials', () => {
@@ -96,6 +96,13 @@ describe('aPI error contract', () => {
   it('returns null from parseApiError when the body is not the contract', () => {
     expect(parseApiError({ message: 'Invalid credentials' })).toBeNull()
     expect(parseApiError(null)).toBeNull()
+  })
+
+  it('reads input details only from invalid_input', () => {
+    const details = [{ path: ['email'], message: 'Enter a valid email address' }]
+
+    expect(invalidInputDetails(apiError('invalid_input', undefined, details))).toEqual(details)
+    expect(invalidInputDetails(apiError('not_found'))).toEqual([])
   })
 
   it('builds a contract body through apiError', () => {

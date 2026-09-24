@@ -6,8 +6,9 @@
 // `@capacitor/preferences` or a Keychain/Keystore plugin without an adapter.
 // Apps reach it through `useAuthTokenStore()`.
 
+import { sessionTokenHeader } from '@nuxt-app/config'
+
 const storageKey = 'nuxt-app.session-token'
-const issuedTokenHeader = 'set-auth-token'
 
 export interface AuthTokenStore {
   read: () => Promise<string | null>
@@ -121,10 +122,10 @@ export function clearAuthToken(expectedToken?: string): Promise<void> {
 }
 
 // Every response that creates or refreshes a session carries the token in
-// `set-auth-token`. The CORS middleware must expose that header or cross-origin
-// JS reads `null` and a bearer sign-in stores nothing.
+// `sessionTokenHeader`. The CORS middleware must expose that header or
+// cross-origin JS reads `null` and a bearer sign-in stores nothing.
 export async function captureIssuedToken(response: Response): Promise<void> {
-  const token = response.headers.get(issuedTokenHeader)
+  const token = response.headers.get(sessionTokenHeader)
 
   if (token) {
     await writeAuthToken(token)

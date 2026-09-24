@@ -1,4 +1,5 @@
 import type { DomainFailure } from '../../utils/domain-failure'
+import { authMount } from '@nuxt-app/config'
 import { loginSchema, registerSchema } from '@nuxt-app/types'
 import { invalidInputFromZod } from '../../utils/domain-failure'
 
@@ -14,10 +15,8 @@ const passwordFlowSchemas = {
 
 type PasswordFlowSchema = (typeof passwordFlowSchemas)[keyof typeof passwordFlowSchemas]
 
-// The auth mount: `server/api/auth/[...all].ts`. Requiring the prefix keeps an
-// unknown nested path (which Better Auth 404s) out of request validation.
-const authMount = '/api/auth'
-
+// The auth mount is `server/api/auth/[...all].ts`. Requiring the prefix keeps
+// an unknown nested path (which Better Auth 404s) out of request validation.
 function flowPath(path: string): string | undefined {
   return path.startsWith(`${authMount}/`) ? path.slice(authMount.length) : undefined
 }

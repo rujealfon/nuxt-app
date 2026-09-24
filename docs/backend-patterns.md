@@ -78,7 +78,9 @@ override keeps `error` and the default safe message. Never join detail messages
 into `message`.
 Define the shared schema and inferred types in `packages/types`. Keep
 transport-independent business failures private to the server, and translate
-them at the error adapter. The mapping is:
+them at the error adapter. The table lives in
+`apps/api/server/utils/failure-contract.ts`; the error adapter and the auth
+mapping both read it. The mapping is:
 
 | `error` | HTTP status | Meaning |
 | --- | --- | --- |

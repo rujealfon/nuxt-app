@@ -1,6 +1,7 @@
 // Rate limits the API's own Nitro routes. Better Auth rate-limits `/api/auth/*`
 // itself (with stricter per-endpoint rules); health checks are exempt so
 // monitoring isn't throttled, and docs are exempt as static reference content.
+import { authMount } from '@nuxt-app/config'
 import { defineEventHandler, getRequestIP, setHeader } from 'h3'
 import { useRuntimeConfig } from 'nitropack/runtime'
 import { isDocsPath, requestPath } from '../utils/api-paths'
@@ -8,7 +9,7 @@ import { domainFailure } from '../utils/domain-failure'
 import { createRateLimitStorage } from '../utils/rate-limit'
 import { rateLimitPolicy } from '../utils/rate-limit-policy'
 
-const EXEMPT_PREFIXES = ['/api/auth', '/api/health']
+const EXEMPT_PREFIXES = [authMount, '/api/health']
 
 const storage = createRateLimitStorage()
 

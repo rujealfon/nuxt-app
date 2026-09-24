@@ -2,11 +2,11 @@ import { createAuthClient } from 'better-auth/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { resetAuthTokenStore } from '../../test/helpers/authTokenStore'
 import { installAuthTokenStore, readAuthToken, writeAuthToken } from './authToken'
-import { authFetchOptions } from './authTransport'
+import { createSessionTransport } from './sessionTransport'
 
 // Unlike the other specs, this drives the REAL better-auth client with a
 // stubbed `fetch`. It is the only check that the `auth`/`onSuccess` options
-// `authFetchOptions` returns are the shape the installed client actually reads.
+// the session transport returns are the shape the installed client reads.
 
 const fetchMock = vi.fn()
 
@@ -41,7 +41,7 @@ async function signedInClient() {
 
   const client = createAuthClient({
     baseURL: 'http://api.test',
-    fetchOptions: authFetchOptions(true),
+    fetchOptions: createSessionTransport('http://api.test', true).authClientOptions,
   })
 
   await client.signIn.email({ email: 'user@example.com', password: 'secret' })

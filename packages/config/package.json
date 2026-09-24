@@ -10,5 +10,8 @@
   "types": "./index.ts",
   "scripts": {
     "lint": "eslint ."
+  },
+  "dependencies": {
+    "@nuxt-app/types": "workspace:*"
   }
 }

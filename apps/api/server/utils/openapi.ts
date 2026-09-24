@@ -1,7 +1,8 @@
 import type { ApiVersion } from '@nuxt-app/config'
+import type { VersionedOperation } from '@nuxt-app/types'
 import type { OpenApiPathItem } from './openapi/shared'
-import { apiVersions, currentApiVersion, versionMeta } from '@nuxt-app/config'
-import { apiErrorSchema, v1 } from '@nuxt-app/types'
+import { apiVersions, currentApiVersion, versionedOperations, versionMeta } from '@nuxt-app/config'
+import { apiErrorSchema } from '@nuxt-app/types'
 import { z } from 'zod'
 import { deprecationHeaders } from './deprecation'
 import { healthResponseSchema, readyResponseSchema, versionRegistrySchema } from './infra'
@@ -11,10 +12,6 @@ import { apiErrorResponse, jsonRef, toJsonSchema } from './openapi/shared'
 const openApiDocumentSchema = z.looseObject({
   openapi: z.string(),
 })
-
-const operationsByVersion: Record<ApiVersion, readonly v1.VersionedOperation[]> = {
-  v1: v1.operations,
-}
 
 // Every versioned response advertises its version (mirroring
 // `defineVersionedHandler`). Deprecation headers share `deprecationHeaders`.
@@ -50,7 +47,7 @@ function versionResponseHeaders(version: ApiVersion) {
 // Pure: takes the operation tables so specs can exercise authenticated
 // operations without a live protected route.
 export function buildVersionedPaths(
-  operations: Record<ApiVersion, readonly v1.VersionedOperation[]> = operationsByVersion,
+  operations: Record<ApiVersion, readonly VersionedOperation[]> = versionedOperations,
 ): Record<string, OpenApiPathItem> {
   return Object.fromEntries(
     apiVersions.flatMap(version =>
@@ -77,7 +74,7 @@ export function buildVersionedPaths(
 function versionedComponentSchemas(): Record<string, ReturnType<typeof toJsonSchema>> {
   return Object.fromEntries(
     apiVersions.flatMap(version =>
-      operationsByVersion[version].map(operation => [
+      versionedOperations[version].map(operation => [
         operation.responseName,
         toJsonSchema(operation.responseSchema),
       ]),
