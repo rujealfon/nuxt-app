@@ -299,8 +299,10 @@ On every push to `main` it opens or updates a release pull request with the
 version bump and `CHANGELOG.md`. Merging that pull request tags the release,
 publishes it to GitHub, and runs the release job. Versioning is fixed across all
 workspaces and npm publishing is skipped; both are set in
-[`.simple-release.json`](.simple-release.json). Commit conventions, the
-commitlint config, and the local changelog commands are in
+[`.simple-release.json`](.simple-release.json). Do not add `"private": true` to
+a workspace package: the pnpm monorepo project skips private packages when it
+collects releases, so marking one private silently disables releases. Commit
+conventions, the commitlint config, and the local changelog commands are in
 [AGENTS.md](AGENTS.md).
 
 The flow depends on these repository settings:

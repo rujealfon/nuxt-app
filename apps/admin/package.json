@@ -2,7 +2,6 @@
   "name": "@nuxt-app/admin",
   "type": "module",
   "version": "0.1.0",
-  "private": true,
   "scripts": {
     "dev": "nuxt dev --port 3002",
     "build": "nuxt build",
