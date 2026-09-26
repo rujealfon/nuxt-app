@@ -1,7 +1,6 @@
 {
   "name": "@nuxt-app/client",
   "type": "module",
-  "version": "0.1.0",
   "private": true,
   "exports": {
     ".": "./nuxt.config.ts",
