@@ -2,7 +2,6 @@
   "name": "@nuxt-app/ui",
   "type": "module",
   "version": "0.1.0",
-  "private": true,
   "exports": {
     ".": "./nuxt.config.ts",
     "./package.json": "./package.json",
