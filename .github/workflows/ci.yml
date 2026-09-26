@@ -32,12 +32,9 @@ jobs:
 
       - run: pnpm test
 
-  # Advisory: Vite Doctor is pre-1.0, so its findings are reported but do not
-  # block pull requests yet. Drop `continue-on-error` once the first findings
-  # are triaged and the rule set is settled.
+  # Vite Doctor is pre-1.0; its findings now block pull requests.
   vite-doctor:
     runs-on: ubuntu-latest
-    continue-on-error: true
     env:
       HUSKY: 0
     steps:
@@ -73,3 +70,34 @@ jobs:
       # Runs `unit` plus the Nuxt-environment projects (no external services).
       # Thresholds in vitest.config.ts fail the job if coverage drops.
       - run: pnpm test:coverage:ci
+
+  # Validates PR commit messages and the PR title against Conventional Commits
+  # so the release workflow can derive versions and the changelog. Merge commits
+  # are ignored. The title is checked because squash merging makes it the commit
+  # that lands on main.
+  commitlint:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    env:
+      HUSKY: 0
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Validate commit messages
+        run: pnpm commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }}
+
+      - name: Validate pull request title
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: printf '%s\n' "$PR_TITLE" | pnpm commitlint

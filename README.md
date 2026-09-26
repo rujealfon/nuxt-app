@@ -287,8 +287,37 @@ type-check, and test on pushes to `main` and on pull requests. A separate
 [`vitest.config.ts`](vitest.config.ts) (90% lines/functions/branches/statements)
 and fails the job if coverage falls below them. That job runs `unit` and the
 Nuxt-environment projects, excluding `api` and `api-dev`. Coverage is not
-uploaded. An advisory `vite-doctor` job reports framework diagnostics without
-failing the run until its findings are triaged.
+uploaded. A `commitlint` job validates commit messages and pull request titles
+against [Conventional Commits](https://www.conventionalcommits.org/). A
+`vite-doctor` job reports framework diagnostics and blocks the run on findings.
+
+## Releases
+
+Releases are automated with
+[simple-release-action](https://github.com/TrigenSoftware/simple-release-action).
+On every push to `main` it opens or updates a release pull request with the
+version bump and `CHANGELOG.md`. Merging that pull request tags the release,
+publishes it to GitHub, and runs the release job. Versioning is fixed across all
+workspaces and npm publishing is skipped; both are set in
+[`.simple-release.json`](.simple-release.json). Commit conventions, the
+commitlint config, and the local changelog commands are in
+[AGENTS.md](AGENTS.md).
+
+The flow depends on these repository settings:
+
+1. **Pull requests** (Settings → General → Pull Requests). Enable **Allow squash
+   merging** and disable **Allow merge commits** and **Allow rebase merging**.
+   Set the squash **Default commit message** to **Pull request title**, so the
+   release pull request's `chore(release):` title becomes the commit on `main`.
+   A merge commit would hide that title and the release would not run.
+2. **Actions** (Settings → Actions → General). Enable **Allow GitHub Actions to
+   create and approve pull requests**. Without it the release pull request job
+   fails.
+3. **Branch ruleset** for `main`. Require linear history and require the
+   `verify`, `vite-doctor`, `coverage`, and `commitlint` status checks.
+
+The release workflow is
+[`.github/workflows/release.yml`](.github/workflows/release.yml).
 
 ## Build
 
