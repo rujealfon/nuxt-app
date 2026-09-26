@@ -48,11 +48,9 @@ PRs should explain behavior changes, link issues, list validation, and include s
 
 Write commit messages in [Conventional Commits](https://www.conventionalcommits.org/). Commitlint enforces the format through the Husky `commit-msg` hook and a CI job on pull requests; merge commits are ignored. Because pull requests squash-merge, the pull request title becomes the commit on `main`, so it must be a Conventional Commit too; the same CI job validates it. Adjust rules in `commitlint.config.js`. Run `pnpm commit` for an interactive Commitizen prompt backed by the same rules, or load the `conventional-commit-message` skill in `.agents/skills/` to have an agent write them.
 
-Releases are automated by [simple-release-action](https://github.com/TrigenSoftware/simple-release-action) on every push to `main`. It opens or updates a release pull request with the version bump and `CHANGELOG.md`, then tags and creates the GitHub release when that pull request is merged. The repository only allows squash merges, which keeps the release commit's `chore(release):` title on the branch head so the release job finds it.
+Releases are automated by [semantic-release](https://semantic-release.org/) on every push to `main`. It reads the Conventional Commits since the last release, computes the next version, creates the tag, and creates the GitHub release with generated notes. It writes no files and opens no pull request, so the repository keeps no `CHANGELOG.md` and no version bump. Configuration is in `.releaserc.json`.
 
-`pnpm changelog` previews the changelog from local history and `pnpm changelog:write` writes it. `changelog.config.js` exists because `conventional-changelog` resolves its preset from its own install location, where Commitlint's transitive v9 preset shadows the direct v10 dependency.
-
-Versioning is fixed across all workspaces, so they share one version, and publishing is skipped because every package is private. Both settings live in `.simple-release.json`. Do not edit `CHANGELOG.md` or workspace versions by hand. Simple Release attributes a commit to a workspace by its scope, so scope a commit to a workspace name (`api`, `app`, `web`, `admin`, `ui`, `client`, `config`, `logger`, `types`) or add the scope to `bump.extraScopes`.
+The first release is `1.0.0`, semantic-release's default when no prior tag exists. Afterwards `fix` and `perf` bump a patch, `feat` bumps a minor, and a `BREAKING CHANGE` bumps a major. The version and notes come from commit messages, so keep the history Conventional Commits; scopes are free-form and do not affect the bump.
 
 ## Issues and domain docs
 

@@ -6,7 +6,6 @@ import { defineEventHandler } from 'h3'
 import { requestPath } from '../utils/api-paths'
 import { domainFailure } from '../utils/domain-failure'
 
-// Smoke-test marker for the release pipeline. Safe to remove.
 export default defineEventHandler((event) => {
   const path = requestPath(event)
 
