@@ -73,3 +73,26 @@ jobs:
       # Runs `unit` plus the Nuxt-environment projects (no external services).
       # Thresholds in vitest.config.ts fail the job if coverage drops.
       - run: pnpm test:coverage:ci
+
+  # Validates PR commit messages against Conventional Commits so the release
+  # workflow can derive versions and the changelog. Merge commits are ignored.
+  commitlint:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    env:
+      HUSKY: 0
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }}
