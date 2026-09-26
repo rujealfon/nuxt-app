@@ -10,7 +10,13 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # The release pull request from simple-release only bumps versions and
+  # regenerates changelogs. Skip the heavy jobs on that branch: a skipped job
+  # still reports success, so the required checks stay satisfied. Do not use
+  # paths-ignore here, because a skipped workflow stays pending and blocks.
+
   verify:
+    if: github.head_ref != 'simple-release'
     runs-on: ubuntu-latest
     env:
       HUSKY: 0
@@ -34,6 +40,7 @@ jobs:
 
   # Vite Doctor is pre-1.0; its findings now block pull requests.
   vite-doctor:
+    if: github.head_ref != 'simple-release'
     runs-on: ubuntu-latest
     env:
       HUSKY: 0
@@ -52,6 +59,7 @@ jobs:
       - run: pnpm vite-doctor
 
   coverage:
+    if: github.head_ref != 'simple-release'
     runs-on: ubuntu-latest
     env:
       HUSKY: 0
@@ -76,7 +84,7 @@ jobs:
   # are ignored. The title is checked because squash merging makes it the commit
   # that lands on main.
   commitlint:
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' && github.head_ref != 'simple-release'
     runs-on: ubuntu-latest
     env:
       HUSKY: 0
