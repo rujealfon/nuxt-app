@@ -1,5 +1,5 @@
 import { ESLint } from 'eslint'
-import { describe, expect, it } from 'vitest'
+import { beforeAll, describe, expect, it } from 'vitest'
 
 // These snippets use virtual paths and only exercise import boundaries.
 const eslint = new ESLint({
@@ -17,6 +17,13 @@ async function violations(filePath: string, code: string) {
 }
 
 describe('architecture import rules', () => {
+  // Resolving the ESLint config and loading its plugins is a one-time cost that
+  // otherwise lands on the first lint. Coverage instrumentation can push that
+  // past the 5s test default and fail the run, so pay it here with headroom.
+  beforeAll(async () => {
+    await eslint.lintText('<script setup lang="ts"></script>', { filePath: 'apps/app/app/pages/login.vue' })
+  }, 30_000)
+
   it.each([
     ['apps/app/app/pages/login.vue', '<script setup lang="ts">import { LoginScreen } from \'~/features/auth\'</script>'],
     ['apps/admin/app/pages/login.vue', '<script setup lang="ts">import { AdminLoginScreen } from \'@/features/auth\'</script>'],
