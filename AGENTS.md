@@ -46,9 +46,9 @@ PRs should explain behavior changes, link issues, list validation, and include s
 
 ## Commits and releases
 
-Write commit messages in [Conventional Commits](https://www.conventionalcommits.org/). Commitlint enforces the format through the Husky `commit-msg` hook and a CI job on pull requests; merge commits are ignored. Adjust rules in `commitlint.config.js`. Run `pnpm commit` for an interactive Commitizen prompt backed by the same rules, or load the `conventional-commit-message` skill in `.agents/skills/` to have an agent write them.
+Write commit messages in [Conventional Commits](https://www.conventionalcommits.org/). Commitlint enforces the format through the Husky `commit-msg` hook and a CI job on pull requests; merge commits are ignored. Because pull requests squash-merge, the pull request title becomes the commit on `main`, so it must be a Conventional Commit too; the same CI job validates it. Adjust rules in `commitlint.config.js`. Run `pnpm commit` for an interactive Commitizen prompt backed by the same rules, or load the `conventional-commit-message` skill in `.agents/skills/` to have an agent write them.
 
-Releases are automated by [simple-release-action](https://github.com/TrigenSoftware/simple-release-action) on every push to `main`. It opens or updates a release pull request with the version bump and `CHANGELOG.md`, then tags and creates the GitHub release when that pull request is merged. Squash-merge release pull requests: the release job finds the release commit by its `chore(release):` title, and a merge commit hides it.
+Releases are automated by [simple-release-action](https://github.com/TrigenSoftware/simple-release-action) on every push to `main`. It opens or updates a release pull request with the version bump and `CHANGELOG.md`, then tags and creates the GitHub release when that pull request is merged. The repository only allows squash merges, which keeps the release commit's `chore(release):` title on the branch head so the release job finds it.
 
 `pnpm changelog` previews the changelog from local history and `pnpm changelog:write` writes it. `changelog.config.js` exists because `conventional-changelog` resolves its preset from its own install location, where Commitlint's transitive v9 preset shadows the direct v10 dependency.
 
