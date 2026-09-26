@@ -1,7 +1,6 @@
 {
   "name": "@nuxt-app/app",
   "type": "module",
-  "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "nuxt dev --port 3001",
