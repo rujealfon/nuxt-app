@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { DomainFailure } from '../utils/domain-failure'
 
 const mocks = vi.hoisted(() => ({
@@ -26,15 +26,20 @@ const handler = (await import('./rate-limit')).default as (event: unknown) => Pr
 
 const { consume, setHeader } = mocks
 
-function event(path: string) {
-  return { path, method: 'GET', context: {} }
+function event(path: string, method = 'GET') {
+  return { path, method, context: {} }
 }
 
 describe('rate-limit middleware', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.stubEnv('VERCEL', '')
     mocks.state.rateLimitEnabled = true
     consume.mockResolvedValue({ allowed: true, retryAfter: null })
+  })
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
   })
 
   it('does nothing when rate limiting is disabled', async () => {
@@ -61,10 +66,49 @@ describe('rate-limit middleware', () => {
     expect(setHeader).not.toHaveBeenCalled()
   })
 
-  it('keys the counter by ip, method, and path without the query string', async () => {
+  it('preserves the known operation bucket without the query string', async () => {
     await handler(event('/api/v1/hello?foo=bar'))
 
     expect(consume).toHaveBeenCalledWith('203.0.113.7:GET:/api/v1/hello', { window: 60, max: 100 })
+  })
+
+  it('shares the known operation bucket with its trailing-slash alias', async () => {
+    await handler(event('/api/v1/hello'))
+    await handler(event('/api/v1/hello/?foo=bar'))
+
+    expect(consume.mock.calls.map(([key]) => key)).toEqual([
+      '203.0.113.7:GET:/api/v1/hello',
+      '203.0.113.7:GET:/api/v1/hello',
+    ])
+  })
+
+  it('shares one bucket across arbitrary paths and methods', async () => {
+    await handler(event('/api/random/one'))
+    await handler(event('/api/random/two?foo=bar'))
+    await handler(event('/api/v9/hello'))
+    await handler(event('/api/v1/hello', 'TRACE'))
+
+    expect(consume.mock.calls.map(([key]) => key)).toEqual([
+      '203.0.113.7:unknown',
+      '203.0.113.7:unknown',
+      '203.0.113.7:unknown',
+      '203.0.113.7:unknown',
+    ])
+  })
+
+  it.each(['/api/authentic/sign-in', '/api/healthful'])('does not exempt lookalike path %s', async (path) => {
+    await handler(event(path))
+
+    expect(consume).toHaveBeenCalledWith('203.0.113.7:unknown', { window: 60, max: 100 })
+  })
+
+  it('uses forwarding headers only on Vercel', async () => {
+    await handler(event('/api/v1/hello'))
+    expect(mocks.getRequestIP).toHaveBeenLastCalledWith(expect.anything(), { xForwardedFor: false })
+
+    vi.stubEnv('VERCEL', '1')
+    await handler(event('/api/v1/hello'))
+    expect(mocks.getRequestIP).toHaveBeenLastCalledWith(expect.anything(), { xForwardedFor: true })
   })
 
   it('denies over-limit requests with retry headers and a rate_limited failure', async () => {
