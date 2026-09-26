@@ -1,75 +1,41 @@
 name: Release
 
 on:
-  issue_comment:
-    types: [created, deleted]
   push:
-    branches:
-      - main
+    branches: [main]
+
+permissions:
+  contents: read
 
 jobs:
-  check:
+  release:
+    name: Release
     runs-on: ubuntu-latest
-    name: Context check
-    permissions:
-      contents: read
-    outputs:
-      continue: ${{ steps.check.outputs.continue }}
-      workflow: ${{ steps.check.outputs.workflow }}
-    steps:
-      - name: Checkout the repository
-        uses: actions/checkout@v4
-
-      - name: Context check
-        id: check
-        uses: TrigenSoftware/simple-release-action@v2
-        with:
-          workflow: check
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-
-  pull-request:
-    runs-on: ubuntu-latest
-    name: Pull request
-    needs: check
-    if: needs.check.outputs.workflow == 'pull-request'
     permissions:
       contents: write
+      issues: write
       pull-requests: write
     steps:
-      - name: Checkout the repository
+      - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Create or update pull request
-        uses: TrigenSoftware/simple-release-action@v2
         with:
-          workflow: pull-request
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
 
-  release:
-    runs-on: ubuntu-latest
-    name: Release
-    needs: check
-    if: needs.check.outputs.workflow == 'release'
-    permissions:
-      contents: write
-    steps:
-      - name: Checkout the repository
-        uses: actions/checkout@v4
-
-      - name: Install pnpm
+      - name: Setup pnpm
         uses: pnpm/action-setup@v4
 
-      - name: Install Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: pnpm
 
+      # semantic-release only needs the devDependencies; skipping lifecycle
+      # scripts avoids the Nuxt prepare step this job does not use.
       - name: Install dependencies
-        run: pnpm install
+        run: pnpm install --frozen-lockfile --ignore-scripts
 
       - name: Release
-        uses: TrigenSoftware/simple-release-action@v2
-        with:
-          workflow: release
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: pnpm exec semantic-release

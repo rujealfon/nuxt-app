@@ -1,9 +1,0 @@
-{
-  "project": ["@simple-release/pnpm#PnpmWorkspacesProject", { "mode": "fixed" }],
-  "bump": {
-    "forcePrivate": true,
-    "extraScopes": ["deps", "auth", "tests", "lint", "docs", "release"],
-    "tagPrefix": "v"
-  },
-  "publish": { "skip": true }
-}

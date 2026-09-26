@@ -2,6 +2,7 @@
   "name": "@nuxt-app/api",
   "type": "module",
   "version": "0.1.0",
+  "private": true,
   "scripts": {
     "dev": "nuxt dev --port 3003",
     "build": "nuxt build",
