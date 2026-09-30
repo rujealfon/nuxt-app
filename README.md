@@ -294,7 +294,8 @@ against [Conventional Commits](https://www.conventionalcommits.org/). A
 ## Releases
 
 Releases are automated with [semantic-release](https://semantic-release.org/).
-On every push to `main` it reads the Conventional Commits since the last release,
+After verification, Vite Doctor, and coverage pass on a push to `main`, it reads
+the Conventional Commits since the last release,
 computes the next version, creates the tag, and creates the GitHub release with
 generated notes. It does not write files, commit, or open a pull request, so the
 notes live only in the GitHub release and the repository keeps no `CHANGELOG.md`.
@@ -305,18 +306,82 @@ After that, `fix` and `perf` bump a patch, `feat` bumps a minor, and a
 `BREAKING CHANGE` bumps a major. Commit conventions and the commitlint config are
 in [AGENTS.md](AGENTS.md).
 
-The flow depends on these repository settings:
+### Release workflow
+
+Use `develop` for integration, `release/<candidate>` for a fixed release
+candidate, and `main` for accepted releases. Staging and UAT are deployment
+environments that test the candidate, rather than permanent Git branches.
+
+| Pull request | Merge method | Purpose |
+| --- | --- | --- |
+| `feature/*` → `develop` | Squash | Keep one Conventional Commit per reviewed change |
+| Release fixes → `release/*` | Squash | Keep one Conventional Commit per fix |
+| `release/*` → `main` | Merge commit | Preserve all feature and fix commits for release analysis |
+| `release/*` or `main` → `develop` | Merge commit | Bring release fixes and production changes back into development |
+
+1. Create feature branches from `develop`. Give each feature PR a Conventional
+   Commit title, including `!` for a breaking change, and squash it into `develop`.
+2. Cut a release branch from the selected `develop` commit, for example
+   `release/2026-09-30`. The branch name identifies the candidate; semantic-release
+   determines the version when the candidate reaches `main`.
+3. Deploy the candidate to staging and UAT. Record the tested commit SHA and
+   deployment IDs for all four apps in the promotion PR. Continue new feature
+   work on `develop`; put candidate fixes on the release branch and repeat
+   acceptance testing after each fix.
+4. After acceptance, open a PR from the release branch into `main`, such as
+   `chore: promote accepted release candidate`, and use a merge commit. If merging
+   requires conflict resolutions or adds changes relative to the tested
+   candidate, test the resulting candidate again before promotion.
+5. CI checks the merged `main` commit before invoking semantic-release. The
+   highest required bump among the preserved commits determines the release;
+   the promotion PR title does not replace those commits.
+6. Merge the released changes back into `develop` through a PR using a merge
+   commit. Delete the release branch once its changes are in both branches.
+
+For an urgent production fix, branch from `main`, squash the fix PR into `main`,
+then merge `main` back into `develop` and any active release branch through PRs.
+Re-test an active candidate after incorporating the fix.
+
+### Repository settings
+
+Apply these settings in GitHub before using this flow:
 
 1. **Pull requests** (Settings → General → Pull Requests). Enable **Allow squash
-   merging** and disable **Allow merge commits** and **Allow rebase merging**.
-   Set the squash **Default commit message** to **Pull request title**, so the
-   Conventional Commit title becomes the commit on `main` that semantic-release
-   analyzes.
-2. **Branch ruleset** for `main`. Require linear history and require the
-   `verify`, `vite-doctor`, `coverage`, and `commitlint` status checks.
+   merging** and **Allow merge commits**; disable **Allow rebase merging**.
+   Set the squash **Default commit message** to **Pull request title**.
+2. **Branch rulesets** for `main`, `develop`, and `release/**/*`. Require PRs and
+   the `verify`, `vite-doctor`, `coverage`, and `commitlint` status checks. Disable
+   **Require linear history** on branches receiving merge commits. Block force
+   pushes and protect branch deletion; allow repository admins to delete completed
+   release branches.
+3. Initialize `develop` from `main` when adopting the flow. Create release
+   branches only when a candidate is ready for testing.
 
-The release workflow is
-[`.github/workflows/release.yml`](.github/workflows/release.yml).
+CI runs on every PR and on pushes to `main`, `develop`, and `release/**`.
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml) calls the reusable
+[release workflow](.github/workflows/release.yml) only after the three validation
+jobs succeed on a push to `main`. PR checks cancel superseded runs; push runs let
+an active release finish.
+
+### Candidate deployments
+
+For each Vercel project, configure staging and UAT with their own URLs and
+environment variables, and deploy the selected release branch commit to both.
+Keep frontend API URLs, auth origins, and API CORS settings aligned with each
+environment. See [Vercel environments](https://vercel.com/docs/deployments/environments).
+
+The CI and release workflows validate code and publish GitHub releases. The
+manual production workflow deploys accepted `main` commits; it does not deploy
+or promote staging/UAT candidates. Configure environment targeting
+and acceptance approvals in Vercel or a separate deployment pipeline before
+using this flow. A GitHub release does not confirm a production deployment.
+Automatic Vercel Git deployments from `main` are disabled in each app's
+`vercel.json`. Deploy production through the manual workflow described below.
+
+Promote an existing tested deployment when its configuration is suitable for
+the target environment. If environment settings require a new build, record and
+test that deployment before accepting it. Vercel documents promotion without
+rebuilding in its [deployment promotion guide](https://vercel.com/docs/deployments/promoting-a-deployment).
 
 ## Build
 
@@ -344,6 +409,53 @@ For every project:
 3. Set the framework preset to Nuxt. Only `apps/admin/vercel.json` currently
    pins `iad1`; the other apps leave region selection to Vercel. Configure the
    API's region to match your database deployment.
+
+### Manual production deployment
+
+Merging into `main` runs CI and semantic-release, which creates a GitHub tag and
+release when needed. Production deployment is a separate manual action in
+[`.github/workflows/deploy.yml`](.github/workflows/deploy.yml).
+
+Each app disables Vercel Git deployments from `main` using
+[`git.deploymentEnabled`](https://vercel.com/docs/project-configuration/git-configuration).
+Other branches retain automatic preview deployments. Set the Vercel Production
+Branch to `main` for each project so another branch cannot auto-deploy production.
+
+Before the first manual deployment, configure GitHub's `production` environment
+under **Settings → Environments**. Restrict its deployment branches to `main`.
+Add these settings there, or as repository secrets and variables:
+
+| Kind | Name | Value |
+| --- | --- | --- |
+| Secret | `VERCEL_TOKEN` | Vercel token with access to the four projects |
+| Variable | `VERCEL_ORG_ID` | Vercel team ID, or account ID for personal projects |
+| Variable | `VERCEL_PROJECT_ID_API` | Project ID for `apps/api` |
+| Variable | `VERCEL_PROJECT_ID_WEB` | Project ID for `apps/web` |
+| Variable | `VERCEL_PROJECT_ID_APP` | Project ID for `apps/app` |
+| Variable | `VERCEL_PROJECT_ID_ADMIN` | Project ID for `apps/admin` |
+
+Find each project ID and the team ID in Vercel settings or its linked
+`.vercel/project.json`. Keep the application environment variables in Vercel;
+the workflow uses each project's production build settings. Confirm the project
+IDs belong to this repository and each project's Root Directory is `apps/<name>`.
+
+To deploy:
+
+1. Wait for the `main` CI run to succeed, including the release job.
+2. Open **Actions → Deploy production → Run workflow**, select **main**, and run
+   it. The workflow must be merged into the default branch before GitHub shows
+   the manual trigger. See [GitHub's manual workflow guide](https://docs.github.com/actions/managing-workflow-runs/manually-running-a-workflow).
+3. The workflow checks the latest push CI run for the exact selected commit. It
+   rejects other branches and commits whose CI is pending or unsuccessful.
+4. It uploads the workspace and deploys `api`, `web`, `app`, then `admin`, building
+   remotely on Vercel. Deployment URLs appear in the job summary. Concurrent
+   production runs are serialized, and an active deployment is not canceled.
+
+Deployments across the four projects are sequential and are not atomic. A failure
+stops the remaining deployments; earlier successful deployments stay live.
+Check the summary before retrying or rolling back a project in Vercel.
+This workflow builds production deployments from the selected commit; it does
+not promote the existing staging/UAT build artifacts or run database migrations.
 
 ### Environment variables
 
