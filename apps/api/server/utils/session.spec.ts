@@ -9,6 +9,8 @@ const mocks = vi.hoisted(() => {
   }
 })
 
+vi.mock('h3', () => ({ getRequestIP: () => '203.0.113.7' }))
+
 vi.mock('./auth', () => ({ useAuth: mocks.useAuth }))
 
 const { createActorGate, getActor, requireActor } = await import('./session')
@@ -86,7 +88,7 @@ describe('createActorGate with an in-memory source', () => {
 })
 
 // The bearer transport rides on this: the gate has to hand the raw request
-// headers (including `Authorization`) to Better Auth, or native clients are
+// transport headers (including `Authorization`) to Better Auth, or native clients are
 // unauthenticated on every route.
 describe('the production session source', () => {
   beforeEach(() => {
@@ -95,11 +97,15 @@ describe('the production session source', () => {
 
   it('forwards the request headers to the session lookup', async () => {
     getSession.mockResolvedValue(null)
-    const headers = new Headers({ authorization: 'Bearer session-token' })
+    const headers = new Headers({ 'authorization': 'Bearer session-token', 'cookie': 'session=cookie', 'x-auth-client-ip': '198.51.100.1' })
 
     await getActor({ headers } as never)
 
-    expect(getSession).toHaveBeenCalledWith({ headers })
+    const forwarded = getSession.mock.calls[0]![0].headers as Headers
+    expect(forwarded.get('authorization')).toBe('Bearer session-token')
+    expect(forwarded.get('cookie')).toBe('session=cookie')
+    expect(forwarded.get('x-auth-client-ip')).toBe('203.0.113.7')
+    expect(headers.get('x-auth-client-ip')).toBe('198.51.100.1')
   })
 
   it('backs the exported gate', async () => {

@@ -3,6 +3,7 @@ import { appendResponseHeader, setResponseHeader, toWebRequest } from 'h3'
 import { useRuntimeConfig } from 'nitropack/runtime'
 import { requestPath } from '../../utils/api-paths'
 import { useAuth } from '../../utils/auth'
+import { authHeaders } from '../../utils/auth-headers'
 import { restrictBearerTokenResponse } from '../../utils/bearer-origin'
 import { authFailureFromResponse } from './auth-error-contract'
 import { isPasswordFlowPath, validateAuthRequest } from './validate-auth-request'
@@ -40,7 +41,8 @@ function preserveAuthErrorHeaders(event: H3Event, headers: Headers) {
 // contract and re-validates the two password flows so `invalid_input` carries
 // `details`. See docs/adr/0004-auth-error-contract.md.
 export async function handleAuthRequest(event: H3Event): Promise<Response | undefined> {
-  const request = toWebRequest(event)
+  const incoming = toWebRequest(event)
+  const request = new Request(incoming, { headers: authHeaders(event, incoming.headers) })
   const path = requestPath(event)
 
   if (isPasswordFlowPath(path)) {

@@ -26,6 +26,7 @@
     "@scalar/api-reference": "^1.70.0",
     "better-auth": "^1.7.5",
     "drizzle-orm": "^0.45.3",
+    "h3": "^1.15.11",
     "ioredis": "^5.11.1",
     "nuxt": "^4.5.2",
     "pg": "^8.23.0",

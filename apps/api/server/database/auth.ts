@@ -3,6 +3,8 @@ import type { RateLimitStorage } from '../utils/rate-limit-policy'
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { bearer } from 'better-auth/plugins/bearer'
+import { authClientIpHeader } from '../utils/auth-ip'
+import { assertAuthOrigins } from '../utils/auth-origins'
 import { rateLimitPolicy } from '../utils/rate-limit-policy'
 import * as schema from './schema'
 
@@ -18,6 +20,14 @@ export function createAuth(
   db: Database,
   config: AuthConfig,
 ) {
+  const trustedOrigins = config.trustedOrigins ?? []
+  assertAuthOrigins(trustedOrigins)
+  // Better Auth also appends these sources to its allowlist independently.
+  assertAuthOrigins((process.env.BETTER_AUTH_TRUSTED_ORIGINS ?? '').split(',').filter(Boolean))
+  if (config.baseURL) {
+    assertAuthOrigins([new URL(config.baseURL).origin])
+  }
+
   return betterAuth({
     appName: 'nuxt-app',
     baseURL: config.baseURL,
@@ -42,7 +52,11 @@ export function createAuth(
       max: rateLimitPolicy.max,
       customStorage: config.rateLimitStorage,
     },
-    trustedOrigins: config.trustedOrigins ?? [],
+    advanced: {
+      disableOriginCheck: false,
+      ipAddress: { ipAddressHeaders: [authClientIpHeader] },
+    },
+    trustedOrigins,
     user: {
       additionalFields: {
         role: {
