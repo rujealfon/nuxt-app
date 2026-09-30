@@ -412,6 +412,10 @@ For every project:
 
 ### Manual production deployment
 
+The deployment job is temporarily disabled while Vercel is unconfigured. Manual
+runs still verify CI, then skip deployment. After completing the setup below,
+set the repository variable `VERCEL_DEPLOYMENT_ENABLED` to `true` to enable it.
+
 Merging into `main` runs CI and semantic-release, which creates a GitHub tag and
 release when needed. Production deployment is a separate manual action in
 [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml).
