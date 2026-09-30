@@ -47,6 +47,11 @@ describe('validate-env plugin', () => {
     expect(() => plugin()).toThrow(/Invalid environment configuration/)
   })
 
+  it.each(['*', 'https://*.example.com', 'https://app?.example.com', 'null', 'https://app.example.com/path'])('rejects unsafe CORS origin %s at startup', (corsOrigins) => {
+    Object.assign(mocks.state, { corsOrigins })
+    expect(() => plugin()).toThrow(/explicit origins/)
+  })
+
   it('lists each failing field in the error', () => {
     Object.assign(mocks.state, { databaseUrl: '', redisUrl: '' })
 
@@ -72,7 +77,7 @@ describe('validate-env plugin', () => {
   })
 
   it('rejects an empty parsed list and opaque browser origins', () => {
-    Object.assign(mocks.state, { authBearerEnabled: true, corsOrigins: 'null' })
+    Object.assign(mocks.state, { authBearerEnabled: true, corsOrigins: 'http://localhost:3000' })
 
     mocks.state.authBearerOrigins = ', ,'
     expect(() => plugin()).toThrow(/AUTH_BEARER_ORIGINS is required/)

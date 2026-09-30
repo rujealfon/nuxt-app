@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { DomainFailure } from '../../utils/domain-failure'
 
 const mocks = vi.hoisted(() => {
@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => {
   return {
     handler,
     toWebRequest: vi.fn(),
+    getRequestIP: vi.fn(() => '203.0.113.7'),
     setResponseHeader: vi.fn(),
     appendResponseHeader: vi.fn(),
     useAuth: vi.fn(() => ({ handler })),
@@ -19,6 +20,7 @@ const mocks = vi.hoisted(() => {
 
 vi.mock('h3', () => ({
   toWebRequest: mocks.toWebRequest,
+  getRequestIP: mocks.getRequestIP,
   setResponseHeader: mocks.setResponseHeader,
   appendResponseHeader: mocks.appendResponseHeader,
 }))
@@ -241,5 +243,51 @@ describe('handleAuthRequest', () => {
     const response = await handleAuthRequest({ path } as never) as Response
 
     await expect(response.json()).resolves.toEqual(expected)
+  })
+})
+
+describe('authentication rate-limit boundary', () => {
+  afterEach(() => vi.unstubAllEnvs())
+
+  it('keeps rotating forged forwarding headers in one budget and permits another real client', async () => {
+    vi.stubEnv('VERCEL', '')
+    const { createAuth } = await import('../../database/auth')
+    const counts = new Map<string, number>()
+    const consume = vi.fn(async (key: string, rule: { max: number }) => {
+      const count = (counts.get(key) ?? 0) + 1
+      counts.set(key, count)
+      return { allowed: count <= rule.max, retryAfter: count > rule.max ? 10 : null }
+    })
+    const auth = createAuth({} as never, {
+      secret: 'test-secret-test-secret-test-secret',
+      baseURL: 'http://localhost',
+      trustedOrigins: ['http://localhost'],
+      rateLimitStorage: { consume },
+    })
+    mocks.handler.mockImplementation(auth.handler)
+    mocks.getRequestIP.mockReturnValue('203.0.113.7')
+    const attempt = async (forged: string) => {
+      mocks.toWebRequest.mockReturnValue(request('/api/auth/sign-in/email', {
+        method: 'POST',
+        headers: {
+          'origin': 'http://localhost',
+          'content-type': 'application/x-www-form-urlencoded',
+          'x-forwarded-for': forged,
+          'x-auth-client-ip': forged,
+        },
+        body: 'email=invalid&password=invalid',
+      }))
+      return caughtFrom({ path: '/api/auth/sign-in/email' })
+    }
+    for (let i = 1; i <= 3; i++) {
+      expect((await attempt(`198.51.100.${i}`) as DomainFailure).error).toBe('unauthenticated')
+    }
+    expect((await attempt('198.51.100.4') as DomainFailure).error).toBe('rate_limited')
+    expect(counts.size).toBe(1)
+    expect(mocks.getRequestIP).toHaveBeenCalledWith(expect.anything(), { xForwardedFor: false })
+
+    mocks.getRequestIP.mockReturnValue('203.0.113.8')
+    expect((await attempt('198.51.100.5') as DomainFailure).error).toBe('unauthenticated')
+    expect(counts.size).toBe(2)
   })
 })

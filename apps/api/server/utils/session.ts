@@ -2,15 +2,16 @@ import type { Actor } from '@nuxt-app/types'
 import type { H3Event } from 'h3'
 import { actorFromSession } from '@nuxt-app/types'
 import { useAuth } from './auth'
+import { authHeaders } from './auth-headers'
 import { domainFailure } from './domain-failure'
 
-// Reads the raw session for a request. Production backs this with Better Auth;
+// Reads the session for a request. Production backs this with Better Auth;
 // tests substitute an in-memory source, so the gate is exercised through its
 // own interface instead of a mocked module.
 export type SessionSource = (event: H3Event) => Promise<unknown>
 
 const betterAuthSession: SessionSource = event =>
-  useAuth().api.getSession({ headers: event.headers })
+  useAuth().api.getSession({ headers: authHeaders(event) })
 
 export interface ActorGate {
   getActor: (event: H3Event) => Promise<Actor | null>

@@ -1,6 +1,7 @@
 import { parseOrigins } from '@nuxt-app/config'
 import { defineNitroPlugin, useRuntimeConfig } from 'nitropack/runtime'
 import { z } from 'zod'
+import { assertAuthOrigins } from '../utils/auth-origins'
 import { bearerOrigins, isExplicitOrigin } from '../utils/bearer-origin'
 
 export const envSchema = z.object({
@@ -43,14 +44,23 @@ export default defineNitroPlugin(() => {
     throw new Error(`Invalid environment configuration:\n${issues}`)
   }
 
+  const allowed = parseOrigins(parsed.data.corsOrigins)
+  try {
+    assertAuthOrigins(allowed)
+    assertAuthOrigins((process.env.BETTER_AUTH_TRUSTED_ORIGINS ?? '').split(',').filter(Boolean))
+    assertAuthOrigins([new URL(parsed.data.betterAuthUrl).origin])
+  }
+  catch {
+    throw new Error('Invalid environment configuration:\n  - corsOrigins/betterAuthUrl/BETTER_AUTH_TRUSTED_ORIGINS: authentication requires explicit origins without wildcards or paths')
+  }
+
   if (parsed.data.authBearerEnabled) {
     const origins = bearerOrigins(parsed.data.authBearerOrigins)
     if (!origins.length) {
       throw new Error('Invalid environment configuration:\n  - authBearerOrigins: AUTH_BEARER_ORIGINS is required when bearer auth is enabled')
     }
 
-    const allowed = parseOrigins(parsed.data.corsOrigins)
-    if (origins.some(origin => !isExplicitOrigin(origin) || (!allowed.includes(origin) && !allowed.includes('*')))) {
+    if (origins.some(origin => !isExplicitOrigin(origin) || !allowed.includes(origin))) {
       throw new Error('Invalid environment configuration:\n  - authBearerOrigins: every bearer origin must be an explicit origin allowed by CORS_ORIGINS')
     }
   }
