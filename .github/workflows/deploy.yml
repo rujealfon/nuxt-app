@@ -88,3 +88,17 @@ jobs:
             deployment_url=$(vercel deploy --prod --yes --token="$VERCEL_TOKEN")
             printf '%s: %s\n' "$app" "$deployment_url" >> "$GITHUB_STEP_SUMMARY"
           done
+
+  release:
+    needs: [verify-deployment, deploy]
+    # Temporary release-only mode while Vercel is unconfigured. Once enabled,
+    # every production deployment must succeed before publishing a release.
+    if: >-
+      !cancelled() && needs['verify-deployment'].result == 'success' &&
+      (needs.deploy.result == 'success' ||
+      (needs.deploy.result == 'skipped' && vars.VERCEL_DEPLOYMENT_ENABLED != 'true'))
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    uses: ./.github/workflows/release.yml

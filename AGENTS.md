@@ -28,7 +28,7 @@ Use `pnpm dev:web`, `pnpm dev:app`, `pnpm dev:admin`, or `pnpm dev:api` for one 
 
 `pnpm db:up` starts local Postgres, Redis, and Drizzle Studio. `pnpm db:reset` deletes their volumes; `pnpm db:push` skips migration files. Reserve both for disposable prototyping. Follow [the API guide](apps/api/AGENTS.md) for schema generation and migrations.
 
-For Vercel deployment, follow the [manual production deployment guide](README.md#manual-production-deployment). Merging into `main` runs CI and release tagging; production deployment requires manually running the `Deploy production` workflow after CI succeeds. Each project uses `apps/<name>` as its root and must include workspace files outside that directory. Staging and UAT setup remains documented only.
+For Vercel deployment, follow the [manual production deployment guide](README.md#manual-production-deployment), including the temporary release-only mode while Vercel is unconfigured. Merging into `main` runs CI; manually run `Deploy production` after CI succeeds to deploy and publish. Each project uses `apps/<name>` as its root and must include workspace files outside that directory. Staging and UAT setup remains documented only.
 
 ## Tests and review
 
@@ -50,7 +50,7 @@ Write commit messages and PR titles in [Conventional Commits](https://www.conven
 
 Squash feature PRs into `develop`; their PR titles become the feature commits. Cut `release/<candidate>` from `develop` for staging and UAT. Use merge commits for release promotion into `main` and for merging release fixes or production hotfixes back into `develop`. Preserve individual Conventional Commits through promotion so semantic-release can analyze them. When preparing a release, promotion, or hotfix, follow the [release workflow](README.md#release-workflow).
 
-Releases are automated by [semantic-release](https://semantic-release.org/) after CI verification, Vite Doctor, and coverage pass on a push to `main`. It reads the Conventional Commits since the last release, computes the next version, creates the tag, and creates the GitHub release with generated notes. It writes no files and opens no pull request, so the repository keeps no `CHANGELOG.md` and no version bump. Configuration is in `.releaserc.json`.
+Releases are automated by [semantic-release](https://semantic-release.org/) through the manual production workflow. With Vercel enabled, all four apps must deploy successfully before publishing. While Vercel is disabled, the documented temporary release-only mode publishes after CI verification. Failed verification or deployment prevents publishing. CI verification, Vite Doctor, and coverage must pass for the selected `main` commit, which must remain at the head of `main` when publishing. It reads the Conventional Commits since the last release, computes the next version, creates the tag, and creates the GitHub release with generated notes. It writes no files and opens no pull request, so the repository keeps no `CHANGELOG.md` and no version bump. Configuration is in `.releaserc.json`.
 
 The first release is `1.0.0`, semantic-release's default when no prior tag exists. Afterwards `fix` and `perf` bump a patch, `feat` bumps a minor, and a `BREAKING CHANGE` bumps a major. The version and notes come from commit messages, so keep the history Conventional Commits; scopes are free-form and do not affect the bump.
 
