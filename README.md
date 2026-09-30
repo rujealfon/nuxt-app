@@ -294,8 +294,9 @@ against [Conventional Commits](https://www.conventionalcommits.org/). A
 ## Releases
 
 Releases are automated with [semantic-release](https://semantic-release.org/).
-After verification, Vite Doctor, and coverage pass on a push to `main`, it reads
-the Conventional Commits since the last release,
+The manual production workflow invokes it after all four apps deploy successfully,
+or after CI verification alone in the temporary release-only mode described below.
+It reads the Conventional Commits since the last release,
 computes the next version, creates the tag, and creates the GitHub release with
 generated notes. It does not write files, commit, or open a pull request, so the
 notes live only in the GitHub release and the repository keeps no `CHANGELOG.md`.
@@ -323,7 +324,7 @@ environments that test the candidate, rather than permanent Git branches.
    Commit title, including `!` for a breaking change, and squash it into `develop`.
 2. Cut a release branch from the selected `develop` commit, for example
    `release/2026-09-30`. The branch name identifies the candidate; semantic-release
-   determines the version when the candidate reaches `main`.
+   determines the version after the candidate deploys successfully from `main`.
 3. Deploy the candidate to staging and UAT. Record the tested commit SHA and
    deployment IDs for all four apps in the promotion PR. Continue new feature
    work on `develop`; put candidate fixes on the release branch and repeat
@@ -332,7 +333,9 @@ environments that test the candidate, rather than permanent Git branches.
    `chore: promote accepted release candidate`, and use a merge commit. If merging
    requires conflict resolutions or adds changes relative to the tested
    candidate, test the resulting candidate again before promotion.
-5. CI checks the merged `main` commit before invoking semantic-release. The
+5. After CI checks the merged `main` commit, manually run `Deploy production`.
+   Successful deployment of all four apps invokes semantic-release. While Vercel
+   is disabled, the manual workflow publishes releases after CI verification alone. The
    highest required bump among the preserved commits determines the release;
    the promotion PR title does not replace those commits.
 6. Merge the released changes back into `develop` through a PR using a merge
@@ -358,10 +361,13 @@ Apply these settings in GitHub before using this flow:
    branches only when a candidate is ready for testing.
 
 CI runs on every PR and on pushes to `main`, `develop`, and `release/**`.
-[`.github/workflows/ci.yml`](.github/workflows/ci.yml) calls the reusable
-[release workflow](.github/workflows/release.yml) only after the three validation
-jobs succeed on a push to `main`. PR checks cancel superseded runs; push runs let
-an active release finish.
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml) validates code without
+publishing releases. PR checks cancel superseded runs; push checks finish.
+The manual [production workflow](.github/workflows/deploy.yml) requires successful
+CI for its commit and calls the reusable [release workflow](.github/workflows/release.yml)
+after all four apps deploy successfully. The temporary release-only mode also
+publishes after CI verification when Vercel is disabled. Failed deployments and
+failed verification do not publish new tags or GitHub releases.
 
 ### Candidate deployments
 
@@ -370,11 +376,13 @@ environment variables, and deploy the selected release branch commit to both.
 Keep frontend API URLs, auth origins, and API CORS settings aligned with each
 environment. See [Vercel environments](https://vercel.com/docs/deployments/environments).
 
-The CI and release workflows validate code and publish GitHub releases. The
-manual production workflow deploys accepted `main` commits; it does not deploy
+CI validates code. The manual production workflow deploys accepted `main`
+commits and then publishes GitHub releases; it does not deploy
 or promote staging/UAT candidates. Configure environment targeting
 and acceptance approvals in Vercel or a separate deployment pipeline before
-using this flow. A GitHub release does not confirm a production deployment.
+using this flow. With Vercel enabled, new GitHub releases follow production
+deployment. Releases published in the temporary release-only mode, or under the
+previous workflow, may predate deployment.
 Automatic Vercel Git deployments from `main` are disabled in each app's
 `vercel.json`. Deploy production through the manual workflow described below.
 
@@ -413,12 +421,18 @@ For every project:
 ### Manual production deployment
 
 The deployment job is temporarily disabled while Vercel is unconfigured. Manual
-runs still verify CI, then skip deployment. After completing the setup below,
-set the repository variable `VERCEL_DEPLOYMENT_ENABLED` to `true` to enable it.
+runs verify CI, skip Vercel deployment, and publish a GitHub Release and Tag if
+the commits warrant a version bump. This temporary release-only mode lets us
+version the repository before production infrastructure exists; its releases do
+not mean the version is live. After completing the setup below, set the repository
+variable `VERCEL_DEPLOYMENT_ENABLED` to `true`. Publishing will then require
+successful deployment of all four apps.
 
-Merging into `main` runs CI and semantic-release, which creates a GitHub tag and
-release when needed. Production deployment is a separate manual action in
+Merging into `main` runs CI. Production deployment is a separate manual action in
 [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml).
+After all four deployments succeed, semantic-release creates a GitHub tag and
+release when the commits warrant a version bump. In temporary release-only mode,
+it runs after successful CI verification even though deployment is skipped.
 
 Each app disables Vercel Git deployments from `main` using
 [`git.deploymentEnabled`](https://vercel.com/docs/project-configuration/git-configuration).
@@ -445,7 +459,7 @@ IDs belong to this repository and each project's Root Directory is `apps/<name>`
 
 To deploy:
 
-1. Wait for the `main` CI run to succeed, including the release job.
+1. Wait for the `main` CI run to succeed.
 2. Open **Actions → Deploy production → Run workflow**, select **main**, and run
    it. The workflow must be merged into the default branch before GitHub shows
    the manual trigger. See [GitHub's manual workflow guide](https://docs.github.com/actions/managing-workflow-runs/manually-running-a-workflow).
@@ -454,10 +468,18 @@ To deploy:
 4. It uploads the workspace and deploys `api`, `web`, `app`, then `admin`, building
    remotely on Vercel. Deployment URLs appear in the job summary. Concurrent
    production runs are serialized, and an active deployment is not canceled.
+5. After all four apps deploy, or after verification in release-only mode, the
+   release job publishes a version tag and GitHub release if the commits warrant
+   one. Commits such as `ci`, `docs`, and `chore` normally produce no release.
+   Failed verification, failed deployments, and canceled runs skip publishing.
 
 Deployments across the four projects are sequential and are not atomic. A failure
 stops the remaining deployments; earlier successful deployments stay live.
 Check the summary before retrying or rolling back a project in Vercel.
+If publishing fails after deployment, the deployed apps remain live. Re-run
+failed jobs to retry publishing while `main` still points to the selected commit.
+If `main` advances during the workflow, publishing stops instead of tagging newer
+changes. Wait for the latest commit's CI and start a new manual run.
 This workflow builds production deployments from the selected commit; it does
 not promote the existing staging/UAT build artifacts or run database migrations.
 

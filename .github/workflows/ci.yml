@@ -10,7 +10,7 @@ permissions:
 
 concurrency:
   group: ci-${{ github.ref }}
-  # Cancel superseded PR checks, but let a running main release finish.
+  # Cancel superseded PR checks, but let push checks finish.
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
@@ -105,12 +105,3 @@ jobs:
         env:
           PR_TITLE: ${{ github.event.pull_request.title }}
         run: printf '%s\n' "$PR_TITLE" | pnpm commitlint
-
-  release:
-    needs: [verify, vite-doctor, coverage]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    permissions:
-      contents: write
-      issues: write
-      pull-requests: write
-    uses: ./.github/workflows/release.yml

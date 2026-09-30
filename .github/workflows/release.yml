@@ -9,7 +9,7 @@ permissions:
 jobs:
   release:
     name: Release
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -19,6 +19,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
+          ref: ${{ github.sha }}
           fetch-depth: 0
 
       - name: Setup pnpm
@@ -34,6 +35,15 @@ jobs:
       # scripts avoids the Nuxt prepare step this job does not use.
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Require selected commit to remain at the head of main
+        shell: bash
+        run: |
+          release_head=$(git ls-remote origin refs/heads/main | cut -f1)
+          if [[ "$release_head" != "$GITHUB_SHA" ]]; then
+            echo "::error::main advanced after this workflow started. Run Deploy production for the latest main commit after CI succeeds to publish its release."
+            exit 1
+          fi
 
       - name: Release
         env:
