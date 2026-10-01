@@ -64,7 +64,11 @@ export function useAuth() {
 
   async function signOut() {
     try {
-      await client.signOut()
+      const { error } = await client.signOut()
+
+      if (error) {
+        throw authRequestError(error)
+      }
     }
     finally {
       // Attempt local cleanup even when revocation fails. Storage failures

@@ -5,6 +5,7 @@ import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { bearer } from 'better-auth/plugins/bearer'
 import { authClientIpHeader } from '../utils/auth-ip'
 import { assertAuthOrigins } from '../utils/auth-origins'
+import { boundedAuthRateLimitStorage } from '../utils/auth-rate-limit-policy'
 import { rateLimitPolicy } from '../utils/rate-limit-policy'
 import * as schema from './schema'
 
@@ -28,7 +29,8 @@ export function createAuth(
     assertAuthOrigins([new URL(config.baseURL).origin])
   }
 
-  return betterAuth({
+  const endpointPaths: string[] = []
+  const auth = betterAuth({
     appName: 'nuxt-app',
     baseURL: config.baseURL,
     secret: config.secret,
@@ -50,7 +52,9 @@ export function createAuth(
       enabled: true,
       window: rateLimitPolicy.window,
       max: rateLimitPolicy.max,
-      customStorage: config.rateLimitStorage,
+      customStorage: config.rateLimitStorage
+        ? boundedAuthRateLimitStorage(config.rateLimitStorage, endpointPaths)
+        : undefined,
     },
     advanced: {
       disableOriginCheck: false,
@@ -68,4 +72,14 @@ export function createAuth(
       },
     },
   })
+
+  // Better Auth attaches endpoint metadata synchronously, including on
+  // getSession whose specialized public type does not declare its path.
+  for (const endpoint of Object.values(auth.api)) {
+    if ('path' in endpoint && typeof endpoint.path === 'string') {
+      endpointPaths.push(endpoint.path)
+    }
+  }
+
+  return auth
 }

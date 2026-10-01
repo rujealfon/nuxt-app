@@ -1,12 +1,18 @@
 import type { H3Event } from 'h3'
-import { appendResponseHeader, setResponseHeader, toWebRequest } from 'h3'
+import { appendResponseHeader, getRequestIP, getRequestURL, setResponseHeader, toWebRequest } from 'h3'
 import { useRuntimeConfig } from 'nitropack/runtime'
 import { requestPath } from '../../utils/api-paths'
 import { useAuth } from '../../utils/auth'
 import { authHeaders } from '../../utils/auth-headers'
 import { restrictBearerTokenResponse } from '../../utils/bearer-origin'
+import { domainFailure } from '../../utils/domain-failure'
+import { createRateLimitStorage } from '../../utils/rate-limit'
+import { rateLimitPolicy } from '../../utils/rate-limit-policy'
 import { authFailureFromResponse } from './auth-error-contract'
+import { closeAuthUpload, readAuthBody } from './read-auth-body'
 import { isPasswordFlowPath, validateAuthRequest } from './validate-auth-request'
+
+const prevalidationStorage = createRateLimitStorage({ failClosed: true })
 
 async function jsonBody(source: Request | Response): Promise<unknown> {
   try {
@@ -41,16 +47,51 @@ function preserveAuthErrorHeaders(event: H3Event, headers: Headers) {
 // contract and re-validates the two password flows so `invalid_input` carries
 // `details`. See docs/adr/0004-auth-error-contract.md.
 export async function handleAuthRequest(event: H3Event): Promise<Response | undefined> {
-  const incoming = toWebRequest(event)
-  const request = new Request(incoming, { headers: authHeaders(event, incoming.headers) })
   const path = requestPath(event)
+  // Request/URL canonicalizes dot segments before Better Auth routes it. Guard
+  // that destination as well as H3's decoded path before any body stream starts.
+  const requestURL = event.web?.request ? new URL(event.web.request.url) : getRequestURL(event)
+  const passwordFlow = isPasswordFlowPath(path) || isPasswordFlowPath(requestURL.pathname)
+  const validationPath = isPasswordFlowPath(path) ? path : requestURL.pathname
+  // Match the ordinary Nitro limiter's deployment trust policy. Never let a
+  // caller supply Better Auth's identity, including through the private header.
+  const ip = getRequestIP(event, { xForwardedFor: process.env.VERCEL === '1' })
+  let bodyBytes: Uint8Array | undefined
+  if (passwordFlow) {
+    if (useRuntimeConfig(event).rateLimitEnabled) {
+      const { allowed, retryAfter } = await prevalidationStorage.consume(
+        `${ip || 'unknown'}:auth-prevalidation`,
+        rateLimitPolicy,
+      )
+      if (!allowed) {
+        setResponseHeader(event, 'x-retry-after', String(retryAfter))
+        setResponseHeader(event, 'retry-after', retryAfter ?? 0)
+        closeAuthUpload(event)
+        throw domainFailure('rate_limited')
+      }
+    }
+    bodyBytes = await readAuthBody(event)
+  }
+  const originalRequest = passwordFlow
+    ? new Request(requestURL, {
+        method: event.method,
+        headers: event.web?.request?.headers ?? event.headers,
+        body: ['GET', 'HEAD'].includes(event.method) ? undefined : bodyBytes as BodyInit,
+        signal: event.web?.request?.signal,
+      })
+    : toWebRequest(event)
+  const request = new Request(originalRequest, { headers: authHeaders(event, originalRequest.headers) })
 
-  if (isPasswordFlowPath(path)) {
+  if (passwordFlow) {
     // Only JSON bodies are pre-validated. A form-encoded body (Better Auth
     // allows it) or an empty one stays with Better Auth, which owns its own
     // parse error.
-    const body = await jsonBody(request)
-    const failure = body === undefined ? undefined : validateAuthRequest(path, body)
+    let body: unknown
+    try {
+      body = JSON.parse(new TextDecoder().decode(bodyBytes))
+    }
+    catch {}
+    const failure = body === undefined ? undefined : validateAuthRequest(validationPath, body)
 
     if (failure) {
       throw failure
