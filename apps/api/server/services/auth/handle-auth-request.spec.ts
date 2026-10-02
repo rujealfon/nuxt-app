@@ -103,6 +103,20 @@ describe('handleAuthRequest', () => {
     expect(mocks.handler).not.toHaveBeenCalled()
   })
 
+  it('uses a zero Retry-After when a denied password request has no retry hint', async () => {
+    mocks.config.rateLimitEnabled = true
+    mocks.toWebRequest.mockReturnValue(request('/api/auth/sign-in/email', { method: 'POST', body: '{}' }))
+    mocks.consume.mockResolvedValue({ allowed: false, retryAfter: null })
+    const event = { path: '/api/auth/sign-in/email' }
+
+    const caught = await caughtFrom(event)
+
+    expect((caught as DomainFailure).error).toBe('rate_limited')
+    expect(mocks.setResponseHeader).toHaveBeenCalledWith(event, 'retry-after', 0)
+    expect(mocks.readAuthBody).not.toHaveBeenCalled()
+    expect(mocks.handler).not.toHaveBeenCalled()
+  })
+
   it('replaces a caller-supplied private IP header without changing credentials or the original request', async () => {
     const original = request('/api/auth/ok', {
       headers: {

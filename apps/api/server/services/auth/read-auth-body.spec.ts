@@ -1,4 +1,4 @@
-import { EventEmitter } from 'node:events'
+import { EventEmitter, once } from 'node:events'
 import { PassThrough } from 'node:stream'
 import { createEvent } from 'h3'
 import { describe, expect, it, vi } from 'vitest'
@@ -10,8 +10,8 @@ vi.mock('h3', async () => {
   return import(require.resolve('h3', { paths: [require.resolve('nuxt/package.json')] }))
 })
 
-function fixture(headers: Record<string, string> = {}) {
-  const req = Object.assign(new PassThrough(), { method: 'POST', url: '/api/auth/sign-in/email', headers })
+function fixture(headers: Record<string, string> = {}, stream = new PassThrough()) {
+  const req = Object.assign(stream, { method: 'POST', url: '/api/auth/sign-in/email', headers })
   const res = Object.assign(new EventEmitter(), { setHeader: vi.fn() })
   const event = createEvent(req as never, res as never)
   return { req, res, event }
@@ -31,6 +31,26 @@ describe('bounded auth body reading', () => {
     Object.assign(req, { body })
     expect(new TextDecoder().decode(await readAuthBody(event))).toBe(JSON.stringify(body))
   })
+
+  it('returns an empty resolved cached body without starting the Node stream', async () => {
+    const { event, req } = fixture()
+    Object.assign(event, { _requestBody: Promise.resolve(undefined) })
+    await expect(readAuthBody(event)).resolves.toEqual(new Uint8Array())
+    expect(req.listenerCount('data')).toBe(0)
+  })
+
+  it('rejects an oversized cached Blob before reading its bytes', async () => {
+    const { event, req, res } = fixture()
+    const body = new Blob([new Uint8Array(authBodyLimit + 1)])
+    const stream = vi.spyOn(body, 'stream')
+    event._requestBody = body
+    await expect(readAuthBody(event)).rejects.toMatchObject({ error: 'invalid_input' })
+    expect(stream).not.toHaveBeenCalled()
+    expect(req.listenerCount('data')).toBe(0)
+    res.emit('close')
+    expect(req.destroyed).toBe(true)
+  })
+
   it('replays exactly the accepted byte limit without trusting a small Content-Length', async () => {
     const { event } = fixture({ 'content-length': '1' })
     const bytes = Buffer.alloc(authBodyLimit, 'x')
@@ -70,6 +90,44 @@ describe('bounded auth body reading', () => {
     } as RequestInit) }
     await expect(readAuthBody(event)).rejects.toMatchObject({ error: 'invalid_input' })
     expect(cancel).toHaveBeenCalledOnce()
+  })
+
+  it('preserves the overflow failure when cancelling the Web upload rejects', async () => {
+    const { event } = fixture()
+    const cancel = vi.fn(async () => {
+      throw new Error('Cancellation failed')
+    })
+    event.web = { request: new Request('http://localhost/api/auth/sign-in/email', {
+      method: 'POST',
+      body: new ReadableStream<Uint8Array>({
+        start(controller) {
+          controller.enqueue(new Uint8Array(authBodyLimit + 1))
+        },
+        cancel,
+      }),
+      duplex: 'half',
+    } as RequestInit) }
+    await expect(readAuthBody(event)).rejects.toMatchObject({ error: 'invalid_input' })
+    expect(cancel).toHaveBeenCalledOnce()
+  })
+
+  it('rejects an already destroyed Node upload without installing listeners', async () => {
+    const { event, req } = fixture()
+    req.destroy()
+    await expect(readAuthBody(event)).rejects.toMatchObject({ error: 'invalid_input' })
+    expect(req.listenerCount('data')).toBe(0)
+    expect(req.listenerCount('end')).toBe(0)
+  })
+
+  it('returns an empty body for an already ended Node stream without waiting for another end', async () => {
+    const { event, req } = fixture({}, new PassThrough({ autoDestroy: false }))
+    const ended = once(req, 'end')
+    req.resume()
+    req.end()
+    await ended
+    await expect(readAuthBody(event)).resolves.toEqual(Buffer.alloc(0))
+    expect(req.listenerCount('data')).toBe(0)
+    expect(req.listenerCount('end')).toBe(0)
   })
 
   it('cleans up an aborted Node upload instead of retaining its buffered body', async () => {
