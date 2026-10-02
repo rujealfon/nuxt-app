@@ -144,6 +144,30 @@ describe('useAuth', () => {
     expect(signOut).toHaveBeenCalled()
   })
 
+  it.each([
+    [429, 'rate_limited', 'Too many requests. Please try again later.'],
+    [500, 'internal_error', 'The request could not be completed'],
+  ])('rejects cookie sign-out with HTTP %i without touching bearer storage', async (status, code, message) => {
+    useRuntimeConfig().public.sessionTransport = 'cookie'
+    const clear = vi.fn()
+    installAuthTokenStore({ read: async () => null, write: async () => {}, clear })
+    signOut.mockResolvedValue({ data: null, error: { error: code, message, status } })
+
+    const error = await useAuth().signOut().catch((caught: unknown) => caught)
+
+    expect(error).toBeInstanceOf(AuthRequestError)
+    expect((error as AuthRequestError).apiError).toEqual({ error: code, message })
+    expect(clear).not.toHaveBeenCalled()
+  })
+
+  it.each([429, 500])('clears the bearer token when sign-out resolves with HTTP %i', async (status) => {
+    await writeAuthToken('session-token')
+    signOut.mockResolvedValue({ data: null, error: { message: 'Unable to sign out', status } })
+
+    await expect(useAuth().signOut()).rejects.toThrow('Unable to sign out')
+    await expect(readAuthToken()).resolves.toBeNull()
+  })
+
   it('clears the stored token on sign out', async () => {
     await writeAuthToken('session-token')
     signOut.mockResolvedValue({ data: {}, error: null })

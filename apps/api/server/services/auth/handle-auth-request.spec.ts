@@ -7,11 +7,14 @@ const mocks = vi.hoisted(() => {
   return {
     handler,
     toWebRequest: vi.fn(),
-    getRequestIP: vi.fn(() => '203.0.113.7'),
+    readAuthBody: vi.fn(),
+    consume: vi.fn(),
+    getRequestIP: vi.fn(() => '192.0.2.10' as string | undefined),
     setResponseHeader: vi.fn(),
     appendResponseHeader: vi.fn(),
     useAuth: vi.fn(() => ({ handler })),
     config: {
+      rateLimitEnabled: false,
       authBearerEnabled: true,
       authBearerOrigins: 'capacitor://localhost',
     },
@@ -19,7 +22,12 @@ const mocks = vi.hoisted(() => {
 })
 
 vi.mock('h3', () => ({
-  toWebRequest: mocks.toWebRequest,
+  getRequestURL: (event: { method: string, headers: Headers }) => {
+    const request = mocks.toWebRequest() as Request
+    event.method = request.method
+    event.headers = request.headers
+    return new URL(request.url)
+  },
   getRequestIP: mocks.getRequestIP,
   setResponseHeader: mocks.setResponseHeader,
   appendResponseHeader: mocks.appendResponseHeader,
@@ -27,6 +35,8 @@ vi.mock('h3', () => ({
 
 vi.mock('nitropack/runtime', () => ({ useRuntimeConfig: () => mocks.config }))
 vi.mock('../../utils/auth', () => ({ useAuth: mocks.useAuth }))
+vi.mock('../../utils/rate-limit', () => ({ createRateLimitStorage: () => ({ consume: mocks.consume }) }))
+vi.mock('./read-auth-body', () => ({ readAuthBody: mocks.readAuthBody, closeAuthUpload: vi.fn() }))
 
 const { handleAuthRequest } = await import('./handle-auth-request')
 
@@ -55,6 +65,88 @@ function sessionResponse() {
 describe('handleAuthRequest', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mocks.config.rateLimitEnabled = false
+    mocks.getRequestIP.mockReturnValue('192.0.2.10')
+    mocks.readAuthBody.mockImplementation(async (event) => {
+      const original = mocks.toWebRequest() as Request
+      event.method = original.method
+      event.headers = original.headers
+      return new Uint8Array(await original.clone().arrayBuffer())
+    })
+  })
+
+  it('preserves valid registration bytes, optional fields and credentials when delegating', async () => {
+    const payload = { name: 'Example User', email: 'user@example.com', password: 'password123', callbackURL: 'https://app.example.com/welcome', rememberMe: false }
+    mocks.toWebRequest.mockReturnValue(request('/api/auth/sign-up/email', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'origin': 'capacitor://localhost', 'cookie': 'existing=value' },
+      body: JSON.stringify(payload),
+    }))
+    mocks.handler.mockResolvedValue(new Response(null))
+    await handleAuthRequest({ path: '/api/auth/sign-up/email' } as never)
+    const delegated = mocks.handler.mock.calls[0]![0] as Request
+    expect(delegated.method).toBe('POST')
+    expect(delegated.headers.get('cookie')).toBe('existing=value')
+    expect(delegated.headers.get('origin')).toBe('capacitor://localhost')
+    await expect(delegated.text()).resolves.toBe(JSON.stringify(payload))
+  })
+
+  it('uses one fallback IP budget and denies before reading the password body', async () => {
+    mocks.config.rateLimitEnabled = true
+    mocks.getRequestIP.mockReturnValue(undefined)
+    mocks.toWebRequest.mockReturnValue(request('/api/auth/sign-in/email', { method: 'POST', body: '{}' }))
+    mocks.consume.mockResolvedValue({ allowed: false, retryAfter: 60 })
+    const caught = await caughtFrom({ path: '/api/auth/sign-in/email' })
+    expect((caught as DomainFailure).error).toBe('rate_limited')
+    expect(mocks.consume).toHaveBeenCalledWith('unknown:auth-prevalidation', { window: 60, max: 100 })
+    expect(mocks.readAuthBody).not.toHaveBeenCalled()
+    expect(mocks.handler).not.toHaveBeenCalled()
+  })
+
+  it('uses a zero Retry-After when a denied password request has no retry hint', async () => {
+    mocks.config.rateLimitEnabled = true
+    mocks.toWebRequest.mockReturnValue(request('/api/auth/sign-in/email', { method: 'POST', body: '{}' }))
+    mocks.consume.mockResolvedValue({ allowed: false, retryAfter: null })
+    const event = { path: '/api/auth/sign-in/email' }
+
+    const caught = await caughtFrom(event)
+
+    expect((caught as DomainFailure).error).toBe('rate_limited')
+    expect(mocks.setResponseHeader).toHaveBeenCalledWith(event, 'retry-after', 0)
+    expect(mocks.readAuthBody).not.toHaveBeenCalled()
+    expect(mocks.handler).not.toHaveBeenCalled()
+  })
+
+  it('replaces a caller-supplied private IP header without changing credentials or the original request', async () => {
+    const original = request('/api/auth/ok', {
+      headers: {
+        'x-auth-client-ip': '198.51.100.1',
+        'x-forwarded-for': '198.51.100.2',
+        'authorization': 'Bearer session-secret',
+        'cookie': 'better-auth.session_token=session-secret',
+        'origin': 'capacitor://localhost',
+      },
+    })
+    mocks.toWebRequest.mockReturnValue(original)
+    mocks.handler.mockResolvedValue(new Response(null))
+    await handleAuthRequest({ path: '/api/auth/ok' } as never)
+    const delegated = mocks.handler.mock.calls[0]![0] as Request
+    expect(delegated.headers.get('x-auth-client-ip')).toBe('192.0.2.10')
+    expect(delegated.headers.get('authorization')).toBe('Bearer session-secret')
+    expect(delegated.headers.get('cookie')).toContain('session-secret')
+    expect(delegated.headers.get('origin')).toBe('capacitor://localhost')
+    expect(original.headers.get('x-auth-client-ip')).toBe('198.51.100.1')
+  })
+
+  it('removes a spoofed identity when the runtime cannot resolve an address', async () => {
+    mocks.getRequestIP.mockReturnValue(undefined)
+    mocks.toWebRequest.mockReturnValue(request('/api/auth/ok', {
+      headers: { 'x-auth-client-ip': '198.51.100.1' },
+    }))
+    mocks.handler.mockResolvedValue(new Response(null))
+    await handleAuthRequest({ path: '/api/auth/ok' } as never)
+    const delegated = mocks.handler.mock.calls[0]![0] as Request
+    expect(delegated.headers.has('x-auth-client-ip')).toBe(false)
   })
 
   it('pre-validates a password flow and throws invalid_input with details', async () => {

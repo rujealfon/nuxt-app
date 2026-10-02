@@ -48,4 +48,20 @@ describe('auth error contract', async () => {
       ],
     })
   })
+
+  it.each(['/sign-up/email', '/sign-out', '/update-user', '/unknown'])(
+    'keeps the byte limit active on %s when the test fixture disables rate limiting',
+    async (path) => {
+      const response = await fetch(`/api/auth${path}`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ name: 'x'.repeat(16 * 1024), email: 'invalid', password: '' }),
+      })
+      expect(response.status).toBe(400)
+      await expect(response.json()).resolves.toEqual({
+        error: 'invalid_input',
+        message: 'The authentication request body is too large',
+      })
+    },
+  )
 })
