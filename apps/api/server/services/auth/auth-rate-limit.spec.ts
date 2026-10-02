@@ -1,7 +1,7 @@
 import type { Server } from 'node:http'
 import { createServer, request as httpRequest } from 'node:http'
 import { apiError } from '@nuxt-app/types'
-import { createApp, eventHandler, setResponseStatus, toNodeListener } from 'h3'
+import { createApp, eventHandler, setResponseStatus, toNodeListener, toWebHandler } from 'h3'
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createAuth } from '../../database/auth'
 import { DomainFailure } from '../../utils/domain-failure'
@@ -32,6 +32,7 @@ vi.mock('nitropack/runtime', () => ({
 describe('auth rate limiting through the Nitro request boundary', () => {
   let server: Server
   let baseURL: string
+  let webHandler: ReturnType<typeof toWebHandler>
   const counters = new Map<string, number>()
 
   beforeAll(async () => {
@@ -47,6 +48,7 @@ describe('auth rate limiting through the Nitro request boundary', () => {
         return apiError(error.error, error.message, error.details)
       }
     }))
+    webHandler = toWebHandler(app)
     server = createServer(toNodeListener(app))
     await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve))
     const address = server.address()
@@ -202,24 +204,93 @@ describe('auth rate limiting through the Nitro request boundary', () => {
     expect([...counters.keys()]).toEqual(['rate-limit:127.0.0.1:auth-prevalidation'])
   })
 
-  it('rejects a chunked overflow before the upload ends and safely closes the connection', async () => {
-    const result = await new Promise<{ status: number | undefined, body: string }>((resolve, reject) => {
-      const request = httpRequest(`${baseURL}/api/auth/sign-up/email`, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-      }, (response) => {
-        let body = ''
-        response.on('data', chunk => body += chunk)
-        response.on('end', () => resolve({ status: response.statusCode, body }))
-      })
-      request.on('error', reject)
-      request.write('{"name":"')
-      request.write('x'.repeat(17 * 1024))
-      // Deliberately never end: rejection must not await the rest of the body.
+  it.each([
+    ['POST', '/sign-out'],
+    ['POST', '/update-user'],
+    ['POST', '/change-password'],
+    ['POST', '/request-password-reset'],
+    ['POST', '/unknown'],
+    ['PUT', '/unknown'],
+    ['PATCH', '/unknown'],
+    ['DELETE', '/unknown'],
+  ])('bounds %s %s before endpoint or origin checks', async (method, path) => {
+    const response = await fetch(`${baseURL}/api/auth${path}`, {
+      method,
+      headers: { 'content-type': 'application/json', 'origin': 'https://untrusted.example' },
+      body: JSON.stringify({ name: 'x'.repeat(17 * 1024) }),
     })
-    expect(result.status).toBe(400)
-    expect(JSON.parse(result.body)).toEqual({ error: 'invalid_input', message: 'The authentication request body is too large' })
-    expect((await fetch(`${baseURL}/api/auth/ok`)).status).toBe(200)
+    expect(response.status).toBe(400)
+    await expect(response.json()).resolves.toEqual({ error: 'invalid_input', message: 'The authentication request body is too large' })
+    expect(mocks.eval).not.toHaveBeenCalled()
+  })
+
+  it.each(['/sign-up/email', '/sign-out', '/unknown', '/x/../update-user'])(
+    'rejects a chunked overflow on %s before the upload ends and safely closes the connection',
+    async (path) => {
+      const result = await new Promise<{ status: number | undefined, body: string }>((resolve, reject) => {
+        const request = httpRequest(baseURL, {
+          path: `/api/auth${path}`,
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+        }, (response) => {
+          let body = ''
+          response.on('data', chunk => body += chunk)
+          response.on('end', () => resolve({ status: response.statusCode, body }))
+        })
+        request.on('error', reject)
+        request.write('{"name":"')
+        request.write('x'.repeat(17 * 1024))
+        // Deliberately never end: rejection must not await the rest of the body.
+      })
+      expect(result.status).toBe(400)
+      expect(JSON.parse(result.body)).toEqual({ error: 'invalid_input', message: 'The authentication request body is too large' })
+      expect((await fetch(`${baseURL}/api/auth/ok`)).status).toBe(200)
+    },
+  )
+
+  it('preserves a bounded non-password upload at the byte limit and ordinary endpoint failures', async () => {
+    const body = JSON.stringify({ name: '' }).replace('""', `"${'x'.repeat(16 * 1024 - 11)}"`)
+    expect(Buffer.byteLength(body)).toBe(16 * 1024)
+    const signOut = await fetch(`${baseURL}/api/auth/sign-out`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'origin': baseURL },
+      body,
+    })
+    expect(signOut.status).toBe(200)
+    await expect(signOut.json()).resolves.toEqual({ success: true })
+    for (const [path, status] of [['/unknown', 404], ['/update-user', 401]] as const) {
+      const response = await fetch(`${baseURL}/api/auth${path}`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'origin': baseURL },
+        body: '{}',
+      })
+      expect(response.status).toBe(status)
+    }
+  })
+
+  it('preserves bodyless native Web POST requests', async () => {
+    const response = await webHandler(new Request(`${baseURL}/api/auth/sign-out`, { method: 'POST' }))
+    expect(response.status).toBe(200)
+    await expect(response.json()).resolves.toEqual({ success: true })
+  })
+
+  it('bounds native Web uploads on methods outside the Node adapter method list', async () => {
+    const cancel = vi.fn()
+    const body = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(new Uint8Array(17 * 1024))
+      },
+      cancel,
+    })
+    const response = await webHandler(new Request(`${baseURL}/api/auth/unknown`, {
+      method: 'OPTIONS',
+      body,
+      duplex: 'half',
+    } as RequestInit))
+    expect(response.status).toBe(400)
+    await expect(response.json()).resolves.toMatchObject({ error: 'invalid_input' })
+    expect(cancel).toHaveBeenCalledOnce()
+    expect(mocks.eval).not.toHaveBeenCalled()
   })
 
   it('bounds raw dot-segment aliases before H3 canonicalizes the destination', async () => {

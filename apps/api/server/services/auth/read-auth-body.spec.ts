@@ -18,6 +18,13 @@ function fixture(headers: Record<string, string> = {}) {
 }
 
 describe('bounded auth body reading', () => {
+  it('returns an empty body for a bodyless native Web Request without reading the Node shim', async () => {
+    const { event, req } = fixture()
+    event.web = { request: new Request('http://localhost/api/auth/sign-out', { method: 'POST' }) }
+    await expect(readAuthBody(event)).resolves.toEqual(new Uint8Array())
+    expect(req.listenerCount('data')).toBe(0)
+  })
+
   it('preserves H3 object-backed JSON bodies', async () => {
     const { event, req } = fixture({ 'content-type': 'application/json' })
     const body = { email: 'user@example.com', password: 'password123' }

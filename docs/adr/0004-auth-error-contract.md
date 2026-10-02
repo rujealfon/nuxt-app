@@ -23,14 +23,16 @@ Better Auth's user-facing message. The route copies `X-Retry-After` and
 `Set-Cookie` from the failed response onto the event before throwing. The
 adapter replaces headers but does not clear them.
 
-Every password-flow body is limited to 16 KiB of actual bytes before JSON
+Every auth request body is limited to 16 KiB of actual bytes before JSON
 parsing, including forms, chunked uploads and bodies without Content-Length.
 This limit applies even when `RATE_LIMIT_ENABLED=false`. Oversized input returns
 `invalid_input` without field details; the adapter stops the upload and closes
 the Node connection after sending the error. Accepted bytes are replayed to
-Better Auth, preserving form support. Malformed bodies consume the shared
-pre-validation budget; credential guessing also retains Better Auth's stricter
-per-endpoint limits.
+Better Auth, preserving form support. The bound applies before route, origin,
+or session checks, including unknown auth paths. Bodyless `GET` and `HEAD`
+requests do not start an upload reader. Malformed password-flow bodies consume
+the shared pre-validation budget; credential guessing also retains Better Auth's
+stricter per-endpoint limits.
 Only the two password flows return `details`; other auth endpoints have no
 shared schema from which to derive field errors.
 

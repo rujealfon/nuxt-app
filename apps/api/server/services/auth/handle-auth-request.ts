@@ -1,5 +1,5 @@
 import type { H3Event } from 'h3'
-import { appendResponseHeader, getRequestIP, getRequestURL, setResponseHeader, toWebRequest } from 'h3'
+import { appendResponseHeader, getRequestIP, getRequestURL, setResponseHeader } from 'h3'
 import { useRuntimeConfig } from 'nitropack/runtime'
 import { requestPath } from '../../utils/api-paths'
 import { useAuth } from '../../utils/auth'
@@ -56,7 +56,6 @@ export async function handleAuthRequest(event: H3Event): Promise<Response | unde
   // Match the ordinary Nitro limiter's deployment trust policy. Never let a
   // caller supply Better Auth's identity, including through the private header.
   const ip = getRequestIP(event, { xForwardedFor: process.env.VERCEL === '1' })
-  let bodyBytes: Uint8Array | undefined
   if (passwordFlow) {
     if (useRuntimeConfig(event).rateLimitEnabled) {
       const { allowed, retryAfter } = await prevalidationStorage.consume(
@@ -70,17 +69,17 @@ export async function handleAuthRequest(event: H3Event): Promise<Response | unde
         throw domainFailure('rate_limited')
       }
     }
-    bodyBytes = await readAuthBody(event)
   }
-  const originalRequest = passwordFlow
-    ? new Request(requestURL, {
-        method: event.method,
-        headers: event.web?.request?.headers ?? event.headers,
-        body: ['GET', 'HEAD'].includes(event.method) ? undefined : bodyBytes as BodyInit,
-        signal: event.web?.request?.signal,
-      })
-    : toWebRequest(event)
-  const request = new Request(originalRequest, { headers: authHeaders(event, originalRequest.headers) })
+  // Bound every upload before constructing a Request. H3's Node stream adapter
+  // starts buffering even if Better Auth later rejects the route or caller.
+  const bodyBytes = ['GET', 'HEAD'].includes(event.method) ? undefined : await readAuthBody(event)
+  const headers = authHeaders(event, event.web?.request?.headers ?? event.headers)
+  const request = new Request(requestURL, {
+    method: event.method,
+    headers,
+    body: bodyBytes?.length ? bodyBytes as BodyInit : undefined,
+    signal: event.web?.request?.signal,
+  })
 
   if (passwordFlow) {
     // Only JSON bodies are pre-validated. A form-encoded body (Better Auth

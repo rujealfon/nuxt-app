@@ -22,8 +22,12 @@ const mocks = vi.hoisted(() => {
 })
 
 vi.mock('h3', () => ({
-  toWebRequest: mocks.toWebRequest,
-  getRequestURL: () => new URL((mocks.toWebRequest() as Request).url),
+  getRequestURL: (event: { method: string, headers: Headers }) => {
+    const request = mocks.toWebRequest() as Request
+    event.method = request.method
+    event.headers = request.headers
+    return new URL(request.url)
+  },
   getRequestIP: mocks.getRequestIP,
   setResponseHeader: mocks.setResponseHeader,
   appendResponseHeader: mocks.appendResponseHeader,

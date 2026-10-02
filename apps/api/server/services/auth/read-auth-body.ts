@@ -54,6 +54,12 @@ export async function readAuthBody(event: H3Event): Promise<Uint8Array> {
     throw tooLarge(event)
   }
 
+  // Web runtimes use a synthetic Node request whose stream may never end.
+  // A native Request with no body is already the authoritative empty upload.
+  if (event.web?.request && !event.web.request.body) {
+    return new Uint8Array()
+  }
+
   const req = event.node.req as typeof event.node.req & {
     [rawBodySymbol]?: unknown
     rawBody?: unknown
