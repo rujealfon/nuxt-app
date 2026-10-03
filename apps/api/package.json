@@ -23,7 +23,7 @@
     "@nuxt-app/config": "workspace:*",
     "@nuxt-app/logger": "workspace:*",
     "@nuxt-app/types": "workspace:*",
-    "@scalar/api-reference": "^1.72.2",
+    "@scalar/api-reference": "^1.72.3",
     "better-auth": "^1.7.6",
     "drizzle-orm": "^0.45.3",
     "h3": "^1.15.11",
