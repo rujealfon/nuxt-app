@@ -1,0 +1,33 @@
+# Dependabot opens pull requests that bump outdated dependencies, so you review
+# a version change instead of checking registries yourself.
+#
+# Minor and patch npm updates share one pull request. Each major stays separate.
+# Commit titles are Conventional Commits so the commitlint title check passes.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: daily
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      github-actions:
+        patterns:
+          - '*'
+
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: daily
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      js-dependencies:
+        patterns:
+          - '*'
+        update-types:
+          - minor
+          - patch
