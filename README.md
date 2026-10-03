@@ -291,6 +291,10 @@ uploaded. A `commitlint` job validates commit messages and pull request titles
 against [Conventional Commits](https://www.conventionalcommits.org/). A
 `vite-doctor` job reports framework diagnostics and blocks the run on findings.
 
+## Dependencies
+
+Dependabot opens pull requests that bump outdated dependencies, so you review a version change instead of checking registries yourself. The schedule and groups are in [`.github/dependabot.yml`](.github/dependabot.yml). Minor and patch JavaScript updates share one pull request. Each major stays separate. GitHub Actions updates are grouped. Titles use `chore(deps)`, which commitlint accepts. Those commits ship with the next release that includes a `fix`, `perf`, or `feat`.
+
 ## Releases
 
 Releases are automated with [semantic-release](https://semantic-release.org/).

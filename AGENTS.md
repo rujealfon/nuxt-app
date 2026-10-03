@@ -28,6 +28,8 @@ Use `pnpm dev:web`, `pnpm dev:app`, `pnpm dev:admin`, or `pnpm dev:api` for one 
 
 `pnpm db:up` starts local Postgres, Redis, and Drizzle Studio. `pnpm db:reset` deletes their volumes; `pnpm db:push` skips migration files. Reserve both for disposable prototyping. Follow [the API guide](apps/api/AGENTS.md) for schema generation and migrations.
 
+Dependency updates arrive as Dependabot pull requests. Review the version change. Configuration is in [`.github/dependabot.yml`](.github/dependabot.yml). See [Dependencies](README.md#dependencies).
+
 For Vercel deployment, follow the [manual production deployment guide](README.md#manual-production-deployment), including the temporary release-only mode while Vercel is unconfigured. Merging into `main` runs CI; manually run `Deploy production` after CI succeeds to deploy and publish. Each project uses `apps/<name>` as its root and must include workspace files outside that directory. Staging and UAT setup remains documented only.
 
 ## Tests and review
