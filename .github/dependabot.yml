@@ -24,6 +24,15 @@ updates:
     commit-message:
       prefix: chore
       include: scope
+    # Version 10 needs conventional-changelog-writer 9. semantic-release ships writer 8.
+    # @types/node majors follow Node majors. This repo stays on Node 22.
+    ignore:
+      - dependency-name: conventional-changelog-conventionalcommits
+        update-types:
+          - version-update:semver-major
+      - dependency-name: '@types/node'
+        update-types:
+          - version-update:semver-major
     groups:
       js-dependencies:
         patterns:
