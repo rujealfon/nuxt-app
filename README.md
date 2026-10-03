@@ -62,7 +62,8 @@ marks which patterns exist now and when to add the others.
 ## Setup
 
 Use Node.js 22.23.2 or newer within the 22.x line, matching CI, and pnpm 12.4.2,
-as pinned in `package.json`.
+as pinned in `package.json`. Keep `@types/node` on 22 as well. A newer major
+describes APIs from a later Node line. Dependabot ignores that major update.
 Run the commands below from the repository root.
 
 ```bash
@@ -305,6 +306,8 @@ computes the next version, creates the tag, and creates the GitHub release with
 generated notes. It does not write files, commit, or open a pull request, so the
 notes live only in the GitHub release and the repository keeps no `CHANGELOG.md`.
 Configuration is in [`.releaserc.json`](.releaserc.json).
+
+Keep `conventional-changelog-conventionalcommits` at 9.3.x. Version 10 needs `conventional-changelog-writer` 9. `@semantic-release/release-notes-generator` 14 ships writer 8, which cannot render that preset. Dependabot ignores the major update.
 
 The first release is `1.0.0`, semantic-release's default when no tag exists.
 After that, `fix` and `perf` bump a patch, `feat` bumps a minor, and a

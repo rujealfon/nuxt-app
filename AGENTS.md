@@ -20,7 +20,7 @@ Nuxt auto-imports are disabled (`imports.autoImport: false`, `components.dirs: [
 
 ## Setup and operations
 
-Use Node 22.23.2 or newer within the 22.x line, matching CI, and the pnpm version pinned in `package.json`. Run commands from the repository root unless a filter is shown. `pnpm install` runs `nuxt:prepare` across apps and layers; dependencies with required install scripts need entries in `pnpm-workspace.yaml`'s `allowBuilds`.
+Use Node 22.23.2 or newer within the 22.x line, matching CI, and the pnpm version pinned in `package.json`. Keep `@types/node` on 22. A newer major describes APIs from a later Node line. Dependabot ignores that major update. Run commands from the repository root unless a filter is shown. `pnpm install` runs `nuxt:prepare` across apps and layers; dependencies with required install scripts need entries in `pnpm-workspace.yaml`'s `allowBuilds`.
 
 Before running an app locally, copy its `.env.example` to `.env` if the file is absent. Frontend examples use production origins. Local web, app, and admin use ports 3000, 3001, and 3002; the API uses 3003. Set frontend URLs and API `CORS_ORIGINS` to the local origins. API startup requires `DATABASE_URL`, `REDIS_URL`, a valid `BETTER_AUTH_URL`, and a `BETTER_AUTH_SECRET` of at least 32 characters.
 
@@ -53,6 +53,8 @@ Write commit messages and PR titles in [Conventional Commits](https://www.conven
 Squash feature PRs into `develop`; their PR titles become the feature commits. Cut `release/<candidate>` from `develop` for staging and UAT. Use merge commits for release promotion into `main` and for merging release fixes or production hotfixes back into `develop`. Preserve individual Conventional Commits through promotion so semantic-release can analyze them. When preparing a release, promotion, or hotfix, follow the [release workflow](README.md#release-workflow).
 
 Releases are automated by [semantic-release](https://semantic-release.org/) through the manual production workflow. With Vercel enabled, all four apps must deploy successfully before publishing. While Vercel is disabled, the documented temporary release-only mode publishes after CI verification. Failed verification or deployment prevents publishing. CI verification, Vite Doctor, and coverage must pass for the selected `main` commit, which must remain at the head of `main` when publishing. It reads the Conventional Commits since the last release, computes the next version, creates the tag, and creates the GitHub release with generated notes. It writes no files and opens no pull request, so the repository keeps no `CHANGELOG.md` and no version bump. Configuration is in `.releaserc.json`.
+
+Keep `conventional-changelog-conventionalcommits` at 9.3.x. Version 10 needs `conventional-changelog-writer` 9, and `@semantic-release/release-notes-generator` 14 ships writer 8. See [Releases](README.md#releases).
 
 The first release is `1.0.0`, semantic-release's default when no prior tag exists. Afterwards `fix` and `perf` bump a patch, `feat` bumps a minor, and a `BREAKING CHANGE` bumps a major. The version and notes come from commit messages, so keep the history Conventional Commits; scopes are free-form and do not affect the bump.
 
