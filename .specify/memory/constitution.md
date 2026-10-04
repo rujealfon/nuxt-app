@@ -1,20 +1,3 @@
-<!--
-Sync Impact Report
-- Version change: unratified template → 1.0.0
-- Modified principles:
-  - PRINCIPLE_1_NAME → I. Independent applications
-  - PRINCIPLE_2_NAME → II. Explicit module boundaries
-  - PRINCIPLE_3_NAME → III. Server authority
-  - PRINCIPLE_4_NAME → IV. Published contracts
-  - PRINCIPLE_5_NAME → V. Proven changes
-- Added sections:
-  - Technology and security constraints (replaces SECTION_2_NAME)
-  - Delivery workflow (replaces SECTION_3_NAME)
-  - Governance rules (filled)
-- Removed sections: none
-- Follow-up TODOs: none
--->
-
 # nuxt-app Constitution
 
 ## Core Principles
@@ -77,7 +60,7 @@ error contract. Shared request and response schemas MUST live in
 database capability seam and bearer session transport MUST follow their
 ADRs. An established contract MUST change only through an ADR and a
 compatibility assessment. Issues, specs, and tests MUST use the terms in
-`CONTEXT.md`.
+Language.
 
 Rationale: clients and generated docs depend on stable codes. ADRs 0001
 through 0004 already record these decisions.
@@ -146,11 +129,87 @@ branches MUST stay blocked. Publishing MUST follow successful CI for the
 selected `main` commit. Failed verification or a failed deployment MUST
 prevent a new tag or GitHub release.
 
+## Language
+
+Issues, specs, tests, and names in code MUST use these terms. Before adding
+a term, check the code for the project's existing name.
+
+### Versioned route
+
+An HTTP endpoint under a registered API version (`/api/<version>/*`) that
+serves application behavior.
+
+Rejected names: public API, business endpoint, product route, product
+endpoint, product API, domain endpoint.
+
+### Infra route
+
+An unversioned endpoint that supports the platform rather than application
+behavior. Examples are Better Auth (`/api/auth/*`), health (`/api/health*`),
+the version registry (`GET /api`), and API docs (`/api/docs*`,
+`/api/openapi.json`).
+
+Rejected names: system endpoint, internal route, infrastructure route.
+
+### Actor
+
+The authenticated identity a request acts as, with a user id, email, name,
+and role. Client and server derive it from the Better Auth session. The UI
+and middleware check the role.
+
+Rejected names: user, account, session user.
+
+### Session transport
+
+How a client carries its session to the API. Browser apps use a session
+cookie. A WebView that refuses cross-origin cookies can send the opaque
+session token in an `Authorization: Bearer` header. Each app selects the
+transport through `sessionTransport`. The API accepts both on every route,
+but registers the bearer plugin only when `AUTH_BEARER_ENABLED` is set.
+
+Rejected names: auth mode, token type, credential transport, cookie mode,
+bearer mode.
+
+### Domain failure
+
+A failure independent of transport. Domain code raises it when an operation
+cannot complete because of invalid input, authentication, authorization,
+absence, conflict, rate limiting, or an unexpected fault. It describes the
+failure without defining its HTTP response.
+
+Rejected names: error, exception, API error, product failure, ProductFailure.
+
+### API error contract
+
+The failure response has `error` (a stable code), a safe non-empty message,
+and optional input details on `invalid_input`. Clients branch on `error`,
+never the message. `/api/auth/*` converts Better Auth failures to this
+shape. Health success responses have separate bodies. Health failures and
+other infra-route failures use the API error contract.
+
+Rejected names: error response, error format, Zod issue, validation error,
+ProductError.
+
+### Input detail
+
+A request path and a safe, non-empty message naming the invalid input.
+Present only for `invalid_input`. Omit the key when there are no details.
+An empty path names the whole body.
+
+Rejected names: Zod issue, field error, validation error.
+
+### Error adapter
+
+The HTTP translation at the API boundary. It turns a domain failure into
+the API error contract, so domain code does not construct the response.
+
+Rejected names: error handler, error middleware, error serializer.
+
 ## Governance
 
 This constitution is the principle source for Spec Kit specs, plans, tasks,
 and reviews. Procedures stay in `AGENTS.md`, `docs/architecture.md`,
-`docs/backend-patterns.md`, `docs/adr/`, and `CONTEXT.md`. Where informal
+`docs/backend-patterns.md`, and `docs/adr/`. Where informal
 practice conflicts with a principle here, this constitution wins. A proposal
 that conflicts with an ADR MUST name that ADR. Changing a principle that an
 ADR records requires amending both documents in the same change.
@@ -168,4 +227,4 @@ architectural seam, or an exception to a principle, MUST be written in the
 spec or in an ADR. Spec Kit templates read this file at runtime. Editing a
 template MUST NOT replace an amendment.
 
-**Version**: 1.0.0 | **Ratified**: 2026-10-04 | **Last Amended**: 2026-10-04
+**Version**: 1.1.0 | **Ratified**: 2026-10-04 | **Last Amended**: 2026-10-04
