@@ -254,8 +254,10 @@ recommended settings from the config's README.
 ## Testing
 
 [Vitest](https://vitest.dev) and [`@nuxt/test-utils`](https://nuxt.com/docs/4.x/getting-started/testing)
-run through projects in the root `vitest.config.ts`. Tests need no Docker or
-external services.
+run through projects in the root `vitest.config.ts`. Local `pnpm test` needs no
+Docker. The `redis` project skips unless Redis is listening on `127.0.0.1:6381`
+(`pnpm db:up`). CI verify starts `redis:8-alpine` on that port and fails the
+spec when the port is closed.
 
 ```bash
 pnpm test                 # run everything once
@@ -272,6 +274,8 @@ pnpm test --project api-dev # development API docs tests
 - `api-dev` (HTTP integration): starts the development server to check Scalar,
   OpenAPI, and the self-hosted docs asset. Both HTTP projects disable the API
   middleware rate limiter with `RATE_LIMIT_ENABLED=false`.
+- `redis` (Node environment): `ping()` and the rate-limit Lua reply against Redis
+  on `127.0.0.1:6381`. Skips when the port is closed.
 - `ui`, `client`, `web`, `app`, `admin` (Nuxt environment): composables, components,
   route middleware, and pages via `mockNuxtImport` / `mountSuspended`.
 
@@ -287,7 +291,7 @@ type-check, and test on pushes to `main` and on pull requests. A separate
 `coverage` job runs `pnpm test:coverage:ci`; Vitest enforces the thresholds in
 [`vitest.config.ts`](vitest.config.ts) (90% lines/functions/branches/statements)
 and fails the job if coverage falls below them. That job runs `unit` and the
-Nuxt-environment projects, excluding `api` and `api-dev`. Coverage is not
+Nuxt-environment projects, excluding `api`, `api-dev`, and `redis`. Coverage is not
 uploaded. A `commitlint` job validates commit messages and pull request titles
 against [Conventional Commits](https://www.conventionalcommits.org/). A
 `vite-doctor` job reports framework diagnostics and blocks the run on findings.
