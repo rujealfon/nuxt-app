@@ -160,8 +160,9 @@ atomic writes, and external effects. Then deliver one complete path:
 4. Test business rules, denied access, database constraints/rollback, and the
    versioned HTTP contract. Use a dedicated test database with deterministic
    setup and cleanup for persistence tests; mocks cannot prove SQL semantics.
-5. Document any new test-service requirement in the README and CI. The current
-   suite needs no external services; keep that distinction explicit.
+5. Document any new test-service requirement in the README and CI. Local
+   `pnpm test` needs no external services. CI verify runs the Redis protocol
+   spec against `redis:8-alpine` on `127.0.0.1:6381`.
 6. Run lint, type checks, relevant tests, and the production build.
 
 Add separate read models (CQRS) when different read and write requirements

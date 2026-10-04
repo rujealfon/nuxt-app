@@ -74,7 +74,9 @@ Put unit tests beside server code as `server/**/*.spec.ts` and run them with
 `pnpm test --project unit`. HTTP contract tests
 in `test/e2e/` build and launch Nitro in production mode. Tests for development
 only Scalar docs use the dev server in `test/e2e-dev/`. Run these with the `api`
-and `api-dev` projects respectively. Existing integration
-tests disable rate limiting and need no external services. Use mocks or explicit
-fixtures for new tests. When changing routes, check response bodies, status
+and `api-dev` projects respectively. The `redis` project checks `ping()` and
+the rate-limit Lua reply against Redis on `127.0.0.1:6381`. It skips when that
+port is closed; CI verify fails it when the port is closed. Existing HTTP
+integration tests disable rate limiting and need no external services. Use mocks
+or explicit fixtures for new tests. When changing routes, check response bodies, status
 codes, version headers, and failure paths.
