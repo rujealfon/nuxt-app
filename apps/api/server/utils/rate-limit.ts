@@ -4,7 +4,7 @@ import { useRedis } from './redis'
 
 // Atomically increments the counter and sets the window expiry on first hit,
 // so concurrent requests can't all pass a stale read.
-const CONSUME_SCRIPT = `
+export const rateLimitConsumeScript = `
 local current = redis.call('INCR', KEYS[1])
 if current == 1 then
   redis.call('PEXPIRE', KEYS[1], ARGV[1])
@@ -23,7 +23,7 @@ export function createRateLimitStorage(options: RateLimitStorageOptions = {}): R
       try {
         const windowMs = Math.max(1000, Math.round(rule.window * 1000))
         const [count, ttl] = await useRedis().eval(
-          CONSUME_SCRIPT,
+          rateLimitConsumeScript,
           1,
           `rate-limit:${key}`,
           windowMs,

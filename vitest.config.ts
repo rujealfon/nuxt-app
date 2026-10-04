@@ -97,6 +97,21 @@ export default defineConfig({
             'apps/api/server/**/*.spec.ts',
             'packages/client/app/**/*.server.spec.ts',
           ],
+          exclude: [
+            '**/node_modules/**',
+            '**/.git/**',
+            'apps/api/server/utils/redis-protocol.spec.ts',
+          ],
+        },
+      },
+      {
+        define: { 'import.meta.server': true },
+        test: {
+          name: 'redis',
+          environment: 'node',
+          include: ['apps/api/server/utils/redis-protocol.spec.ts'],
+          testTimeout: 15_000,
+          hookTimeout: 15_000,
         },
       },
       {
