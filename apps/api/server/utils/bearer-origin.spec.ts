@@ -29,7 +29,7 @@ describe('bearer token origin boundary', () => {
     expect(canExposeBearerToken('null', { ...config, authBearerOrigins: 'null' })).toBe(false)
   })
 
-  it('removes the token from a cookie-mode browser response without changing its cookie or body', async () => {
+  it('removes the token from a browser response using cookie session transport without changing its cookie or body', async () => {
     const response = await restrictBearerTokenResponse(sessionResponse(), 'https://app.example.com', config)
 
     expect(response.headers.get('set-auth-token')).toBeNull()

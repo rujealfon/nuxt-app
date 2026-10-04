@@ -1,8 +1,8 @@
 import type { AuthTokenStore } from '../lib/authToken'
 import { authTokenStore, installAuthTokenStore } from '../lib/authToken'
 
-// The store bearer-mode clients keep the session token in. Call it once at
-// startup, before any sign-in, to replace the default `localStorage`
+// Clients using bearer session transport keep their token in this store. Call it
+// once at startup, before any sign-in, to replace the default `localStorage`
 // implementation with one backed by `@capacitor/preferences` (or a
 // Keychain/Keystore plugin), which can persist across a WebView data eviction:
 //
@@ -16,8 +16,8 @@ import { authTokenStore, installAuthTokenStore } from '../lib/authToken'
 // })
 // ```
 //
-// Call it with no argument to read the store in use. Cookie-mode apps never
-// need it: their session lives in the browser's cookie jar.
+// Call it with no argument to read the store in use. Apps using cookie session
+// transport never need it: their session lives in the browser's cookie jar.
 
 export function useAuthTokenStore(next?: AuthTokenStore): AuthTokenStore {
   if (next && !installAuthTokenStore(next)) {

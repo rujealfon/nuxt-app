@@ -307,7 +307,7 @@ generated notes. It does not write files, commit, or open a pull request, so the
 notes live only in the GitHub release and the repository keeps no `CHANGELOG.md`.
 Configuration is in [`.releaserc.json`](.releaserc.json).
 
-Keep `conventional-changelog-conventionalcommits` at 9.3.x. Version 10 needs `conventional-changelog-writer` 9. `@semantic-release/release-notes-generator` 14 ships writer 8, which cannot render that preset. Dependabot ignores the major update.
+Keep `conventional-changelog-conventionalcommits` at 9.3.x. Version 10 needs `conventional-changelog-writer` 9. `@semantic-release/release-notes-generator` 14 ships writer 8, which cannot render that preset. Dependabot allows patch updates only for this package.
 
 The first release is `1.0.0`, semantic-release's default when no tag exists.
 After that, `fix` and `perf` bump a patch, `feat` bumps a minor, and a
@@ -359,11 +359,16 @@ Apply these settings in GitHub before using this flow:
 1. **Pull requests** (Settings → General → Pull Requests). Enable **Allow squash
    merging** and **Allow merge commits**; disable **Allow rebase merging**.
    Set the squash **Default commit message** to **Pull request title**.
-2. **Branch rulesets** for `main`, `develop`, and `release/**/*`. Require PRs and
+2. **Branch rulesets** for `main`, `master`, `develop`, and `release/**/*`. Require PRs and
    the `verify`, `vite-doctor`, `coverage`, and `commitlint` status checks. Disable
    **Require linear history** on branches receiving merge commits. Block force
-   pushes and protect branch deletion; allow repository admins to delete completed
-   release branches.
+   pushes, with no bypass actors for these rules. Protect deletion of `main`,
+   `master`, and `develop` in a separate deletion-only ruleset without bypass actors.
+   Protect deletion of `release/**/*` in another deletion-only ruleset with a
+   repository administrator bypass. Administrators may delete a release branch only
+   after promotion and required back-merges are complete; verify completion before
+   deletion. This bypass permits release-branch deletion without bypassing PRs,
+   required checks, or force-push protection.
 3. Initialize `develop` from `main` when adopting the flow. Create release
    branches only when a candidate is ready for testing.
 
@@ -405,10 +410,9 @@ pnpm build
 ```
 
 Run this after changing exports, Nuxt configuration, or routing; CI does not run
-the workspace build. Turbo's `build.env` list is currently missing
-`NUXT_PUBLIC_API_VERSION`, `NUXT_PUBLIC_SESSION_TRANSPORT`, `AUTH_BEARER_ENABLED`,
-`AUTH_BEARER_ORIGINS`, and `RATE_LIMIT_ENABLED`. Add them before relying on
-shell-provided overrides through `pnpm build`, so Turbo passes and hashes them.
+the workspace build. Keep variables read by app and layer Nuxt configs in Turbo's
+`build.env` list so Turbo passes and hashes shell-provided overrides. The root
+build environment test checks these configs against the list.
 
 ## Deployment
 

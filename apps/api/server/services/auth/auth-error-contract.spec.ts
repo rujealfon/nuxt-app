@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { authFailureFromResponse } from './auth-error-contract'
 
 describe('authFailureFromResponse', () => {
-  it('maps a validation error onto invalid_input with its message', () => {
+  it('maps a Better Auth input failure onto invalid_input with its message', () => {
     const failure = authFailureFromResponse(400, {
       message: '[body.email] Invalid email address',
       code: 'VALIDATION_ERROR',

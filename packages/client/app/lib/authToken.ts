@@ -1,5 +1,6 @@
-// Session-token storage for bearer-mode clients. Cookie mode keeps the session
-// in the browser's cookie jar and never touches this module. Rationale:
+// Session-token storage for clients using bearer session transport. Cookie session
+// transport keeps the session in the browser's cookie jar and never touches this module.
+// Rationale:
 // docs/adr/0003-bearer-tokens-for-native-clients.md.
 //
 // The interface is async so a native shell can back it with

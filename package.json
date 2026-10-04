@@ -5,7 +5,7 @@
   "packageManager": "pnpm@12.4.2",
   "repository": "github:rujealfon/nuxt-app",
   "engines": {
-    "node": ">=22.23.2 <25"
+    "node": ">=22.23.2 <23"
   },
   "scripts": {
     "dev:web": "pnpm --filter @nuxt-app/web dev",
@@ -55,7 +55,7 @@
     "@vitest/coverage-v8": "5.0.3",
     "@vue/test-utils": "^2.5.1",
     "commitizen": "^4.3.2",
-    "conventional-changelog-conventionalcommits": "^9.3.1",
+    "conventional-changelog-conventionalcommits": "~9.3.1",
     "eslint": "^10.11.0",
     "eslint-import-resolver-typescript": "^4.4.5",
     "eslint-plugin-better-tailwindcss": "^4.7.0",

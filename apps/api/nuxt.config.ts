@@ -23,6 +23,7 @@ export default defineNuxtConfig({
     },
   },
   imports: { autoImport: false },
+  components: { dirs: [] },
   app: {
     head: {
       meta: [{ name: 'robots', content: 'noindex, nofollow' }],

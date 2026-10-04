@@ -18,7 +18,7 @@ export type RegisterCredentials = z.infer<typeof registerSchema>
 // API error contract. Stable across versions: every versioned route answers
 // failures with one of these codes and a safe, non-empty message.
 // `invalid_input` may include input details; other codes must not.
-// Not used by Better Auth or health.
+// Auth and health failures use this contract too; health success bodies are separate.
 export const apiErrorCodes = [
   'invalid_input',
   'unauthenticated',

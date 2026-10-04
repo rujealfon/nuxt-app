@@ -206,7 +206,7 @@ importers:
         specifier: ^4.3.2
         version: 4.3.2(@types/node@22.20.4)(typescript@6.0.3)
       conventional-changelog-conventionalcommits:
-        specifier: ^9.3.1
+        specifier: ~9.3.1
         version: 9.3.1
       eslint:
         specifier: ^10.11.0

@@ -18,6 +18,7 @@ export default defineNuxtConfig({
   // Auto-imports are disabled repo-wide; the layer sets it too so its
   // standalone `nuxt doctor` run matches how the apps consume it.
   imports: { autoImport: false },
+  components: { dirs: [] },
   typescript: {
     tsConfig: {
       include: ['../test/**/*'],

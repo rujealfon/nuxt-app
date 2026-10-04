@@ -56,7 +56,7 @@ function authFetchOptions(bearer: boolean): AuthFetchOptions {
   }
 
   return {
-    // The token *is* the session in bearer mode, so cookies are neither sent
+    // The token is the session with bearer session transport, so cookies are neither sent
     // nor accepted.
     credentials: 'omit',
     auth: {

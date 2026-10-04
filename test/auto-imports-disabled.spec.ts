@@ -16,16 +16,19 @@ const app = await loadConfig('../apps/app/nuxt.config')
 const admin = await loadConfig('../apps/admin/nuxt.config')
 const api = await loadConfig('../apps/api/nuxt.config')
 const ui = await loadConfig('../packages/ui/nuxt.config')
+const client = await loadConfig('../packages/client/nuxt.config')
+
+const configs = [web, app, admin, api, ui, client]
 
 describe('auto-imports disabled', () => {
-  it('disables Nuxt auto-imports in every app', () => {
-    for (const config of [web, app, admin, api]) {
+  it('disables Nuxt auto-imports in every app and layer', () => {
+    for (const config of configs) {
       expect(config.imports?.autoImport).toBe(false)
     }
   })
 
-  it('disables component auto-imports in every Vue app and the UI layer', () => {
-    for (const config of [web, app, admin, ui]) {
+  it('disables component auto-imports in every app and layer', () => {
+    for (const config of configs) {
       expect(config.components?.dirs).toEqual([])
     }
   })

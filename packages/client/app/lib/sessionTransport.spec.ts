@@ -92,7 +92,7 @@ describe('authClientOptions', () => {
 })
 
 describe('apiClientOptions', () => {
-  it('keeps cookies in cookie mode', () => {
+  it('keeps cookies with cookie session transport', () => {
     const options = createSessionTransport(baseURL, false).apiClientOptions
 
     expect(options.credentials).toBe('include')
@@ -100,7 +100,7 @@ describe('apiClientOptions', () => {
     expect(options.onResponseError).toBeUndefined()
   })
 
-  it('omits cookies and wires the bearer handlers in bearer mode', () => {
+  it('omits cookies and wires the bearer handlers with bearer session transport', () => {
     const options = createSessionTransport(baseURL, true).apiClientOptions
 
     expect(options.credentials).toBe('omit')

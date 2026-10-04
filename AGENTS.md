@@ -42,7 +42,7 @@ Use `*.spec.ts` for tests. Put frontend tests under `app/` or `test/`, API unit 
 
 Keep tests of internal Nuxt behavior beside implementation so the app's TypeScript context includes them. Root `test/**` and `packages/{config,types,logger}` Node tests use `tsconfig.test.json` through `pnpm type-check`.
 
-CI does not run `pnpm build`; run it locally for export, Nuxt config, or routing changes. Keep every environment variable read by Nuxt configs in `turbo.json`'s `build.env` list for strict environment filtering and caching. The current list is incomplete, including API-version, session-transport, and bearer settings.
+CI does not run `pnpm build`; run it locally for export, Nuxt config, or routing changes. Keep every environment variable read by Nuxt configs in `turbo.json`'s `build.env` list for strict environment filtering and caching. The root build environment test checks this list against app and layer configs.
 
 PRs should explain behavior changes, link issues, list validation, and include screenshots for visible UI changes. Do not run `git commit` or `git push`; those operations are reserved for the user.
 
@@ -54,7 +54,7 @@ Squash feature PRs into `develop`; their PR titles become the feature commits. C
 
 Releases are automated by [semantic-release](https://semantic-release.org/) through the manual production workflow. With Vercel enabled, all four apps must deploy successfully before publishing. While Vercel is disabled, the documented temporary release-only mode publishes after CI verification. Failed verification or deployment prevents publishing. CI verification, Vite Doctor, and coverage must pass for the selected `main` commit, which must remain at the head of `main` when publishing. It reads the Conventional Commits since the last release, computes the next version, creates the tag, and creates the GitHub release with generated notes. It writes no files and opens no pull request, so the repository keeps no `CHANGELOG.md` and no version bump. Configuration is in `.releaserc.json`.
 
-Keep `conventional-changelog-conventionalcommits` at 9.3.x. Version 10 needs `conventional-changelog-writer` 9, and `@semantic-release/release-notes-generator` 14 ships writer 8. See [Releases](README.md#releases).
+Keep `conventional-changelog-conventionalcommits` at 9.3.x. Dependabot allows patch updates only for this preset. Version 10 needs `conventional-changelog-writer` 9, and `@semantic-release/release-notes-generator` 14 ships writer 8. See [Releases](README.md#releases).
 
 The first release is `1.0.0`, semantic-release's default when no prior tag exists. Afterwards `fix` and `perf` bump a patch, `feat` bumps a minor, and a `BREAKING CHANGE` bumps a major. The version and notes come from commit messages, so keep the history Conventional Commits; scopes are free-form and do not affect the bump.
 

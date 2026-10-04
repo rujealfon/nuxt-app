@@ -6,7 +6,7 @@ export const authBodyLimit = 16 * 1024
 const rawBodySymbol = Symbol.for('h3RawBody')
 
 // Stop accepting an unread upload without destroying the socket before the
-// API error response has been sent. No unbounded drain or H3 stream is started.
+// API error contract has been sent. No unbounded drain or H3 stream is started.
 export function closeAuthUpload(event: H3Event) {
   const { req, res } = event.node
   req.pause()

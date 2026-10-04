@@ -32,8 +32,8 @@ then succeeds, but the WebView drops the cookie and the next navigation finds
 no session. Better Auth's cookie remedies require a reverse proxy or a shared
 parent domain, neither of which the bundled WebView has.
 
-Bearer mode stores the token on the client, which is weaker than an HttpOnly
-cookie. Only deployments that enable bearer mode take on that risk.
+Bearer session transport stores the token on the client, which is weaker than an
+HttpOnly cookie. Only deployments that enable bearer session transport take on that risk.
 `useAuthTokenStore()` lets a native shell use `@capacitor/preferences` or a
 Keychain/Keystore plugin. `signIn.social()` cannot complete inside a WebView;
 social sign-in needs the provider's native SDK and ID token forwarding, or a

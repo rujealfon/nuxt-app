@@ -53,9 +53,11 @@ contract: `error`, a safe non-empty `message`, and `details` only for
 branch on `error`, never on message text. Domain code MUST raise a domain
 failure and MUST NOT build the HTTP body. The error adapter MUST translate
 that failure. A thrown `ZodError` MUST stay `internal_error`. Responses
-MUST NOT include stack traces, SQL, credentials, or internal provider
-errors. Health success bodies stay separate; health failures use the API
-error contract. Shared request and response schemas MUST live in
+MUST NOT include stack traces, SQL, or internal provider errors. Session
+credentials MAY be issued only by successful authentication responses
+following ADR 0003. Other credentials MUST NOT be exposed, and failure
+bodies MUST NOT carry credentials. Health success bodies stay separate;
+health failures use the API error contract. Shared request and response schemas MUST live in
 `packages/types`. Database rows MUST NOT be sent to the browser. The
 database capability seam and bearer session transport MUST follow their
 ADRs. An established contract MUST change only through an ADR and a
@@ -92,11 +94,13 @@ The root `@antfu/eslint-config` is the format: two-space indentation, single
 quotes, and no semicolons. Tailwind classes MUST use theme tokens and scale
 values, and MUST NOT use duplicate, conflicting, or deprecated classes.
 
-Authentication MUST use Better Auth. Postgres access MUST use Drizzle.
-Transactions MUST go through `withTransaction(fn)`. The `Database` type
-MUST omit `.transaction()`. Remote client data MUST use the configured
-Pinia Colada query cache. Client state shared across screens MUST use
-Pinia. Temporary form and dialog state MUST stay local to the screen.
+Better Auth MUST own authentication and session state. Bearer session-token
+persistence MUST use the `AuthTokenStore` interface following ADR 0003.
+Other remote application data MUST use the configured Pinia Colada query
+cache. Shared application UI state outside authentication MUST use Pinia.
+Temporary form and dialog state MUST stay local to the screen.
+Postgres access MUST use Drizzle. Transactions MUST go through
+`withTransaction(fn)`. The `Database` type MUST omit `.transaction()`.
 Every environment variable a Nuxt config reads MUST be listed in
 `turbo.json` under `build.env`. API startup MUST require `DATABASE_URL`,
 `REDIS_URL`, a valid `BETTER_AUTH_URL`, and a `BETTER_AUTH_SECRET` of at
@@ -164,8 +168,10 @@ Rejected names: user, account, session user.
 How a client carries its session to the API. Browser apps use a session
 cookie. A WebView that refuses cross-origin cookies can send the opaque
 session token in an `Authorization: Bearer` header. Each app selects the
-transport through `sessionTransport`. The API accepts both on every route,
-but registers the bearer plugin only when `AUTH_BEARER_ENABLED` is set.
+transport through `sessionTransport`. Cookie session transport is the
+default. With `AUTH_BEARER_ENABLED=true`, the API registers the bearer
+plugin and authentication accepts either cookie or bearer session
+transport. With bearer authentication disabled, it accepts cookies only.
 
 Rejected names: auth mode, token type, credential transport, cookie mode,
 bearer mode.
@@ -227,4 +233,4 @@ architectural seam, or an exception to a principle, MUST be written in the
 spec or in an ADR. Spec Kit templates read this file at runtime. Editing a
 template MUST NOT replace an amendment.
 
-**Version**: 1.1.0 | **Ratified**: 2026-10-04 | **Last Amended**: 2026-10-04
+**Version**: 1.1.1 | **Ratified**: 2026-10-04 | **Last Amended**: 2026-10-04
