@@ -61,3 +61,17 @@ The first release is `1.0.0`, semantic-release's default when no prior tag exist
 ## Issues and domain docs
 
 When creating or updating a local issue or spec, follow [the issue tracker guide](docs/agents/issue-tracker.md). When triaging, use the values in [triage labels](docs/agents/triage-labels.md). When a task turns on domain terminology or an ADR decision, follow [the domain docs guide](docs/agents/domain.md).
+
+## Agent skills
+
+### Issue tracker
+
+Issues and specs live as markdown files under `.scratch/<feature>/`. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+The five canonical roles use their own names: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, and `wontfix`. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: one root `GLOSSARY.md` and ADRs in `docs/adr/`. See `docs/agents/domain.md`.
