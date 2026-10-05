@@ -409,10 +409,10 @@ pnpm build
 ```
 
 Run this after changing exports, Nuxt configuration, or routing; CI does not run
-the workspace build. Turbo's `build.env` list is currently missing
-`NUXT_PUBLIC_API_VERSION`, `NUXT_PUBLIC_SESSION_TRANSPORT`, `AUTH_BEARER_ENABLED`,
-`AUTH_BEARER_ORIGINS`, and `RATE_LIMIT_ENABLED`. Add them before relying on
-shell-provided overrides through `pnpm build`, so Turbo passes and hashes them.
+the workspace build. Declare environment variables read by Nuxt configs in
+`turbo.json`'s `build.env` list so Turbo passes and hashes shell-provided overrides.
+`test/build-env.spec.ts` checks direct `process.env` property and literal bracket
+reads against that list as part of the unit test suite.
 
 ## Deployment
 

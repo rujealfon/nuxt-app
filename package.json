@@ -5,7 +5,7 @@
   "packageManager": "pnpm@12.4.2",
   "repository": "github:rujealfon/nuxt-app",
   "engines": {
-    "node": ">=22.23.2 <25"
+    "node": ">=22.23.2 <23"
   },
   "scripts": {
     "dev:web": "pnpm --filter @nuxt-app/web dev",
