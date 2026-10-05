@@ -12,9 +12,9 @@ Before changing protected operations, authorization, API errors, transactions, o
 
 ## Code and imports
 
-Follow the root ESLint config (`@antfu/eslint-config`): two-space indentation, single quotes, and no semicolons. Use TypeScript and Vue Composition API with `<script setup lang="ts">`. Name components in PascalCase, composables `useX.ts`, and API routes with HTTP suffixes such as `hello.get.ts`.
+Follow [the ESLint config](eslint.config.mjs) for formatting and Tailwind classes. Use TypeScript and Vue Composition API with `<script setup lang="ts">`. Name components in PascalCase, composables `useX.ts`, and API routes with HTTP suffixes such as `hello.get.ts`.
 
-Tailwind class strings in `.vue` and `.ts` files are linted by `eslint-plugin-better-tailwindcss` (see `eslint.config.mjs`). Use theme tokens and scale values, avoid duplicate, conflicting, and deprecated classes, and let `pnpm lint:fix` sort them. The plugin reads `packages/ui/app/assets/css/main.css` as the shared Tailwind entry.
+Use theme tokens and scale values for Tailwind classes. The shared Tailwind entry is `packages/ui/app/assets/css/main.css`.
 
 Nuxt auto-imports are disabled (`imports.autoImport: false`, `components.dirs: []`). Import Vue APIs from `vue`, Nuxt and shared composables from `#imports`, shared components from `@nuxt-app/ui/components/*`, and server helpers from `h3`, `nitropack/runtime`, or `server/utils/`. `@nuxt-app/client` is a Nuxt layer with no ordinary composable subpath exports; app and admin extend it and import its exposed composables through `#imports`.
 
@@ -42,22 +42,37 @@ Use `*.spec.ts` for tests. Put frontend tests under `app/` or `test/`, API unit 
 
 Keep tests of internal Nuxt behavior beside implementation so the app's TypeScript context includes them. Root `test/**` and `packages/{config,types,logger}` Node tests use `tsconfig.test.json` through `pnpm type-check`.
 
-CI does not run `pnpm build`; run it locally for export, Nuxt config, or routing changes. Keep every environment variable read by Nuxt configs in `turbo.json`'s `build.env` list for strict environment filtering and caching. The current list is incomplete, including API-version, session-transport, and bearer settings.
+Run `pnpm build` for export, Nuxt config, or routing changes. Follow [the build guide](README.md#build) for Turbo environment declarations and their automated check.
 
 PRs should explain behavior changes, link issues, list validation, and include screenshots for visible UI changes. Do not run `git commit` or `git push`; those operations are reserved for the user.
 
 ## Commits and releases
 
-Write commit messages and PR titles in [Conventional Commits](https://www.conventionalcommits.org/). Commitlint enforces the format through the Husky `commit-msg` hook and a CI job on pull requests; merge commits are ignored. Adjust rules in `commitlint.config.js`. Run `pnpm commit` for an interactive Commitizen prompt backed by the same rules, or load the `conventional-commit-message` skill in `.agents/skills/` to have an agent write them.
+Write commit messages and PR titles in [Conventional Commits](https://www.conventionalcommits.org/); rules are in `commitlint.config.js`. For generated messages, use the `conventional-commit-message` skill in `.agents/skills/`.
 
-Squash feature PRs into `develop`; their PR titles become the feature commits. Cut `release/<candidate>` from `develop` for staging and UAT. Use merge commits for release promotion into `main` and for merging release fixes or production hotfixes back into `develop`. Preserve individual Conventional Commits through promotion so semantic-release can analyze them. When preparing a release, promotion, or hotfix, follow the [release workflow](README.md#release-workflow).
+When preparing a release, promotion, or hotfix, follow [the release workflow](README.md#release-workflow). For semantic-release behavior and dependency constraints, read [Releases](README.md#releases).
 
-Releases are automated by [semantic-release](https://semantic-release.org/) through the manual production workflow. With Vercel enabled, all four apps must deploy successfully before publishing. While Vercel is disabled, the documented temporary release-only mode publishes after CI verification. Failed verification or deployment prevents publishing. CI verification, Vite Doctor, and coverage must pass for the selected `main` commit, which must remain at the head of `main` when publishing. It reads the Conventional Commits since the last release, computes the next version, creates the tag, and creates the GitHub release with generated notes. It writes no files and opens no pull request, so the repository keeps no `CHANGELOG.md` and no version bump. Configuration is in `.releaserc.json`.
+## Agent skills
 
-Keep `conventional-changelog-conventionalcommits` at 9.3.x. Version 10 needs `conventional-changelog-writer` 9, and `@semantic-release/release-notes-generator` 14 ships writer 8. See [Releases](README.md#releases).
+### Issue tracker
 
-The first release is `1.0.0`, semantic-release's default when no prior tag exists. Afterwards `fix` and `perf` bump a patch, `feat` bumps a minor, and a `BREAKING CHANGE` bumps a major. The version and notes come from commit messages, so keep the history Conventional Commits; scopes are free-form and do not affect the bump.
+When creating or updating a local issue or spec, follow [the issue tracker guide](docs/agents/issue-tracker.md). Issues and specs live as markdown files under `.scratch/<feature>/`.
 
-## Issues and domain docs
+### Triage labels
 
-When creating or updating a local issue or spec, follow [the issue tracker guide](docs/agents/issue-tracker.md). When triaging, use the values in [triage labels](docs/agents/triage-labels.md). When a task turns on domain terminology or an ADR decision, follow [the domain docs guide](docs/agents/domain.md).
+When triaging, use the values in [triage labels](docs/agents/triage-labels.md). The five canonical roles use their own names: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, and `wontfix`.
+
+### Domain docs
+
+When a task turns on domain terminology or an ADR decision, follow [the domain docs guide](docs/agents/domain.md). Single-context: one root `GLOSSARY.md` and ADRs in `docs/adr/`.
+
+<!-- BEGIN:turborepo-agent-rules -->
+
+## This is NOT the Turborepo you know
+
+Turborepo configuration, task behavior, and CLI commands can vary between installed versions and may differ from your training data. Resolve the `turbo` package from this file's directory or relevant workspace; in monorepos, it may not be visible from the repository root. For example, run `node -p "require.resolve('turbo/package.json')"` from a workspace that depends on `turbo`.
+
+Read `docs/README.md` inside that installed package first, then read the relevant pages from its `docs/` directory before changing Turborepo configuration or commands. Heed deprecation notices. These bundled docs match the installed package version and are available without network access.
+
+This block is written and re-added by `turbo` before repository-scoped commands when an AI agent is detected. In the Turborepo source repository, its template is defined in `crates/turborepo-cli/src/cli/agent_guidance.rs`. Removing the managed block while updates are enabled means a later qualifying invocation will add it again. Set `"agentGuidance": false` in the root `turbo.json` or `turbo.jsonc` to opt out; this does not remove an existing block. Keep the block committed with your work to avoid an uncommitted change on the next agent invocation.
+<!-- END:turborepo-agent-rules -->
