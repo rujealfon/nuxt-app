@@ -58,20 +58,16 @@ Keep `conventional-changelog-conventionalcommits` at 9.3.x. Version 10 needs `co
 
 The first release is `1.0.0`, semantic-release's default when no prior tag exists. Afterwards `fix` and `perf` bump a patch, `feat` bumps a minor, and a `BREAKING CHANGE` bumps a major. The version and notes come from commit messages, so keep the history Conventional Commits; scopes are free-form and do not affect the bump.
 
-## Issues and domain docs
-
-When creating or updating a local issue or spec, follow [the issue tracker guide](docs/agents/issue-tracker.md). When triaging, use the values in [triage labels](docs/agents/triage-labels.md). When a task turns on domain terminology or an ADR decision, follow [the domain docs guide](docs/agents/domain.md).
-
 ## Agent skills
 
 ### Issue tracker
 
-Issues and specs live as markdown files under `.scratch/<feature>/`. See `docs/agents/issue-tracker.md`.
+When creating or updating a local issue or spec, follow [the issue tracker guide](docs/agents/issue-tracker.md). Issues and specs live as markdown files under `.scratch/<feature>/`.
 
 ### Triage labels
 
-The five canonical roles use their own names: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, and `wontfix`. See `docs/agents/triage-labels.md`.
+When triaging, use the values in [triage labels](docs/agents/triage-labels.md). The five canonical roles use their own names: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, and `wontfix`.
 
 ### Domain docs
 
-Single-context: one root `GLOSSARY.md` and ADRs in `docs/adr/`. See `docs/agents/domain.md`.
+When a task turns on domain terminology or an ADR decision, follow [the domain docs guide](docs/agents/domain.md). Single-context: one root `GLOSSARY.md` and ADRs in `docs/adr/`.
