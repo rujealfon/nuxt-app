@@ -15,7 +15,7 @@
   },
   "dependencies": {
     "@nuxt-app/config": "workspace:*",
-    "@nuxt/ui": "^4.11.2",
+    "@nuxt/ui": "^4.11.3",
     "@vueuse/nuxt": "^15.0.0",
     "tailwindcss": "^4.3.3"
   },
