@@ -22,7 +22,7 @@ Nuxt auto-imports are disabled (`imports.autoImport: false`, `components.dirs: [
 
 Use Node 22.23.2 or newer within the 22.x line, matching CI, and the pnpm version pinned in `package.json`. Keep `@types/node` on 22. A newer major describes APIs from a later Node line. Dependabot ignores that major update. Run commands from the repository root unless a filter is shown. `pnpm install` runs `nuxt:prepare` across apps and layers; dependencies with required install scripts need entries in `pnpm-workspace.yaml`'s `allowBuilds`.
 
-Before running an app locally, copy its `.env.example` to `.env` if the file is absent. Frontend examples use production origins. Local web, app, and admin use ports 3000, 3001, and 3002; the API uses 3003. Set frontend URLs and API `CORS_ORIGINS` to the local origins. API startup requires `DATABASE_URL`, `REDIS_URL`, a valid `BETTER_AUTH_URL`, and a `BETTER_AUTH_SECRET` of at least 32 characters.
+Before running an app locally, copy its `.env.example` to `.env` if the file is absent. Frontend examples use production origins. Local web, app, and admin use ports 3000, 3001, and 3002; the API uses 3003. Before driving a local origin, confirm the listener's working directory is this repository. Configured site URLs can point at a port another project owns. Set frontend URLs and API `CORS_ORIGINS` to the local origins. API startup requires `DATABASE_URL`, `REDIS_URL`, a valid `BETTER_AUTH_URL`, and a `BETTER_AUTH_SECRET` of at least 32 characters.
 
 Use `pnpm dev:web`, `pnpm dev:app`, `pnpm dev:admin`, or `pnpm dev:api` for one app; `pnpm dev` starts all four. `pnpm dev:stop` kills every listener on ports 3000-3003, so use it only when those ports can be cleared.
 
