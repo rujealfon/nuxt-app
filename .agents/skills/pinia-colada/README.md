@@ -1,44 +1,36 @@
 # Pinia Colada skill
 
-Build, review, migrate, test, and troubleshoot asynchronous data workflows
-with Pinia Colada in Vue and Nuxt applications.
+Queries, mutations, cache consistency, Nuxt integration, and async data diagnostics.
 
-## Version
+## Use in this repository
 
-- Skill version: **1.0.2**. See [CHANGELOG.md](CHANGELOG.md).
-- Tracks: `@pinia/colada` 1.x — verified against 1.4.5 on 2026-09-21
-- Docs: https://pinia-colada.esm.dev/llms.txt
-
-## Installation
-
-Install the skill with:
-
-```bash
-npx skills add rujealfon/skills --skill pinia-colada
-```
-
-Then ask your agent:
+This skill is installed under `.agents/skills/pinia-colada`. Invoke it by name:
 
 ```text
 Use $pinia-colada to implement and verify async data fetching in this Vue application.
 ```
 
-## Coverage
+Read [SKILL.md](SKILL.md) for the workflow and task-specific reference pointers.
+Use that index to select references for the change you are making.
 
-Queries, mutations, cache, Vue/Nuxt/SSR, official plugins, persistence, TanStack Vue Query migration, and `PINIA_COLADA_*` diagnostics. The installed `@pinia/colada` declarations remain the API authority.
+## Version
 
-Won't add: community plugin directory.
+The [changelog](CHANGELOG.md) records skill versions separately from package
+versions. The bundled references have these verification baselines:
 
-## Contents
+| Package | Reference baseline | Last verification |
+| --- | --- | --- |
+| `@pinia/colada` | 1.4.5 | 2026-09-21 |
 
-- [SKILL.md](SKILL.md) contains the core agent workflow.
-- [references/queries.md](references/queries.md) covers query design and state.
-- [references/cache-and-mutations.md](references/cache-and-mutations.md) covers cache consistency and writes.
-- [references/integrations.md](references/integrations.md) covers Vue, Nuxt, SSR, and testing.
-- [references/plugins-and-persistence.md](references/plugins-and-persistence.md) covers plugins and persistent caches.
-- [references/migration.md](references/migration.md) covers migrations and compatibility.
-- [references/troubleshooting.md](references/troubleshooting.md) covers diagnostics and runtime errors.
+Use the project's installed package declarations and source as the API authority.
+For details they do not resolve, consult the [official documentation index](https://pinia-colada.esm.dev/llms.txt).
+A reference baseline records past verification, not the latest upstream release.
 
-## License
+## Install elsewhere
 
-Repository content is available under the root [MIT License](../../LICENSE).
+```bash
+npx skills add rujealfon/skills --skill pinia-colada
+```
+
+[skills-lock.json](../../../skills-lock.json) records the upstream source and
+installed skill metadata for this repository.
