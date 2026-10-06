@@ -50,8 +50,11 @@ Database code lives in `server/database/`. After changing Better Auth
 configuration, run `pnpm db:auth:generate`, then `pnpm db:generate`. Review
 `auth-schema.ts` and the generated SQL before `pnpm db:migrate`. Drizzle loads
 `DATABASE_URL` from `apps/api/.env` or the process environment, even during
-generation. The auth generator is pinned to 1.7.4 while the runtime dependency
-is `better-auth ^1.7.5`; review that split before changing either version.
+generation. `pnpm db:test:*` manages a separate `nuxt_app_test` database through
+`TEST_DATABASE_URL`; a guard refuses database names that do not end in `_test`,
+so tests and test scripts cannot reach `nuxt_app_db`. The auth generator is
+pinned to 1.7.4 while the runtime dependency is `better-auth ^1.7.5`; review
+that split before changing either version.
 
 Before changing database drivers or transaction behavior, read
 [ADR 0002](../../docs/adr/0002-database-capability-seam.md). `useDb()` omits
@@ -77,6 +80,8 @@ only Scalar docs use the dev server in `test/e2e-dev/`. Run these with the `api`
 and `api-dev` projects respectively. The `redis` project checks `ping()` and
 the rate-limit Lua reply against Redis on `127.0.0.1:6381`. It skips when that
 port is closed; CI verify fails it when the port is closed. Existing HTTP
-integration tests disable rate limiting and need no external services. Use mocks
-or explicit fixtures for new tests. When changing routes, check response bodies, status
-codes, version headers, and failure paths.
+integration tests disable rate limiting and need no external services. The
+`api` and `api-dev` projects point `DATABASE_URL` at `nuxt_app_test`; specs that
+need the database should skip when it is unreachable, like the `redis` project.
+Use mocks or explicit fixtures for new tests. When changing routes, check
+response bodies, status codes, version headers, and failure paths.

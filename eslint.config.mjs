@@ -27,7 +27,7 @@ export default antfu({
     'pnpm/yaml-enforce-settings': 'off',
   },
 }, {
-  files: ['**/seed.ts'],
+  files: ['**/seed.ts', '**/test-db.ts'],
   rules: {
     'no-console': 'off',
   },

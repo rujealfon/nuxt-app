@@ -163,6 +163,7 @@ pnpm db:reset  # DESTRUCTIVE: down -v (wipes data) then rebuild + up
 ```
 
 - Postgres: `postgres://nuxt_app_user:nuxt_app_password@localhost:55432/nuxt_app_db`
+- Test Postgres: `postgres://nuxt_app_user:nuxt_app_password@localhost:55432/nuxt_app_test`
 - Redis: `redis://localhost:6381`
 
 Drizzle Studio runs on host port `4984`; `db:up` starts it with the other
@@ -205,6 +206,28 @@ The seed signs up `dev@nuxt-app.com` / `password123` (override with `SEED_EMAIL`
 `SEED_PASSWORD`) through Better Auth and grants it the `admin` role.
 If that email already exists, the seed deletes its user, accounts, and sessions
 before recreating it. Run it only against a disposable development account.
+
+### Test database
+
+`nuxt_app_test` is a second database in the same Postgres container. The `api`
+and `api-dev` Vitest projects run against it through `TEST_DATABASE_URL`, and
+every `db:test:*` command refuses a URL whose database name does not end in
+`_test`, so tests and these scripts cannot reach `nuxt_app_db`. `pnpm db:up`
+creates the database when it is missing; the init script under
+`docker/postgres/init/` covers fresh volumes.
+
+```bash
+pnpm db:test:create   # create nuxt_app_test if missing
+pnpm db:test:migrate  # apply migrations to the test database
+pnpm db:test:push     # push schema without migrations (disposable prototyping)
+pnpm db:test:seed     # seed the test database
+pnpm db:test:reset    # drop and recreate only nuxt_app_test
+```
+
+`db:test:migrate`, `db:test:push`, and `db:test:seed` create the database first
+when needed. The scripts read `TEST_DATABASE_URL` from `apps/api/.env` or the
+process environment and fall back to
+`postgres://nuxt_app_user:nuxt_app_password@localhost:55432/nuxt_app_test`.
 
 `GET /api/health/ready` pings Postgres and Redis.
 
@@ -256,8 +279,9 @@ recommended settings from the config's README.
 [Vitest](https://vitest.dev) and [`@nuxt/test-utils`](https://nuxt.com/docs/4.x/getting-started/testing)
 run through projects in the root `vitest.config.ts`. Local `pnpm test` needs no
 Docker. The `redis` project skips unless Redis is listening on `127.0.0.1:6381`
-(`pnpm db:up`). CI verify starts `redis:8-alpine` on that port and fails the
-spec when the port is closed.
+(`pnpm db:up`). Postgres-backed specs should follow that pattern and skip when
+`nuxt_app_test` is unreachable. CI verify starts `redis:8-alpine` on that port
+and fails the spec when the port is closed.
 
 ```bash
 pnpm test                 # run everything once
@@ -273,7 +297,8 @@ pnpm test --project api-dev # development API docs tests
   versioning, auth error responses, and JSON 404s for development-only docs.
 - `api-dev` (HTTP integration): starts the development server to check Scalar,
   OpenAPI, and the self-hosted docs asset. Both HTTP projects disable the API
-  middleware rate limiter with `RATE_LIMIT_ENABLED=false`.
+  middleware rate limiter with `RATE_LIMIT_ENABLED=false` and point
+  `DATABASE_URL` at `nuxt_app_test` instead of the development database.
 - `redis` (Node environment): `ping()` and the rate-limit Lua reply against Redis
   on `127.0.0.1:6381`. Skips when the port is closed.
 - `ui`, `client`, `web`, `app`, `admin` (Nuxt environment): composables, components,

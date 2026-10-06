@@ -26,7 +26,10 @@ Before running an app locally, copy its `.env.example` to `.env` if the file is 
 
 Use `pnpm dev:web`, `pnpm dev:app`, `pnpm dev:admin`, or `pnpm dev:api` for one app; `pnpm dev` starts all four. `pnpm dev:stop` kills every listener on ports 3000-3003, so use it only when those ports can be cleared.
 
-`pnpm db:up` starts local Postgres, Redis, and Drizzle Studio. `pnpm db:reset` deletes their volumes; `pnpm db:push` skips migration files. Reserve both for disposable prototyping. Follow [the API guide](apps/api/AGENTS.md) for schema generation and migrations.
+`pnpm db:up` starts local Postgres, Redis, and Drizzle Studio, and creates the
+`nuxt_app_test` database when missing. `pnpm db:reset` deletes their volumes;
+`pnpm db:push` skips migration files. Reserve both for disposable prototyping.
+Follow [the API guide](apps/api/AGENTS.md) for schema generation and migrations.
 
 Dependency updates arrive as Dependabot pull requests. Review the version change. Configuration is in [`.github/dependabot.yml`](.github/dependabot.yml). See [Dependencies](README.md#dependencies).
 
@@ -36,7 +39,7 @@ For Vercel deployment, follow the [manual production deployment guide](README.md
 
 Before review, run `pnpm lint`, then `pnpm type-check`, then `pnpm test`. Lint uses the split-process ESLint runner in `scripts/lint.mjs`, then Steiger. `pnpm lint:fix` fixes ESLint only, so rerun `pnpm lint` afterward. There is no standalone repository formatter. When adding a frontend app, extend `lint:structure` and the `nuxtProject()` list in `vitest.config.ts`.
 
-Focus workspace commands with `pnpm --filter @nuxt-app/<package> <script>` and tests with `pnpm test --project <name> [file]`. Vitest projects are `unit`, `api`, `api-dev`, `redis`, `ui`, `client`, `web`, `app`, and `admin`. Local `pnpm test` needs no Docker: the `redis` project skips unless Redis is listening on `127.0.0.1:6381` (`pnpm db:up`). CI verify starts `redis:8-alpine` on that port and fails the spec when the port is closed. `api` and `api-dev` launch real Nitro servers in production and development modes.
+Focus workspace commands with `pnpm --filter @nuxt-app/<package> <script>` and tests with `pnpm test --project <name> [file]`. Vitest projects are `unit`, `api`, `api-dev`, `redis`, `ui`, `client`, `web`, `app`, and `admin`. Local `pnpm test` needs no Docker: the `redis` project skips unless Redis is listening on `127.0.0.1:6381` (`pnpm db:up`). CI verify starts `redis:8-alpine` on that port and fails the spec when the port is closed. `api` and `api-dev` launch real Nitro servers in production and development modes, both pointed at the `nuxt_app_test` database through `TEST_DATABASE_URL`.
 
 Use `*.spec.ts` for tests. Put frontend tests under `app/` or `test/`, API unit tests beside server code, and API HTTP tests in `apps/api/test/e2e/` or `apps/api/test/e2e-dev/`. Cover changed behavior and regressions. Extend coverage `include` globs and the `test:coverage:ci` project list when adding a source root if needed. That command enforces 90% thresholds and excludes the `api`, `api-dev`, and `redis` projects.
 
