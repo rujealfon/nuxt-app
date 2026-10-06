@@ -17,34 +17,34 @@ Quick-reference index of all 125+ components. For full API docs (props, slots, e
 
 ## Element
 
-| Component        | Purpose                                              |
-| ---------------- | ---------------------------------------------------- |
-| `UButton`        | Buttons — links, actions, icons, loading states      |
-| `UBadge`         | Labels, tags, status indicators                      |
-| `UAvatar`        | User photos, initials, icons                         |
-| `UAvatarGroup`   | Stacked avatars with `max` limit                     |
-| `UIcon`          | Iconify icons (`i-{collection}-{name}`)              |
-| `UCard`          | Bordered container with header/body/footer           |
-| `UAlert`         | Inline messages — info, warning, error, success      |
-| `UBanner`        | App-wide sticky announcement bar                     |
-| `UChip`          | Notification dot overlay on children                 |
-| `UKbd`           | Keyboard key display                                 |
-| `USeparator`     | Divider line with optional label                     |
-| `USkeleton`      | Loading placeholder                                  |
-| `UProgress`      | Progress bar                                         |
-| `UProgressGroup` | Segmented progress bar with a list of items          |
-| `UToast`         | Toast notification (shown via `useToast`)            |
-| `UCalendar`      | Date calendar (single, range, multiple)              |
-| `UCollapsible`   | Animated expand/collapse                             |
-| `UFieldGroup`    | Group form inputs horizontally                       |
-| `UMarquee`       | Scrolling content ticker                             |
-| `UCarousel`      | Image/content carousel with autoplay                 |
-| `UEmpty`         | Empty state placeholder with icon, title, actions    |
-| `UError`         | Error display with retry action                      |
-| `UScrollArea`    | Scrollable area with custom scrollbar                |
-| `UTimeline`      | Timeline display for events and activity             |
-| `UUser`          | User display — avatar + name + description           |
-| `UTheme`         | Theme provider — scoped color overrides for children |
+| Component        | Purpose                                                     |
+| ---------------- | ----------------------------------------------------------- |
+| `UButton`        | Buttons — links, actions, icons, loading states             |
+| `UBadge`         | Labels, tags, status indicators                             |
+| `UAvatar`        | User photos, initials, icons                                |
+| `UAvatarGroup`   | Stacked avatars with `max` limit                            |
+| `UIcon`          | Iconify icons (`i-{collection}-{name}`)                     |
+| `UCard`          | Bordered container with header/body/footer                  |
+| `UAlert`         | Inline messages — info, warning, error, success             |
+| `UBanner`        | App-wide sticky announcement bar                            |
+| `UChip`          | Notification dot overlay on children                        |
+| `UKbd`           | Keyboard key display                                        |
+| `USeparator`     | Divider line with optional label                            |
+| `USkeleton`      | Loading placeholder                                         |
+| `UProgress`      | Progress bar                                                |
+| `UProgressGroup` | Segmented progress bar with a list of items                 |
+| `UToast`         | Toast notification (shown via `useToast`)                   |
+| `UCalendar`      | Date calendar (single, range, multiple)                     |
+| `UCollapsible`   | Animated expand/collapse                                    |
+| `UFieldGroup`    | Group form inputs horizontally                              |
+| `UMarquee`       | Scrolling content ticker                                    |
+| `UCarousel`      | Image/content carousel with autoplay                        |
+| `UEmpty`         | Empty state placeholder with icon, title, actions           |
+| `UError`         | Error display with retry action                             |
+| `UScrollArea`    | Scrollable area with custom scrollbar                       |
+| `UTimeline`      | Timeline display for events and activity                    |
+| `UUser`          | User display — avatar + name + description                  |
+| `UTheme`         | Scoped `ui` class overrides and prop defaults for a subtree |
 
 ## Form
 
@@ -57,9 +57,12 @@ Quick-reference index of all 125+ components. For full API docs (props, slots, e
 | `USelectMenu`    | Rich searchable dropdown, multi-select, groups |
 | `UInputMenu`     | Autocomplete / combobox                        |
 | `UInputNumber`   | Numeric input with +/- controls                |
+| `UInputRating`   | Rating input                                   |
 | `UInputDate`     | Date picker with calendar                      |
 | `UInputTime`     | Time picker (12/24h)                           |
 | `UInputTags`     | Tag/chip input                                 |
+| `UListbox`       | Selectable list with search and virtualization |
+| `ULocaleSelect`  | Select to switch between locales               |
 | `UPinInput`      | Verification code input                        |
 | `UCheckbox`      | Single boolean checkbox                        |
 | `UCheckboxGroup` | Multiple checkboxes                            |
