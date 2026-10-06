@@ -23,10 +23,10 @@ export default defineNuxtConfig({
   routeRules: {
     '/': { prerender: true },
   },
-  nitro: {
-    prerender: {
-      crawlLinks: true,
-    },
+  // Top-level alias for `nitro.prerender`. Crawl stays on Nuxt's config so it
+  // is not tied to one server builder.
+  prerender: {
+    crawlLinks: true,
   },
   runtimeConfig: {
     public: {

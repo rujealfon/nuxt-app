@@ -29,7 +29,7 @@ Rendering modes:
 
 | App | Mode |
 | --- | --- |
-| Web | Prerendered at build (`nuxt build`, `routeRules` + `nitro.prerender`) |
+| Web | Prerendered at build (`nuxt build`, `routeRules` + `prerender`) |
 | App | SPA (`ssr: false`) |
 | Admin | SPA (`ssr: false`), protected by Better Auth (`role === 'admin'`) |
 | API | Server (Nitro routes) |

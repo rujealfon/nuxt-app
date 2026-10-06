@@ -65,7 +65,7 @@
     "happy-dom": "^20.14.5",
     "husky": "^9.1.7",
     "lint-staged": "^17.6.0",
-    "nuxt": "^4.5.2",
+    "nuxt": "^4.6.0",
     "prettier": "^3.9.9",
     "prettier-plugin-css-order": "^2.2.0",
     "semantic-release": "^25.0.9",

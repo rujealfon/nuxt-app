@@ -16,7 +16,7 @@ layer are not available without explicitly adding that layer.
 
 ## Rendering and navigation
 
-The home route is prerendered, and Nitro crawls links during the build. Keep
+The home route is prerendered. `prerender.crawlLinks` crawls links during the build. Keep
 public pages compatible with build-time rendering. Access browser-only APIs in
 client lifecycle hooks. Run `pnpm build` when adding routes or changing
 prerender configuration, and verify the expected pages in `.output/public/`.
