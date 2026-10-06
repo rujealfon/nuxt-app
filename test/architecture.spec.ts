@@ -13,7 +13,9 @@ async function violations(filePath: string, code: string) {
   const [result] = await eslint.lintText(code, { filePath })
   expect(result.fatalErrorCount).toBe(0)
   expect(result.messages.some(message => message.message.startsWith('Resolve error:'))).toBe(false)
-  return result.messages.filter(message => message.ruleId?.startsWith('boundaries/'))
+  return result.messages.filter(
+    message => message.ruleId?.startsWith('boundaries/') || message.ruleId === 'no-restricted-syntax',
+  )
 }
 
 describe('architecture import rules', () => {
@@ -30,10 +32,10 @@ describe('architecture import rules', () => {
     ['apps/app/app/features/auth/index.ts', 'export { default as LoginScreen } from \'./ui/LoginScreen.vue\''],
     ['apps/app/app/features/auth/model/form.ts', 'import LoginScreen from \'../ui/LoginScreen.vue\''],
     ['apps/app/app/workflows/login.ts', 'import { LoginScreen } from \'../features/auth\''],
-    ['apps/api/server/api/v1/hello.get.ts', 'import { getHelloMessage } from \'../../services/hello\''],
+    ['apps/api/server/api/v1/hello.get.ts', 'import { getHelloMessage } from \'#server/services/hello\''],
     ['apps/api/server/services/hello/index.ts', 'export { getHelloMessage } from \'./get-hello-message\''],
     ['apps/api/server/services/hello/hello.spec.ts', 'import { getHelloMessage } from \'./get-hello-message\''],
-    ['apps/api/server/workflows/greeting.ts', 'import { getHelloMessage } from \'../services/hello\''],
+    ['apps/api/server/workflows/greeting.ts', 'import { getHelloMessage } from \'#server/services/hello\''],
     ['apps/app/app/features/auth/model/form.ts', 'import { loginSchema } from \'@nuxt-app/types\''],
   ])('allows a supported dependency from %s', async (filePath, code) => {
     expect(await violations(filePath, code)).toEqual([])
@@ -49,6 +51,10 @@ describe('architecture import rules', () => {
     ['apps/app/app/features/auth/model/form.ts', 'import Page from \'../../../pages/login.vue\''],
     ['apps/api/server/api/v1/hello.get.ts', 'import { getHelloMessage } from \'../../services/hello/get-hello-message\''],
     ['apps/api/server/api/v1/hello.get.ts', 'import { getHelloMessage } from \'#server/services/hello/get-hello-message\''],
+    ['apps/api/server/api/v1/hello.get.ts', 'import { getHelloMessage } from \'../../services/hello\''],
+    ['apps/api/server/services/auth/handle-auth-request.ts', 'const load = () => import(\'../../utils/auth\')'],
+    ['apps/api/server/services/auth/auth-error-contract.ts', 'export { domainFailure } from \'../../utils/domain-failure\''],
+    ['apps/api/server/services/auth/auth-error-contract.ts', 'export * from \'../../utils/domain-failure\''],
     ['apps/api/server/workflows/greeting.ts', 'import { getHelloMessage } from \'../services/hello/get-hello-message\''],
     ['apps/api/server/services/orders/index.ts', 'import { getHelloMessage } from \'../hello\''],
     ['apps/api/server/services/hello/get-hello-message.ts', 'import handler from \'../../api/v1/hello.get\''],

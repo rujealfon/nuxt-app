@@ -1,8 +1,8 @@
 import { parseOrigins } from '@nuxt-app/config'
 import { defineNitroPlugin, useRuntimeConfig } from 'nitropack/runtime'
 import { z } from 'zod'
-import { assertAuthOrigins } from '../utils/auth-origins'
-import { bearerOrigins, isExplicitOrigin } from '../utils/bearer-origin'
+import { assertAuthOrigins } from '#server/utils/auth-origins'
+import { bearerOrigins, isExplicitOrigin } from '#server/utils/bearer-origin'
 
 export const envSchema = z.object({
   databaseUrl: z.string().min(1, 'DATABASE_URL is required'),

@@ -1,7 +1,7 @@
 import type { ApiErrorCode } from '@nuxt-app/types'
-import type { DomainFailure } from '../../utils/domain-failure'
-import { domainFailure } from '../../utils/domain-failure'
-import { concealedErrorFromStatus } from '../../utils/failure-contract'
+import type { DomainFailure } from '#server/utils/domain-failure'
+import { domainFailure } from '#server/utils/domain-failure'
+import { concealedErrorFromStatus } from '#server/utils/failure-contract'
 
 // Better Auth raises a fixed vocabulary of `code`s. Only the ones whose meaning
 // the HTTP status does not imply need an entry; everything else falls back to

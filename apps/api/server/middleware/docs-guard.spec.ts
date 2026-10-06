@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { DomainFailure } from '../utils/domain-failure'
+import { DomainFailure } from '#server/utils/domain-failure'
 
 const h3 = vi.hoisted(() => ({
   defineEventHandler: vi.fn((handler: unknown) => handler),

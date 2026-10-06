@@ -1,5 +1,5 @@
 import { eq } from 'drizzle-orm'
-import { createDb, parseDriver } from '../utils/db-core'
+import { createDb, parseDriver } from '#server/utils/db-core'
 import { createAuth } from './auth'
 import { user } from './schema'
 

@@ -28,6 +28,10 @@ function resolveTestDatabaseUrl() {
 
 const testDatabaseUrl = resolveTestDatabaseUrl()
 
+// Vite does not read tsconfig paths, so node-environment projects that run
+// server modules need an explicit alias for Nuxt's server directory.
+const serverDir = dir('apps/api/server')
+
 // Tests may be colocated next to source (`app/**`) or grouped under `test/**`.
 function nuxtProject(name: string, root: string, appName: string) {
   return defineVitestProject({
@@ -111,6 +115,7 @@ export default defineConfig({
     projects: [
       {
         define: { 'import.meta.server': true },
+        resolve: { alias: { '#server': serverDir } },
         test: {
           name: 'unit',
           environment: 'node',
@@ -129,6 +134,7 @@ export default defineConfig({
       },
       {
         define: { 'import.meta.server': true },
+        resolve: { alias: { '#server': serverDir } },
         test: {
           name: 'redis',
           environment: 'node',

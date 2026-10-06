@@ -1,4 +1,12 @@
 {
+  "compilerOptions": {
+    // Resolve Nuxt's server alias for tools outside the Nuxt build, such as
+    // `tsx`, which runs `server/database/seed.ts` for `pnpm db:seed`.
+    "paths": {
+      "#server": ["./server"],
+      "#server/*": ["./server/*"]
+    }
+  },
   "references": [
     { "path": "./.nuxt/tsconfig.app.json" },
     { "path": "./.nuxt/tsconfig.server.json" },

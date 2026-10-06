@@ -1,5 +1,5 @@
 import { defineEventHandler } from 'h3'
-import { healthResponseSchema } from '../utils/infra'
+import { healthResponseSchema } from '#server/utils/infra'
 
 export default defineEventHandler(() => {
   return healthResponseSchema.parse({

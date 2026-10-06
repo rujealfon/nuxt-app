@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { DomainFailure } from '../../utils/domain-failure'
+import { DomainFailure } from '#server/utils/domain-failure'
 
 const mocks = vi.hoisted(() => ({
   getItem: vi.fn(),

@@ -4,10 +4,10 @@
 import { authMount, versionedOperations } from '@nuxt-app/config'
 import { defineEventHandler, getRequestIP, setHeader } from 'h3'
 import { useRuntimeConfig } from 'nitropack/runtime'
-import { isDocsPath, requestPath } from '../utils/api-paths'
-import { domainFailure } from '../utils/domain-failure'
-import { createRateLimitStorage } from '../utils/rate-limit'
-import { rateLimitPolicy } from '../utils/rate-limit-policy'
+import { isDocsPath, requestPath } from '#server/utils/api-paths'
+import { domainFailure } from '#server/utils/domain-failure'
+import { createRateLimitStorage } from '#server/utils/rate-limit'
+import { rateLimitPolicy } from '#server/utils/rate-limit-policy'
 
 const EXEMPT_PATHS = [authMount, '/api/health']
 

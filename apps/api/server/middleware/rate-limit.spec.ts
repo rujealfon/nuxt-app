@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { DomainFailure } from '../utils/domain-failure'
+import { DomainFailure } from '#server/utils/domain-failure'
 
 const mocks = vi.hoisted(() => ({
   consume: vi.fn(),
@@ -18,7 +18,7 @@ vi.mock('nitropack/runtime', () => ({
   useRuntimeConfig: () => ({ rateLimitEnabled: mocks.state.rateLimitEnabled }),
 }))
 
-vi.mock('../utils/rate-limit', () => ({
+vi.mock('#server/utils/rate-limit', () => ({
   createRateLimitStorage: () => ({ consume: mocks.consume }),
 }))
 

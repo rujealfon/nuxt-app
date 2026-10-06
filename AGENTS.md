@@ -4,7 +4,7 @@
 
 This pnpm/Turbo workspace has four apps: `apps/web`, the prerendered public site; `apps/app`, the user SPA; `apps/admin`, the admin SPA; and `apps/api`, the Nitro server. Before editing an app, read its `AGENTS.md`. Keep app-specific code local and share code through `packages/`, never direct imports between apps.
 
-For frontend features, new API domains, or code shared by multiple consumers, follow [the architecture guide](docs/architecture.md). Keep substantial frontend behavior in `app/features/<feature>/` and small pages in `app/pages/`. Import features and services through their selected `index.ts` exports; use relative implementation imports within a module. Keep versioned API handlers thin and domain logic in `apps/api/server/services/<domain>/`. Reserve `server/workflows/` for cross-domain orchestration.
+For frontend features, new API domains, or code shared by multiple consumers, follow [the architecture guide](docs/architecture.md). Keep substantial frontend behavior in `app/features/<feature>/` and small pages in `app/pages/`. Import features and services through their selected `index.ts` exports; use relative implementation imports within a module, and import across folders in `apps/api/server/` with the `#server/...` alias. Keep versioned API handlers thin and domain logic in `apps/api/server/services/<domain>/`. Reserve `server/workflows/` for cross-domain orchestration.
 
 When deciding where frontend code belongs or reorganizing it, read the [Feature-Sliced Design skill](.agents/skills/feature-sliced-design/SKILL.md). Use the architecture guide and app `AGENTS.md` for this repository's paths and import rules.
 

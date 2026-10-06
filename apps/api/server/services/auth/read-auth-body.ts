@@ -1,6 +1,6 @@
 import type { H3Event } from 'h3'
 import { setResponseHeader } from 'h3'
-import { domainFailure } from '../../utils/domain-failure'
+import { domainFailure } from '#server/utils/domain-failure'
 
 export const authBodyLimit = 16 * 1024
 const rawBodySymbol = Symbol.for('h3RawBody')

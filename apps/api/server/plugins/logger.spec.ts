@@ -16,7 +16,7 @@ const mocks = vi.hoisted(() => {
 
 vi.mock('nitropack/runtime', () => ({ defineNitroPlugin: mocks.defineNitroPlugin }))
 vi.mock('h3', () => ({ getHeader: mocks.getHeader, setHeader: mocks.setHeader }))
-vi.mock('../utils/logger', () => ({ useLogger: mocks.useLogger }))
+vi.mock('#server/utils/logger', () => ({ useLogger: mocks.useLogger }))
 
 const plugin = (await import('./logger')).default as unknown as (app: unknown) => void
 

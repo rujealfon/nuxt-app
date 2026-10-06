@@ -1,6 +1,6 @@
 import { parseOrigins } from '@nuxt-app/config'
 import { useRuntimeConfig } from 'nitropack/runtime'
-import { createAuth } from '../database/auth'
+import { createAuth } from '#server/database/auth'
 import { useDb } from './db'
 import { createRateLimitStorage } from './rate-limit'
 

@@ -8,7 +8,9 @@ Put handlers in `server/api/`, domain logic in `server/services/<domain>/`, util
 in `server/utils/`, middleware in `server/middleware/`, and startup hooks in
 `server/plugins/`. Import each service through its domain's `index.ts`. Import
 utilities from `server/utils/` and framework helpers from `h3` or
-`nitropack/runtime`. Keep peer services independent and put cross-domain
+`nitropack/runtime`; import across server folders with `#server/...` and keep
+`./...` for files in the same folder. ESLint rejects parent-relative server
+imports. Keep peer services independent and put cross-domain
 orchestration in `server/workflows/` when needed. Before adding business
 operations, follow [backend patterns](../../docs/backend-patterns.md).
 

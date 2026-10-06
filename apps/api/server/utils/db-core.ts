@@ -5,7 +5,7 @@ import { neon } from '@neondatabase/serverless'
 import { drizzle as drizzleNeon } from 'drizzle-orm/neon-http'
 import { drizzle as drizzlePg } from 'drizzle-orm/node-postgres'
 import { Pool } from 'pg'
-import * as schema from '../database/schema'
+import * as schema from '#server/database/schema'
 
 // Framework-free database construction, shared by the Nitro runtime (`useDb`
 // in `db.ts`) and the CLI scripts (`seed.ts`, `better-auth.config.ts`). It must
