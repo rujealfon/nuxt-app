@@ -26,11 +26,18 @@ updates:
       include: scope
     # Keep the preset on 9.3.x. Version 10 needs writer 9; semantic-release ships writer 8.
     # @types/node majors follow Node majors. This repo stays on Node 22.
+    # h3 v2 needs the server runtime: @nuxt/nitro-server (Nitro 2.13) pins h3 1.x,
+    # and apps/api imports h3 directly, so a major bump resolves to v2 in tests
+    # while the Nitro build keeps bundling v1. Revisit with the h3 v2 code
+    # migration once Nuxt/Nitro pins h3 2.x.
     ignore:
       - dependency-name: conventional-changelog-conventionalcommits
         update-types:
           - version-update:semver-major
       - dependency-name: '@types/node'
+        update-types:
+          - version-update:semver-major
+      - dependency-name: h3
         update-types:
           - version-update:semver-major
     groups:
