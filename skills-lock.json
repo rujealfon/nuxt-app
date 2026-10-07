@@ -5,7 +5,7 @@
       "source": "rujealfon/skills",
       "sourceType": "github",
       "skillPath": "skills/drizzle-postgres/SKILL.md",
-      "computedHash": "5aff2c4f658b404184474eda554524692ea53258da559546bd1f942b27475ba0"
+      "computedHash": "cf2fce836d5fa75b5096d8a4937b7e24e147b01e6c1b77c9bd9ebc5d29585b7c"
     },
     "nuxt": {
       "source": "onmax/nuxt-skills",
@@ -29,7 +29,7 @@
       "source": "rujealfon/skills",
       "sourceType": "github",
       "skillPath": "skills/pinia-colada/SKILL.md",
-      "computedHash": "a5cb722b58786ac5afac4d2fddb5ec831cef83f72362b5379c2c8510e67852c5"
+      "computedHash": "7d95bb88a6d87671d74d9dc11c68e373e3dc49023a36260de4b998d33c982061"
     },
     "vue-best-practices": {
       "source": "onmax/nuxt-skills",
