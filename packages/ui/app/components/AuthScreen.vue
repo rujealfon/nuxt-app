@@ -50,7 +50,11 @@ function onSubmit(event: FormSubmitEvent<T>) {
         :title="title"
         :description="description"
         :icon="icon"
-        :submit="{ label: submitLabel, block: true, loading }"
+        :submit="{
+          label: submitLabel,
+          block: true,
+          loading,
+        }"
         @submit="onSubmit"
       >
         <template #validation>
