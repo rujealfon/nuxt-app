@@ -191,3 +191,7 @@ read [Releases](docs/releases.md).
 - Vercel configuration or production deployment:
   [Deployment](docs/deployment.md). It documents the release-only mode selected
   when `VERCEL_DEPLOYMENT_ENABLED` is unset or not `true`.
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).

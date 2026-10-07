@@ -2,6 +2,7 @@
   "name": "@nuxt-app/types",
   "type": "module",
   "private": true,
+  "license": "MIT",
   "exports": {
     ".": "./src/index.ts"
   },

@@ -3,6 +3,7 @@
   "type": "module",
   "private": true,
   "packageManager": "pnpm@11.28.5",
+  "license": "MIT",
   "repository": "github:rujealfon/nuxt-app",
   "engines": {
     "node": ">=22.23.2 <23"
