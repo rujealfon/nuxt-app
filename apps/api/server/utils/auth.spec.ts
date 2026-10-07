@@ -21,7 +21,7 @@ const mocks = vi.hoisted(() => {
 })
 
 vi.mock('nitropack/runtime', () => ({ useRuntimeConfig: () => mocks.state }))
-vi.mock('../database/auth', () => ({ createAuth: mocks.createAuth }))
+vi.mock('#server/database/auth', () => ({ createAuth: mocks.createAuth }))
 vi.mock('./db', () => ({ useDb: mocks.useDb }))
 vi.mock('./rate-limit', () => ({ createRateLimitStorage: mocks.createRateLimitStorage }))
 

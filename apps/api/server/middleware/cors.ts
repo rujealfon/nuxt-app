@@ -1,7 +1,7 @@
 import { parseOrigins, sessionTokenHeader } from '@nuxt-app/config'
 import { defineEventHandler, getHeader, setHeader, setResponseStatus } from 'h3'
 import { useRuntimeConfig } from 'nitropack/runtime'
-import { canExposeBearerToken } from '../utils/bearer-origin'
+import { canExposeBearerToken } from '#server/utils/bearer-origin'
 
 export default defineEventHandler((event) => {
   const config = useRuntimeConfig(event)

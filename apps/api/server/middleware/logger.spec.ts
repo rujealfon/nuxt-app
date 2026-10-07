@@ -15,7 +15,7 @@ vi.mock('h3', () => ({
   defineEventHandler: mocks.defineEventHandler,
   getResponseStatus: mocks.getResponseStatus,
 }))
-vi.mock('../utils/logger', () => ({ useLogger: mocks.useLogger }))
+vi.mock('#server/utils/logger', () => ({ useLogger: mocks.useLogger }))
 
 const handler = (await import('./logger')).default as unknown as (event: unknown) => void
 

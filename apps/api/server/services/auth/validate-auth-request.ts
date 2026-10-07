@@ -1,7 +1,7 @@
-import type { DomainFailure } from '../../utils/domain-failure'
+import type { DomainFailure } from '#server/utils/domain-failure'
 import { authMount } from '@nuxt-app/config'
 import { loginSchema, registerSchema } from '@nuxt-app/types'
-import { invalidInputFromZod } from '../../utils/domain-failure'
+import { invalidInputFromZod } from '#server/utils/domain-failure'
 
 // The password flows the API documents, keyed by the path relative to
 // `/api/auth`. The request bodies are the same shared schemas the client forms

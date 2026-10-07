@@ -1,6 +1,6 @@
 import { defineEventHandler, setHeader } from 'h3'
 import { useStorage } from 'nitropack/runtime'
-import { domainFailure } from '../../utils/domain-failure'
+import { domainFailure } from '#server/utils/domain-failure'
 
 // Self-hosted Scalar UI bundle so `/api/docs` works offline and stays
 // version-pinned with the API. Embedded at build time through

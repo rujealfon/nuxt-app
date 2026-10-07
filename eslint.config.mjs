@@ -1,7 +1,7 @@
 import antfu from '@antfu/eslint-config'
 import betterTailwindcss from 'eslint-plugin-better-tailwindcss'
 import vuejsAccessibility from 'eslint-plugin-vuejs-accessibility'
-import { architecture, workspaceResolvers } from './eslint.architecture.mjs'
+import { architecture, serverAliasGuard, workspaceResolvers } from './eslint.architecture.mjs'
 
 export default antfu({
   type: 'app',
@@ -27,7 +27,7 @@ export default antfu({
     'pnpm/yaml-enforce-settings': 'off',
   },
 }, {
-  files: ['**/seed.ts'],
+  files: ['**/seed.ts', '**/test-db.ts'],
   rules: {
     'no-console': 'off',
   },
@@ -101,4 +101,4 @@ export default antfu({
       entryPoint: 'app/assets/css/main.css',
     },
   },
-}, architecture, ...workspaceResolvers)
+}, architecture, serverAliasGuard, ...workspaceResolvers)

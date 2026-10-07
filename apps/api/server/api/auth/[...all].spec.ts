@@ -6,7 +6,7 @@ const mocks = vi.hoisted(() => ({
 }))
 
 vi.mock('h3', () => ({ defineEventHandler: mocks.defineEventHandler }))
-vi.mock('../../services/auth', () => ({ handleAuthRequest: mocks.handleAuthRequest }))
+vi.mock('#server/services/auth', () => ({ handleAuthRequest: mocks.handleAuthRequest }))
 
 const route = (await import('./[...all]')).default as unknown as (event: unknown) => unknown
 

@@ -1,12 +1,6 @@
 {
   "version": 1,
   "skills": {
-    "conventional-commit-message": {
-      "source": "conventional-changelog/conventional-changelog",
-      "sourceType": "github",
-      "skillPath": "skills/conventional-commit-message/SKILL.md",
-      "computedHash": "6ae250d67edc757e2e54163dae2d32f7b44bd8827231cbab2895db8fc0331ac3"
-    },
     "drizzle-postgres": {
       "source": "rujealfon/skills",
       "sourceType": "github",
@@ -17,19 +11,19 @@
       "source": "onmax/nuxt-skills",
       "sourceType": "github",
       "skillPath": "skills/nuxt/SKILL.md",
-      "computedHash": "48b941815cebc7c8057249e8c4a1caf7416c059b71dca1dd67a2f8972f4cccd6"
+      "computedHash": "fe1e046ff8a01c55d1b1ea68711cadf9161ed846ca0fb27ff883c027d8f3c180"
     },
     "nuxt-ui": {
       "source": "onmax/nuxt-skills",
       "sourceType": "github",
       "skillPath": "skills/nuxt-ui/SKILL.md",
-      "computedHash": "72acbf25ef51d20a455b96ec834592855b2982964fe87f7d8620291c95a53301"
+      "computedHash": "d177489e1be5f8acd2cfbf986781694b9a3a3cbad23649d0d83b5288e53d7f20"
     },
     "pinia": {
       "source": "onmax/nuxt-skills",
       "sourceType": "github",
       "skillPath": "skills/pinia/SKILL.md",
-      "computedHash": "1a75383fb39f74378c69073b8d4fa893e8ed3ee330df77f9be994bdaac8294c6"
+      "computedHash": "8a7b03a50dd4b5aac92ce06bb8d48b724092b92384ae816fbba970bb7efe47ef"
     },
     "pinia-colada": {
       "source": "rujealfon/skills",
@@ -53,7 +47,7 @@
       "source": "onmax/nuxt-skills",
       "sourceType": "github",
       "skillPath": "skills/vueuse-functions/SKILL.md",
-      "computedHash": "5d35cf3b3d9dd3054242d044103bf36a3811f086503369333de3e531ff498981"
+      "computedHash": "69a1d8d44fe336f8d5f06f075be8b22c7847d818ad4d15b0605baa45674bf758"
     },
     "zod": {
       "source": "rujealfon/skills",

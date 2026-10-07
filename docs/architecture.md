@@ -28,14 +28,17 @@ Each feature and service exposes selected exports through `index.ts`. Import
 that entrypoint explicitly from outside the module:
 
 ```ts
+// API handler
+import { getHelloMessage } from '#server/services/hello'
+
 // Frontend route
 import { LoginScreen } from '~/features/auth'
-
-// API handler
-import { getHelloMessage } from '../../services/hello'
 ```
 
-Inside the module, use relative imports to implementation files. Keep tests
+Inside the module, use relative imports to implementation files. In
+`apps/api/server`, import across folders with the `#server/...` alias and keep
+`./...` for files in the same folder; ESLint rejects parent-relative server
+imports. Keep tests
 beside the implementation when they exercise internal behavior; route-level
 integration tests can remain in an app's `test/` directory and mount the real
 route. Implementation files should import one another by relative path to avoid

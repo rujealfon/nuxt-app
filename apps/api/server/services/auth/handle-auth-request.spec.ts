@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { DomainFailure } from '../../utils/domain-failure'
+import { DomainFailure } from '#server/utils/domain-failure'
 
 const mocks = vi.hoisted(() => {
   const handler = vi.fn()
@@ -34,8 +34,8 @@ vi.mock('h3', () => ({
 }))
 
 vi.mock('nitropack/runtime', () => ({ useRuntimeConfig: () => mocks.config }))
-vi.mock('../../utils/auth', () => ({ useAuth: mocks.useAuth }))
-vi.mock('../../utils/rate-limit', () => ({ createRateLimitStorage: () => ({ consume: mocks.consume }) }))
+vi.mock('#server/utils/auth', () => ({ useAuth: mocks.useAuth }))
+vi.mock('#server/utils/rate-limit', () => ({ createRateLimitStorage: () => ({ consume: mocks.consume }) }))
 vi.mock('./read-auth-body', () => ({ readAuthBody: mocks.readAuthBody, closeAuthUpload: vi.fn() }))
 
 const { handleAuthRequest } = await import('./handle-auth-request')
@@ -343,7 +343,7 @@ describe('authentication rate-limit boundary', () => {
 
   it('keeps rotating forged forwarding headers in one budget and permits another real client', async () => {
     vi.stubEnv('VERCEL', '')
-    const { createAuth } = await import('../../database/auth')
+    const { createAuth } = await import('#server/database/auth')
     const counts = new Map<string, number>()
     const consume = vi.fn(async (key: string, rule: { max: number }) => {
       const count = (counts.get(key) ?? 0) + 1

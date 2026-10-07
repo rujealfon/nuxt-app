@@ -1,5 +1,5 @@
 import { defineEventHandler } from 'h3'
-import { domainFailure } from '../utils/domain-failure'
+import { domainFailure } from '#server/utils/domain-failure'
 
 // Strict 404 for any `/api/*` path without a matching route. Versioned routes
 // live under `/api/v1/*`; infra routes (`/api/auth`, `/api/health`, `/api/docs`,

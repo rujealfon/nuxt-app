@@ -3,10 +3,10 @@ import { createServer, request as httpRequest } from 'node:http'
 import { apiError } from '@nuxt-app/types'
 import { createApp, eventHandler, setResponseStatus, toNodeListener, toWebHandler } from 'h3'
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
-import { createAuth } from '../../database/auth'
-import { DomainFailure } from '../../utils/domain-failure'
-import { statusByError } from '../../utils/failure-contract'
-import { createRateLimitStorage } from '../../utils/rate-limit'
+import { createAuth } from '#server/database/auth'
+import { DomainFailure } from '#server/utils/domain-failure'
+import { statusByError } from '#server/utils/failure-contract'
+import { createRateLimitStorage } from '#server/utils/rate-limit'
 import { handleAuthRequest } from './handle-auth-request'
 
 const mocks = vi.hoisted(() => ({
@@ -22,9 +22,9 @@ vi.mock('h3', async () => {
   return import(require.resolve('h3', { paths: [require.resolve('nuxt/package.json')] }))
 })
 
-vi.mock('../../utils/auth', () => ({ useAuth: () => mocks.auth }))
-vi.mock('../../utils/redis', () => ({ useRedis: () => ({ eval: mocks.eval }) }))
-vi.mock('../../utils/logger', () => ({ useLogger: () => ({ error: mocks.loggerError }) }))
+vi.mock('#server/utils/auth', () => ({ useAuth: () => mocks.auth }))
+vi.mock('#server/utils/redis', () => ({ useRedis: () => ({ eval: mocks.eval }) }))
+vi.mock('#server/utils/logger', () => ({ useLogger: () => ({ error: mocks.loggerError }) }))
 vi.mock('nitropack/runtime', () => ({
   useRuntimeConfig: () => ({ authBearerEnabled: false, authBearerOrigins: '', rateLimitEnabled: true }),
 }))

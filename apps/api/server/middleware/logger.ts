@@ -1,6 +1,6 @@
 import type { Logger } from '@nuxt-app/logger'
 import { defineEventHandler, getResponseStatus } from 'h3'
-import { useLogger } from '../utils/logger'
+import { useLogger } from '#server/utils/logger'
 
 // Monitoring hits health checks constantly, so keep routine successes at debug
 // to avoid filling the request log.

@@ -2,8 +2,8 @@
 // self-hosted UI bundle answer 404 in production builds. `import.meta.dev`
 // is compile-time: there is no runtime env opt-in.
 import { defineEventHandler } from 'h3'
-import { isDocsPath, requestPath } from '../utils/api-paths'
-import { domainFailure } from '../utils/domain-failure'
+import { isDocsPath, requestPath } from '#server/utils/api-paths'
+import { domainFailure } from '#server/utils/domain-failure'
 
 // Takes the compile-time `import.meta.dev` flag so specs can exercise both the
 // development passthrough and the production 404.

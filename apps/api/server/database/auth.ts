@@ -1,12 +1,12 @@
-import type { Database } from '../utils/db-core'
-import type { RateLimitStorage } from '../utils/rate-limit-policy'
+import type { Database } from '#server/utils/db-core'
+import type { RateLimitStorage } from '#server/utils/rate-limit-policy'
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { bearer } from 'better-auth/plugins/bearer'
-import { authClientIpHeader } from '../utils/auth-ip'
-import { assertAuthOrigins } from '../utils/auth-origins'
-import { boundedAuthRateLimitStorage } from '../utils/auth-rate-limit-policy'
-import { rateLimitPolicy } from '../utils/rate-limit-policy'
+import { authClientIpHeader } from '#server/utils/auth-ip'
+import { assertAuthOrigins } from '#server/utils/auth-origins'
+import { boundedAuthRateLimitStorage } from '#server/utils/auth-rate-limit-policy'
+import { rateLimitPolicy } from '#server/utils/rate-limit-policy'
 import * as schema from './schema'
 
 export interface AuthConfig {

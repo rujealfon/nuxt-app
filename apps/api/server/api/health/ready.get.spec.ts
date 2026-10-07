@@ -6,8 +6,8 @@ const mocks = vi.hoisted(() => ({
 }))
 
 vi.mock('h3', () => ({ defineEventHandler: (handler: unknown) => handler }))
-vi.mock('../../utils/db', () => ({ useDb: () => ({ execute: mocks.execute }) }))
-vi.mock('../../utils/redis', () => ({ useRedis: () => ({ ping: mocks.ping }) }))
+vi.mock('#server/utils/db', () => ({ useDb: () => ({ execute: mocks.execute }) }))
+vi.mock('#server/utils/redis', () => ({ useRedis: () => ({ ping: mocks.ping }) }))
 
 const handler = (await import('./ready.get')).default as () => Promise<unknown>
 

@@ -68,6 +68,29 @@ export const architecture = {
   },
 }
 
+// Server code imports across folders through Nuxt's #server alias, so moving or
+// nesting a file does not rewrite its imports. The resolver below teaches ESLint
+// the alias; this guard rejects the parent-relative form it replaces.
+export const serverAliasGuard = {
+  name: 'nuxt-app/server-alias',
+  files: ['apps/*/server/**/*.ts'],
+  rules: {
+    'no-restricted-syntax': ['error', {
+      selector: 'ImportDeclaration[source.value=/^\\.\\.\\//]',
+      message: 'Use the "#server/..." alias instead of a parent-relative import.',
+    }, {
+      selector: 'ImportExpression[source.value=/^\\.\\.\\//]',
+      message: 'Use the "#server/..." alias instead of a parent-relative import.',
+    }, {
+      selector: 'ExportNamedDeclaration[source.value=/^\\.\\.\\//]',
+      message: 'Use the "#server/..." alias instead of a parent-relative import.',
+    }, {
+      selector: 'ExportAllDeclaration[source.value=/^\\.\\.\\//]',
+      message: 'Use the "#server/..." alias instead of a parent-relative import.',
+    }],
+  },
+}
+
 // Resolve aliases per workspace: ~/features/auth means different files in app/admin.
 // Explicit aliases also let lint run without relying on generated Nuxt tsconfigs.
 export const workspaceResolvers = ['apps', 'packages'].flatMap(parent =>
