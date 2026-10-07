@@ -1,6 +1,6 @@
 ---
 name: drizzle-postgres
-description: Build, review, migrate, and troubleshoot PostgreSQL data layers with Drizzle ORM and Drizzle Kit. Use when defining a Postgres schema with pgTable, writing Drizzle queries (select/insert/update/delete, joins, db.query), setting up drizzle.config.ts, running drizzle-kit generate/migrate/push/pull/studio, wiring a Postgres driver (pg, postgres.js, Neon, Supabase, PGlite, PlanetScale Postgres, Bun SQL), adding indexes/constraints/relations, or debugging Drizzle/Postgres errors, even if the request is just "add a table" or "write a migration." Use when the user runs /drizzle-postgres. PostgreSQL only; for MySQL, SQLite, MSSQL, SingleStore, or CockroachDB, rely on general Drizzle knowledge.
+description: Build, review, migrate, and troubleshoot PostgreSQL data layers with Drizzle ORM and Drizzle Kit. Use when defining a Postgres schema with pgTable, writing Drizzle queries (select/insert/update/delete, joins, db.query), setting up drizzle.config.ts, running drizzle-kit generate/migrate/push/pull/studio, wiring a Postgres driver (pg, postgres.js, Neon, Supabase, PGlite, PlanetScale Postgres, Bun SQL, Netlify DB), adding indexes/constraints/relations, or debugging Drizzle/Postgres errors, even if the request is just "add a table" or "write a migration." Use when the user runs /drizzle-postgres. PostgreSQL only; for MySQL, SQLite, MSSQL, SingleStore, or CockroachDB, rely on general Drizzle knowledge.
 ---
 
 # Drizzle ORM (PostgreSQL)
@@ -9,7 +9,7 @@ Drizzle's API differs between versions. The relations API changed from `relation
 
 ## Start from the project
 
-1. Check `package.json`/lockfile for the installed `drizzle-orm` and `drizzle-kit` versions, and which Postgres driver package is present (`pg`, `postgres`, `@neondatabase/serverless`, `@vercel/postgres`, `@electric-sql/pglite`, etc.).
+1. Check `package.json`/lockfile for the installed `drizzle-orm` and `drizzle-kit` versions, and which Postgres driver package is present (`pg`, `postgres`, `@neondatabase/serverless`, `@vercel/postgres`, `@electric-sql/pglite`, `@netlify/db`, etc.).
 2. Read the existing schema file(s), `drizzle.config.ts`, and any existing migrations to match the project's conventions (file layout, naming, camelCase vs snake_case column mapping, single-file vs `schema/` directory).
 3. Grep `node_modules/drizzle-orm/pg-core` or the package's type declarations when unsure whether a given API (e.g. `defineRelations`, `.generatedAlwaysAsIdentity()`, `pgTable.withRLS()`) exists in the installed version before using it.
 4. Preserve the project's organization unless the task explicitly asks for a refactor.
@@ -20,7 +20,7 @@ Drizzle's API differs between versions. The relations API changed from `relation
 - [references/relations.md](references/relations.md) covers declaring relations (both the legacy `relations()`/`one()`/`many()` API and the newer `defineRelations()`/`r.one`/`r.many` API) and querying them with `db.query`.
 - [references/queries.md](references/queries.md) covers select/insert/update/delete, operators, joins, transactions, set operations, and dynamic query building.
 - [references/migrations.md](references/migrations.md) covers `drizzle.config.ts`, Drizzle Kit commands (`generate`, `migrate`, `push`, `pull`, `check`, `studio`, `export`), custom SQL migrations, seeding.
-- [references/connections.md](references/connections.md) covers driver setup for node-postgres, postgres.js, Neon, Supabase, Vercel Postgres, PGlite, PlanetScale Postgres, Bun SQL, HTTP proxy, and other providers.
+- [references/connections.md](references/connections.md) covers driver setup for node-postgres, postgres.js, Neon, Supabase, Vercel Postgres, PGlite, PlanetScale Postgres, Bun SQL, Netlify DB, HTTP proxy, and other providers.
 - [references/postgres-advanced.md](references/postgres-advanced.md) covers indexes/constraints, views, generated columns, custom types, RLS, sequences, extensions (pgvector/PostGIS), query cache, batch API, read replicas, and Zod/Valibot validation integration.
 - [references/migration-0.45-to-1.0.md](references/migration-0.45-to-1.0.md) covers the 0.45.x → 1.0 breaking changes (casing moved to table builders, `relations()` removed, `drizzle()` config shape) with before/after code and a migration checklist. Read this whenever a project is on the 1.0 RC, or when guidance that works on 0.45.x appears to have no effect.
 
@@ -40,7 +40,7 @@ These are condensed and curated, not full copies of the upstream docs. For behav
 
 ## Verify the result
 
-- Run `drizzle-kit check` after `generate` to confirm the migration doesn't collide with another branch's migration history.
+- Run `drizzle-kit check` after `generate` to confirm the migration doesn't collide with another branch's migration history. A journal-timestamp warning is a failed check even when the process exits 0; see [references/migrations.md](references/migrations.md).
 - Read the generated SQL migration file before applying it. Confirm it does what's intended (e.g. a column rename wasn't generated as drop+add, which would lose data).
 - Typecheck: Drizzle infers row/insert types from the schema, so a schema or query mistake usually surfaces as a TypeScript error at the call site. Run the project's typecheck rather than assuming it compiles.
 - For query changes, exercise the empty-result, single-row, and multi-row cases, and confirm `where` conditions use the intended AND/OR grouping (a common mistake when mixing `and()`/`or()`).

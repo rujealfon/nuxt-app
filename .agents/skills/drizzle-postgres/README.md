@@ -1,42 +1,47 @@
 # Drizzle Postgres skill
 
-PostgreSQL schemas, queries, migrations, and driver setup with Drizzle ORM and Drizzle Kit.
-
-## Use in this repository
-
-This skill is installed under `.agents/skills/drizzle-postgres`. Invoke it by name:
-
-```text
-Use $drizzle-postgres to add a users/posts schema with relations to this Postgres project.
-```
-
-Read [SKILL.md](SKILL.md) for the workflow and task-specific reference pointers.
-Use that index to select references for the change you are making.
+Build, migrate, query, and troubleshoot PostgreSQL data layers with Drizzle
+ORM and Drizzle Kit.
 
 ## Version
 
-The [changelog](CHANGELOG.md) records skill versions separately from package
-versions. The bundled references have these verification baselines:
+- Skill version: **1.2.0**. See [CHANGELOG.md](CHANGELOG.md).
+- Tracks: `drizzle-orm` 0.45.x — verified against 0.45.3 on 2026-10-07
+- Tracks: `drizzle-kit` 0.31.x — verified against 0.31.11 on 2026-10-07
+- Docs: https://orm.drizzle.team/llms.txt
+- **Pending upstream: `drizzle-orm` 1.0** is in release candidate (1.0.0-rc.5). 0.45.x remains the primary target. 1.0 breaking changes live in [references/migration-0.45-to-1.0.md](references/migration-0.45-to-1.0.md). When 1.0 ships stable, re-verify that reference, flip the primary target, and bump the tracked line.
 
-| Package | Reference baseline | Last verification |
-| --- | --- | --- |
-| `drizzle-orm` | 0.45.2 | 2026-08-23 |
-| `drizzle-kit` | 0.31.10 | 2026-08-23 |
+## Installation
 
-The bundled 1.0 migration reference was checked against `1.0.0-rc.5`.
-For a 1.0 upgrade, read
-[the migration reference](references/migration-0.45-to-1.0.md) and verify it
-against the installed release before applying changes.
-
-Use the project's installed package declarations and source as the API authority.
-For details they do not resolve, consult the [official documentation index](https://orm.drizzle.team/llms.txt).
-A reference baseline records past verification, not the latest upstream release.
-
-## Install elsewhere
+Install the skill with:
 
 ```bash
 npx skills add rujealfon/skills --skill drizzle-postgres
 ```
 
-[skills-lock.json](../../../skills-lock.json) records the upstream source and
-installed skill metadata for this repository.
+Then ask your agent:
+
+```text
+Use $drizzle-postgres to add a users/posts schema with relations to this Postgres project.
+```
+
+## Coverage
+
+Postgres schema, relations (legacy `relations()` and `defineRelations()`), queries, Drizzle Kit migrations, driver setup (including PlanetScale Postgres, Bun SQL, Netlify DB, and HTTP proxy), and 0.45.x → 1.0 RC migration. The installed `drizzle-orm`/`drizzle-kit` versions remain the API authority.
+
+Won't add: ESLint plugin, drizzle-graphql, kit web/mobile walkthroughs, community dialects.
+
+## Contents
+
+- [SKILL.md](SKILL.md) contains the core agent workflow.
+- [references/schema.md](references/schema.md) covers table/column declaration and Postgres column types.
+- [references/relations.md](references/relations.md) covers relation declarations and the relational query API.
+- [references/queries.md](references/queries.md) covers CRUD, operators, joins, and transactions.
+- [references/migrations.md](references/migrations.md) covers Drizzle Kit config, commands, and seeding.
+- [references/connections.md](references/connections.md) covers driver setup per provider.
+- [references/postgres-advanced.md](references/postgres-advanced.md) covers RLS, sequences, extensions, and validation integration.
+- [references/migration-0.45-to-1.0.md](references/migration-0.45-to-1.0.md) covers the 0.45.x → 1.0 breaking changes and migration checklist.
+
+## License
+
+Repository content is available under the root [MIT License](../../LICENSE).

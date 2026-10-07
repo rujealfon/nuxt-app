@@ -68,7 +68,7 @@ app.use(PiniaColada, {
 })
 ```
 
-Verify callback argument order against installed types. Use query `meta` to keep policy declarative. Do not use global hooks for component-instance effects; use component logic or a watcher instead. A cache-level hook may run once per request rather than once per mounted observer.
+Verify callback argument order against installed types. Use query `meta` to keep policy declarative. Do not use global hooks for component-instance effects; use component logic or a watcher instead. A cache-level hook may run once per request rather than once per mounted observer. Since 1.4.6, `onError` runs for a failed fetch; a cancelled fetch skips it. Detect an abort from the query `signal` or the cancellation APIs.
 
 ## Auto-refetch
 
@@ -79,7 +79,7 @@ Verify callback argument order against installed types. Use query `meta` to keep
 - a millisecond interval;
 - a function returning `boolean | number` from query state.
 
-When using `true`, set a meaningful `staleTime`. The plugin is timer-based and effectively client-only; verify server behavior before enabling it in custom SSR. Pause queries with `enabled` when polling is not appropriate.
+When using `true`, set a finite `staleTime`. `Infinity` does not schedule a refetch (`@pinia/colada-plugin-auto-refetch` 0.2.7, released with Colada 1.4.6). The plugin is timer-based and effectively client-only; verify server behavior before enabling it in custom SSR. Pause queries with `enabled` when polling is not appropriate.
 
 Refetching on focus, reconnect, and mount is **core**, not this plugin. `refetchOnMount`, `refetchOnWindowFocus`, and `refetchOnReconnect` default to `true` and also accept `'always'`. Use the auto-refetch plugin only for interval polling.
 

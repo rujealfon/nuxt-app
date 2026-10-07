@@ -16,6 +16,7 @@ Use this reference when Pinia Colada emits a diagnostic code or async state beha
 | `PINIA_COLADA_R0007` | Defined mutation called outside an effect scope | Call it from setup, a store, or an explicit effect scope |
 | `PINIA_COLADA_R0008` | Previous infinite page requested without `getPreviousPageParam` | Define the callback or remove backward pagination |
 | `PINIA_COLADA_R0009` | Infinite-query entry not found | Ensure the query is active and the key has not changed or been collected |
+| `PINIA_COLADA_R0010` | An active query entry was removed | Wait until every consumer stops, or invalidate the key instead of `queryCache.remove()` |
 
 Verify the installed version's official error page if a code is absent or its behavior differs.
 
@@ -71,7 +72,15 @@ Avoid broad cache resets. Prefer:
 - cancellation followed by removal only for deliberate eviction;
 - versioned persistence cleanup for incompatible stored data.
 
-Removing an active entry usually causes immediate recreation. Removing does not necessarily abort in-flight work, so cancel it first.
+Removing an active entry is unsupported. In development, `queryCache.remove()` on an entry a component or effect scope still uses warns `PINIA_COLADA_R0010` and leaves those consumers holding an entry that is no longer in the cache. Wait until they stop, or invalidate:
+
+```ts
+await queryCache.invalidateQueries({ key: entry.key, exact: true })
+```
+
+Removal does not abort in-flight work. Cancel first when removing an inactive entry.
+
+Official page: [PINIA_COLADA_R0010](https://pinia-colada.esm.dev/errors/pinia_colada_r0010.html).
 
 ## SSR failures
 
