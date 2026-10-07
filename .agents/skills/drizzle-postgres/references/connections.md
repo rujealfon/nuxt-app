@@ -176,6 +176,31 @@ const db = drizzle(process.env.DATABASE_URL);
 
 Or pass an existing `SQL` client: `drizzle({ client: new SQL(process.env.DATABASE_URL!) })`. Bun-only, so do not import `drizzle-orm/bun-sql` from Node.
 
+## Netlify DB
+
+`drizzle-orm/netlify-db` shipped on 0.45.3. Its peer is `@netlify/db`. The [Netlify Database](https://orm.drizzle.team/docs/connect-netlify-db) page's install block is the 1.0 RC (`drizzle-orm@rc` and `@netlify/database`). On this line, add `@netlify/db` next to the `drizzle-orm` the project already has.
+
+```bash
+npm i drizzle-orm @netlify/db
+npm i -D drizzle-kit
+```
+
+Zero-config `drizzle()` calls `getDatabase()` from `@netlify/db`. That reads `NETLIFY_DB_URL` and `NETLIFY_DB_DRIVER` and returns either a serverless HTTP client or a node-postgres pool.
+
+```typescript
+import { drizzle } from 'drizzle-orm/netlify-db';
+
+const db = drizzle();
+```
+
+A connection string skips that picker and always builds the serverless client (`neon` HTTP plus a websocket `Pool`):
+
+```typescript
+const db = drizzle(process.env.DATABASE_URL);
+```
+
+Pass `{ client }` when the caller already holds a Netlify client. The runtime migrator is `drizzle-orm/netlify-db/migrator`. Netlify maintains the driver.
+
 ## Drizzle HTTP proxy
 
 When queries must go through your own HTTP endpoint instead of a direct driver:
@@ -196,7 +221,7 @@ Return `{ rows: string[][] }` for `method === 'all'`, `{ rows: string[] }` for `
 
 ## Other providers
 
-Xata and Nile follow the same `drizzle(...)` / `drizzle({ client })` calls as above. AWS Data API is `drizzle-orm/aws-data-api/pg` and takes `resourceArn` / `secretArn` / `database` instead of a URL. Netlify DB (`drizzle-orm/netlify-db`) and Effect Postgres (`drizzle-orm/effect-postgres`) are 1.0-line drivers; see [migration-0.45-to-1.0.md](migration-0.45-to-1.0.md).
+Xata and Nile follow the same `drizzle(...)` / `drizzle({ client })` calls as above. AWS Data API is `drizzle-orm/aws-data-api/pg` and takes `resourceArn` / `secretArn` / `database` instead of a URL. Effect Postgres (`drizzle-orm/effect-postgres`) is a 1.0-line driver; see [migration-0.45-to-1.0.md](migration-0.45-to-1.0.md).
 
 ## `db.execute` for anything outside the query builder
 

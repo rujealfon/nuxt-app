@@ -33,12 +33,14 @@ export default defineConfig({
 | `drizzle-kit migrate` | Applies pending SQL migration files to the database in order, recording each in the migrations table. |
 | `drizzle-kit push` | Diffs the schema file against the live database and applies changes directly, with no migration file produced. |
 | `drizzle-kit pull` | Introspects an existing database and generates a Drizzle schema file from it (for onboarding onto an existing DB). |
-| `drizzle-kit check` | Validates that migration files don't have colliding/out-of-order changes (e.g. after a branch merge). |
+| `drizzle-kit check` | Validates that migration files don't have colliding/out-of-order changes (e.g. after a branch merge). On 0.31.11+ it also warns when a journal `when` does not strictly increase. |
 | `drizzle-kit up` | Upgrades old migration snapshot files to the current snapshot format after a Drizzle Kit version bump. |
 | `drizzle-kit studio` | Opens Drizzle Studio, a local GUI for browsing/editing the connected database. |
 | `drizzle-kit export` | Prints the schema's DDL as raw SQL without writing a migration file. |
 
 **`push` vs `generate` + `migrate`:** `push` is quicker for local development or early prototyping where there's no need to track history. For anything shared across a team, deployed to production, or that needs an audit trail or rollback path, use `generate` then `migrate` (or apply the generated SQL through whatever migration runner the deployment pipeline uses). Versioned SQL files are reviewable in a PR; a direct `push` is not.
+
+**Out-of-order journal timestamps (drizzle-kit 0.31.11+).** `check` warns when an entry's `when` is less than or equal to an earlier entry's `when`, and names both tags. The process still exits 0, and `check` still does not open a database connection. `migrate` skips a journal entry whose timestamp is not greater than the newest applied `created_at`. A merge that appends branch A's `when: 100` after branch B's already-applied `when: 200` prints success and leaves A unapplied. Treat the warning as a failed check: regenerate or reorder so `when` strictly increases in journal order.
 
 ## Applying migrations at runtime (without the CLI)
 

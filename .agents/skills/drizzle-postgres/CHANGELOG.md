@@ -2,6 +2,15 @@
 
 Versions here track this skill's own content (instructions and references), not the `drizzle-orm`/`drizzle-kit` package versions. See the [README](README.md#version) for which lines this skill was last verified against.
 
+## 1.2.0 - 2026-10-07
+
+Re-verified against `drizzle-orm` 0.45.3 and `drizzle-kit` 0.31.11. 0.45.x remains the primary target.
+
+- Netlify DB is a 0.45.3 driver: `drizzle-orm/netlify-db` with peer `@netlify/db`. Zero-config `drizzle()` uses `getDatabase()` (`NETLIFY_DB_URL`, `NETLIFY_DB_DRIVER`). The docs install block is the 1.0 RC (`drizzle-orm@rc`, `@netlify/database`).
+- `drizzle-kit check` warns, and still exits 0, when a journal `when` does not strictly increase. `migrate` then skips that entry if an earlier timestamp is already applied.
+
+Won't add: Effect Postgres on 0.45.x (still a 1.0-line driver).
+
 ## 1.1.0 - 2026-08-23
 
 Docs-backed refresh against official Postgres docs and `drizzle-orm`/`drizzle-kit` 1.0.0-rc.5. 0.45.x remains the primary target.
