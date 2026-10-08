@@ -71,7 +71,11 @@ describe('validate-env plugin', () => {
   })
 
   it('rejects a wildcard bearer origin', () => {
-    Object.assign(mocks.state, { authBearerEnabled: true, corsOrigins: '*', authBearerOrigins: '*' })
+    Object.assign(mocks.state, {
+      authBearerEnabled: true,
+      corsOrigins: '*',
+      authBearerOrigins: '*',
+    })
 
     expect(() => plugin()).toThrow(/explicit origin/)
   })
@@ -122,9 +126,13 @@ describe('compiled env schema', () => {
     ['an empty required field', { ...valid, databaseUrl: '' }],
     ['a malformed URL', { ...valid, betterAuthUrl: 'not-a-url' }],
     ['an unknown enum member', { ...valid, databaseDriver: 'mysql' }],
-    ['several failures at once', { ...valid, databaseUrl: '', redisUrl: '', betterAuthUrl: 'nope' }],
+    [
+      'several failures at once',
+      { ...valid, databaseUrl: '', redisUrl: '', betterAuthUrl: 'nope' },
+    ],
   ])('matches the runtime parser on %s', (_label, input) => {
-    expect(summarize(compiledEnvSchema.safeParse(input))).toEqual(summarize(envSchema.safeParse(input)))
+    expect(summarize(compiledEnvSchema.safeParse(input)))
+      .toEqual(summarize(envSchema.safeParse(input)))
   })
 
   it('checks validity with .validate()', () => {

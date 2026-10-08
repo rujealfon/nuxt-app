@@ -10,7 +10,9 @@ vi.mock('h3', () => ({
   setHeader: h3.setHeader,
 }))
 
-const handler = (await import('./hello.get')).default as unknown as (event: unknown) => { message: string }
+const handler = (await import('./hello.get')).default as unknown as (
+  event: unknown,
+) => { message: string }
 
 describe('get /api/v1/hello', () => {
   beforeEach(() => {

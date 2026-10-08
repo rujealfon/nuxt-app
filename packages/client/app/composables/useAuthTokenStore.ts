@@ -21,7 +21,8 @@ import { authTokenStore, installAuthTokenStore } from '../lib/authToken'
 
 export function useAuthTokenStore(next?: AuthTokenStore): AuthTokenStore {
   if (next && !installAuthTokenStore(next)) {
-    console.warn('[auth] useAuthTokenStore() was called again after setup; the existing store remains active.')
+    console.warn('[auth] useAuthTokenStore() was called again after setup; '
+      + 'the existing store remains active.')
   }
 
   return authTokenStore()

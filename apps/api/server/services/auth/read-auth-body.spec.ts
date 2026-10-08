@@ -18,7 +18,8 @@ function fixture(headers: Record<string, string> = {}, stream = new PassThrough(
 }
 
 describe('bounded auth body reading', () => {
-  it('returns an empty body for a bodyless native Web Request without reading the Node shim', async () => {
+  it('returns an empty body for a bodyless native Web Request '
+    + 'without reading the Node shim', async () => {
     const { event, req } = fixture()
     event.web = { request: new Request('http://localhost/api/auth/sign-out', { method: 'POST' }) }
     await expect(readAuthBody(event)).resolves.toEqual(new Uint8Array())
@@ -51,7 +52,8 @@ describe('bounded auth body reading', () => {
     expect(req.destroyed).toBe(true)
   })
 
-  it('replays exactly the accepted byte limit without trusting a small Content-Length', async () => {
+  it('replays exactly the accepted byte limit '
+    + 'without trusting a small Content-Length', async () => {
     const { event } = fixture({ 'content-length': '1' })
     const bytes = Buffer.alloc(authBodyLimit, 'x')
     event._requestBody = bytes
@@ -73,7 +75,8 @@ describe('bounded auth body reading', () => {
     expect(req.destroyed).toBe(true)
   })
 
-  it('bounds a lengthless web-runtime stream and cancels it without waiting for completion', async () => {
+  it('bounds a lengthless web-runtime stream '
+    + 'and cancels it without waiting for completion', async () => {
     const { event } = fixture()
     const cancel = vi.fn(() => new Promise<void>(() => {}))
     const stream = new ReadableStream<Uint8Array>({
@@ -119,7 +122,8 @@ describe('bounded auth body reading', () => {
     expect(req.listenerCount('end')).toBe(0)
   })
 
-  it('returns an empty body for an already ended Node stream without waiting for another end', async () => {
+  it('returns an empty body for an already ended Node stream '
+    + 'without waiting for another end', async () => {
     const { event, req } = fixture({}, new PassThrough({ autoDestroy: false }))
     const ended = once(req, 'end')
     req.resume()

@@ -13,7 +13,10 @@ export interface SessionTransport {
   authClientOptions: AuthFetchOptions
   apiClientOptions: ApiFetchOptions
   clientKey: string
-  isConfiguredOrigin: (request: FetchContext['request'], requestBaseURL: string | undefined) => boolean
+  isConfiguredOrigin: (
+    request: FetchContext['request'],
+    requestBaseURL: string | undefined,
+  ) => boolean
 }
 
 function targetsConfiguredOrigin(
@@ -104,6 +107,7 @@ export function createSessionTransport(baseURL: string, bearer: boolean): Sessio
     authClientOptions: authFetchOptions(bearer),
     apiClientOptions: apiFetchOptions(baseURL, bearer),
     clientKey: `${baseURL}|${bearer ? 'bearer' : 'cookie'}`,
-    isConfiguredOrigin: (request, requestBaseURL) => targetsConfiguredOrigin(request, requestBaseURL, baseURL),
+    isConfiguredOrigin: (request, requestBaseURL) =>
+      targetsConfiguredOrigin(request, requestBaseURL, baseURL),
   }
 }

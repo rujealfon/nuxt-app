@@ -36,7 +36,10 @@ async function withAdmin<T>(fn: (client: Client) => Promise<T>): Promise<T> {
   }
   catch (error) {
     const detail = error instanceof Error ? error.message : String(error)
-    throw new Error(`Could not reach Postgres to manage "${databaseName}". Is it running? Start it with "pnpm db:up".\n${detail}`)
+    throw new Error(
+      `Could not reach Postgres to manage "${databaseName}". Is it running? `
+      + `Start it with "pnpm db:up".\n${detail}`,
+    )
   }
 
   try {
@@ -49,7 +52,10 @@ async function withAdmin<T>(fn: (client: Client) => Promise<T>): Promise<T> {
 
 async function createDatabase(): Promise<void> {
   await withAdmin(async (client) => {
-    const existing = await client.query('SELECT 1 FROM pg_database WHERE datname = $1', [databaseName])
+    const existing = await client.query(
+      'SELECT 1 FROM pg_database WHERE datname = $1',
+      [databaseName],
+    )
 
     if (existing.rowCount === 1) {
       console.log(`Test database already exists: ${databaseName}`)

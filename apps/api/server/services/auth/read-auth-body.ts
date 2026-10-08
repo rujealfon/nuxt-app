@@ -21,7 +21,10 @@ function tooLarge(event: H3Event) {
   return domainFailure('invalid_input', 'The authentication request body is too large')
 }
 
-async function readWebBody(event: H3Event, stream: ReadableStream<Uint8Array>): Promise<Uint8Array> {
+async function readWebBody(
+  event: H3Event,
+  stream: ReadableStream<Uint8Array>,
+): Promise<Uint8Array> {
   const reader = stream.getReader()
   const chunks: Uint8Array[] = []
   let size = 0

@@ -1,5 +1,16 @@
 import { describe, expect, it } from 'vitest'
-import { actorFromSession, actorSchema, apiError, apiErrorMessages, apiErrorSchema, invalidInputDetails, loginSchema, parseApiError, registerSchema, v1 } from '../src'
+import {
+  actorFromSession,
+  actorSchema,
+  apiError,
+  apiErrorMessages,
+  apiErrorSchema,
+  invalidInputDetails,
+  loginSchema,
+  parseApiError,
+  registerSchema,
+  v1,
+} from '../src'
 
 describe('auth schemas', () => {
   it('accepts valid login credentials', () => {
@@ -11,8 +22,16 @@ describe('auth schemas', () => {
   })
 
   it('requires an 8+ character password on register', () => {
-    expect(registerSchema.safeParse({ name: 'A', email: 'user@example.com', password: 'short' }).success).toBe(false)
-    expect(registerSchema.safeParse({ name: 'A', email: 'user@example.com', password: 'longenough' }).success).toBe(true)
+    expect(registerSchema.safeParse({
+      name: 'A',
+      email: 'user@example.com',
+      password: 'short',
+    }).success).toBe(false)
+    expect(registerSchema.safeParse({
+      name: 'A',
+      email: 'user@example.com',
+      password: 'longenough',
+    }).success).toBe(true)
   })
 })
 
@@ -147,11 +166,21 @@ describe('aPI error contract', () => {
 
 describe('actor contract', () => {
   it('accepts a complete actor', () => {
-    expect(actorSchema.safeParse({ id: 'u1', email: 'admin@example.com', name: null, role: 'admin' }).success).toBe(true)
+    expect(actorSchema.safeParse({
+      id: 'u1',
+      email: 'admin@example.com',
+      name: null,
+      role: 'admin',
+    }).success).toBe(true)
   })
 
   it('defaults an unknown role to user', () => {
-    expect(actorSchema.parse({ id: 'u1', email: 'user@example.com', name: null, role: 'owner' })).toMatchObject({ role: 'user' })
+    expect(actorSchema.parse({
+      id: 'u1',
+      email: 'user@example.com',
+      name: null,
+      role: 'owner',
+    })).toMatchObject({ role: 'user' })
   })
 
   it('rejects a missing id', () => {

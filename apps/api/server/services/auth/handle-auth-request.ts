@@ -100,7 +100,12 @@ export async function handleAuthRequest(event: H3Event): Promise<Response | unde
   const response = await useAuth().handler(request)
 
   if (response.status < 400) {
-    return restrictBearerTokenResponse(response, request.headers.get('origin'), useRuntimeConfig(event), path)
+    return restrictBearerTokenResponse(
+      response,
+      request.headers.get('origin'),
+      useRuntimeConfig(event),
+      path,
+    )
   }
 
   preserveAuthErrorHeaders(event, response.headers)

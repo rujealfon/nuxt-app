@@ -129,7 +129,9 @@ describe('apiClientOptions', () => {
   it('drops the stored token when the API answers 401', async () => {
     await writeAuthToken('session-token')
 
-    await clearVia(createSessionTransport(baseURL, true), 401, { authorization: 'Bearer session-token' })
+    await clearVia(createSessionTransport(baseURL, true), 401, {
+      authorization: 'Bearer session-token',
+    })
 
     await expect(readAuthToken()).resolves.toBeNull()
   })
@@ -137,7 +139,9 @@ describe('apiClientOptions', () => {
   it('keeps the stored token on any other status', async () => {
     await writeAuthToken('session-token')
 
-    await clearVia(createSessionTransport(baseURL, true), 500, { authorization: 'Bearer session-token' })
+    await clearVia(createSessionTransport(baseURL, true), 500, {
+      authorization: 'Bearer session-token',
+    })
 
     await expect(readAuthToken()).resolves.toBe('session-token')
   })
@@ -145,7 +149,9 @@ describe('apiClientOptions', () => {
   it('preserves a new session when an old request returns 401', async () => {
     await writeAuthToken('new-session')
 
-    await clearVia(createSessionTransport(baseURL, true), 401, { authorization: 'Bearer old-session' })
+    await clearVia(createSessionTransport(baseURL, true), 401, {
+      authorization: 'Bearer old-session',
+    })
 
     await expect(readAuthToken()).resolves.toBe('new-session')
   })

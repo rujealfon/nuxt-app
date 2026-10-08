@@ -45,7 +45,11 @@ export const architecture = {
         },
         {
           from: { element: { type: appTypes } },
-          disallow: { to: { element: { type: appTypes, captured: { app: '!{{ from.element.captured.app }}' } } } },
+          disallow: {
+            to: {
+              element: { type: appTypes, captured: { app: '!{{ from.element.captured.app }}' } },
+            },
+          },
           message: 'Share code through packages instead of importing another application.',
         },
         {
@@ -60,8 +64,11 @@ export const architecture = {
         },
         {
           from: { element: { type: 'service' } },
-          disallow: { to: { element: { type: ['service', 'http', 'frontend', 'feature', 'app'] } } },
-          message: 'Keep services independent of versioned-route handlers and peer domains; compose them in server workflows.',
+          disallow: {
+            to: { element: { type: ['service', 'http', 'frontend', 'feature', 'app'] } },
+          },
+          message: 'Keep services independent of versioned-route handlers and peer domains; '
+            + 'compose them in server workflows.',
         },
       ],
     }],

@@ -5,7 +5,9 @@ const h3 = vi.hoisted(() => ({ defineEventHandler: vi.fn((handler: unknown) => h
 
 vi.mock('h3', () => ({ defineEventHandler: h3.defineEventHandler }))
 
-const handler = (await import('./api-only')).default as unknown as (event: { path: string }) => unknown
+const handler = (await import('./api-only')).default as unknown as (
+  event: { path: string },
+) => unknown
 
 function caughtFrom(path: string): unknown {
   try {
@@ -19,11 +21,19 @@ function caughtFrom(path: string): unknown {
 }
 
 describe('api-only middleware', () => {
-  it.each(['/api', '/api/v1/hello', '/api/health?full=1'])('passes an API path through: %s', (path) => {
+  it.each([
+    '/api',
+    '/api/v1/hello',
+    '/api/health?full=1',
+  ])('passes an API path through: %s', (path) => {
     expect(handler({ path })).toBeUndefined()
   })
 
-  it.each(['/_nuxt/entry.js', '/__nuxt_error', '/@vite/client'])('passes framework internals through: %s', (path) => {
+  it.each([
+    '/_nuxt/entry.js',
+    '/__nuxt_error',
+    '/@vite/client',
+  ])('passes framework internals through: %s', (path) => {
     expect(handler({ path })).toBeUndefined()
   })
 

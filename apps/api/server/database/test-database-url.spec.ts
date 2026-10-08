@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { assertTestDatabaseUrl, databaseNameFromUrl, defaultTestDatabaseUrl } from './test-database-url'
+import {
+  assertTestDatabaseUrl,
+  databaseNameFromUrl,
+  defaultTestDatabaseUrl,
+} from './test-database-url'
 
 describe('databaseNameFromUrl', () => {
   it('reads the database name from a postgres URL', () => {

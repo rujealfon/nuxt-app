@@ -40,12 +40,18 @@ describe('usePasswordAuthScreen', () => {
 
     await screenProps.value.submit({})
 
-    expect(screenProps.value.fieldErrors).toEqual([{ name: 'email', message: 'Enter a valid email address' }])
+    expect(screenProps.value.fieldErrors).toEqual([
+      { name: 'email', message: 'Enter a valid email address' },
+    ])
     expect(screenProps.value.errorMessage).toBe('')
   })
 
   it('navigates after a successful submit', async () => {
-    const { screenProps } = usePasswordAuthScreen({ mode: 'login', submit: vi.fn(), redirectTo: '/home' })
+    const { screenProps } = usePasswordAuthScreen({
+      mode: 'login',
+      submit: vi.fn(),
+      redirectTo: '/home',
+    })
 
     await screenProps.value.submit({})
 

@@ -1,6 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { memoryAuthTokenStore, resetAuthTokenStore } from '../../test/helpers/authTokenStore'
-import { browserAuthTokenStore, captureIssuedToken, clearAuthToken, installAuthTokenStore, readAuthToken, writeAuthToken } from './authToken'
+import {
+  browserAuthTokenStore,
+  captureIssuedToken,
+  clearAuthToken,
+  installAuthTokenStore,
+  readAuthToken,
+  writeAuthToken,
+} from './authToken'
 
 beforeEach(resetAuthTokenStore)
 afterEach(() => {

@@ -10,7 +10,9 @@ const mocks = vi.hoisted(() => {
     db,
     withTransaction,
     createDb: vi.fn((_config: unknown) => ({ db, withTransaction })),
-    parseDriver: vi.fn((value: unknown) => (value === 'pg' || value === 'neon' ? value : undefined)),
+    parseDriver: vi.fn(
+      (value: unknown) => (value === 'pg' || value === 'neon' ? value : undefined),
+    ),
     state: {
       databaseUrl: 'postgres://user:pass@localhost:5432/db',
       databaseDriver: 'pg' as string,

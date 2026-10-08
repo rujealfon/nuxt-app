@@ -7,7 +7,9 @@ describe('buildDocsHtml', () => {
 
     expect(html).toContain('<div id="app"></div>')
     expect(html).toContain(`<script src="${scalarStandaloneJsUrl}"></script>`)
-    expect(html).toContain(`Scalar.createApiReference('#app', { url: ${JSON.stringify(openApiSpecUrl)} })`)
+    expect(html).toContain(
+      `Scalar.createApiReference('#app', { url: ${JSON.stringify(openApiSpecUrl)} })`,
+    )
     expect(html).toContain('noindex, nofollow')
     expect(html).not.toContain('cdn.jsdelivr.net')
   })

@@ -38,6 +38,32 @@ export default antfu({
     'vue/object-property-newline': ['error', {
       allowAllPropertiesOnSameLine: false,
     }],
+    // One attribute per line. Long attribute lists make the Tailwind class
+    // wrapper split `class` values into unreadable blocks; keeping attributes
+    // separate lets short class lists stay inline.
+    'vue/max-attributes-per-line': ['error', {
+      singleline: { max: 1 },
+      multiline: { max: 1 },
+    }],
+  },
+}, {
+  name: 'talaan-ko/max-len',
+  files: ['**/*.{js,mjs,cjs,jsx,ts,tsx,vue}'],
+  rules: {
+    // Matches the 100-column convention the Tailwind class wrapper uses.
+    // Only comments, URLs, and regex literals are exempt.
+    // Tailwind class constants stay on one line for readability; name them
+    // `...Class` or `...Classes` so this rule exempts the declaration.
+    'style/max-len': ['error', {
+      code: 100,
+      tabWidth: 2,
+      ignoreComments: true,
+      ignoreStrings: false,
+      ignoreUrls: true,
+      ignoreTemplateLiterals: false,
+      ignoreRegExpLiterals: true,
+      ignorePattern: 'const\\s+\\w*(?:Class|Classes)\\s*=',
+    }],
   },
 }, {
   files: ['**/seed.ts', '**/test-db.ts'],

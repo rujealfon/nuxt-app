@@ -12,7 +12,12 @@ const configs = ['apps', 'packages'].flatMap(parent =>
 )
 
 function environmentReads(path: string): string[] {
-  const source = ts.createSourceFile(path, readFileSync(new URL(path, root), 'utf8'), ts.ScriptTarget.Latest, true)
+  const source = ts.createSourceFile(
+    path,
+    readFileSync(new URL(path, root), 'utf8'),
+    ts.ScriptTarget.Latest,
+    true,
+  )
   const names = new Set<string>()
 
   function visit(node: ts.Node) {

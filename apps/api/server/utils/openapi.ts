@@ -19,7 +19,10 @@ const infraTagName = 'Infra'
 // Every versioned response advertises its version (mirroring
 // `defineVersionedHandler`). Deprecation headers share `deprecationHeaders`.
 function versionResponseHeaders(version: ApiVersion) {
-  const headers: Record<string, { description: string, schema: ReturnType<typeof toJsonSchema> }> = {
+  const headers: Record<
+    string,
+    { description: string, schema: ReturnType<typeof toJsonSchema> }
+  > = {
     'x-api-version': {
       description: 'API version that served the response.',
       schema: toJsonSchema(z.enum([version])),
@@ -151,20 +154,36 @@ export function buildOpenApiDocument() {
     ...auth.schemas,
   }
 
+  const operationTags = [
+    ...new Set(
+      apiVersions.flatMap(version =>
+        versionedOperations[version].map(operation => operation.tag),
+      ),
+    ),
+  ]
+
   return {
     openapi: '3.1.0',
     info: {
       title: 'nuxt-app API',
       version: currentApiVersion,
-      description: 'Versioned routes live under `/api/<version>/` and advertise it via `X-Api-Version`. Infra routes (`/api/auth/*`, `/api/health*`, `GET /api`, `/api/docs*`, `/api/openapi.json`) are unversioned. Failures use the API error contract: `/api/auth/*` normalizes Better Auth failures onto it, and `invalid_input` may carry `details`. Health 200s are custom liveness/readiness bodies; health failures use the API error contract. Protected operations accept either the Better Auth session cookie or, on deployments that enable it, a bearer token. The `Auth` tag documents the email/password sign-in flow so a local Scalar session can authenticate before calling protected routes.',
+      description:
+        'Versioned routes live under `/api/<version>/` and advertise it via '
+        + '`X-Api-Version`. Infra routes (`/api/auth/*`, `/api/health*`, `GET /api`, '
+        + '`/api/docs*`, `/api/openapi.json`) are unversioned. Failures use the API error '
+        + 'contract: `/api/auth/*` normalizes Better Auth failures onto it, and `invalid_input` '
+        + 'may carry `details`. Health 200s are custom liveness/readiness bodies; health '
+        + 'failures use the API error contract. Protected operations accept either the '
+        + 'Better Auth session cookie or, on deployments that enable it, a bearer token. '
+        + 'The `Auth` tag documents the email/password sign-in flow so a local Scalar session '
+        + 'can authenticate before calling protected routes.',
     },
     servers: [
       { url: '/', description: 'Same origin: docs, spec, and API share one host.' },
     ],
     tags: [
       { name: metaTagName, description: 'Version registry and API documentation.' },
-      ...[...new Set(apiVersions.flatMap(version => versionedOperations[version].map(operation => operation.tag)))]
-        .map(name => ({ name, description: `${name} operations.` })),
+      ...operationTags.map(name => ({ name, description: `${name} operations.` })),
       auth.tag,
       { name: infraTagName, description: 'Unversioned health checks.' },
     ],

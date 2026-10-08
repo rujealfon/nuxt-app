@@ -18,6 +18,11 @@ useHead({ title: 'nuxt-app' })
     <p class="mt-3 text-muted">
       Public marketing site served from web.nuxt-app.com.
     </p>
-    <UButton class="mt-6" size="lg" label="Open the app" @click="goToApp" />
+    <UButton
+      class="mt-6"
+      size="lg"
+      label="Open the app"
+      @click="goToApp"
+    />
   </section>
 </template>

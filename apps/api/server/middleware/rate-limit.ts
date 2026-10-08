@@ -15,7 +15,9 @@ const EXEMPT_PATHS = [authMount, '/api/health']
 // bounded bucket, so arbitrary URLs and methods cannot create Redis keys.
 const knownOperations = new Set(
   Object.entries(versionedOperations).flatMap(([version, operations]) =>
-    operations.map(operation => `${operation.method.toUpperCase()}:/api/${version}${operation.suffix}`),
+    operations.map(
+      operation => `${operation.method.toUpperCase()}:/api/${version}${operation.suffix}`,
+    ),
   ),
 )
 
