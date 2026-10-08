@@ -13,6 +13,9 @@ const openApiDocumentSchema = z.looseObject({
   openapi: z.string(),
 })
 
+const metaTagName = 'Meta'
+const infraTagName = 'Infra'
+
 // Every versioned response advertises its version (mirroring
 // `defineVersionedHandler`). Deprecation headers share `deprecationHeaders`.
 function versionResponseHeaders(version: ApiVersion) {
@@ -91,7 +94,7 @@ export function buildOpenApiDocument() {
   const paths: Record<string, OpenApiPathItem> = {
     '/api': {
       get: {
-        tags: ['Meta'],
+        tags: [metaTagName],
         summary: 'Version registry',
         description: 'Reports the current version and per-version deprecation metadata.',
         responses: {
@@ -102,7 +105,7 @@ export function buildOpenApiDocument() {
     },
     '/api/openapi.json': {
       get: {
-        tags: ['Meta'],
+        tags: [metaTagName],
         summary: 'OpenAPI document',
         description: 'This document. Rendered by the Scalar UI at `/api/docs`.',
         responses: {
@@ -118,7 +121,7 @@ export function buildOpenApiDocument() {
     ...auth.paths,
     '/api/health': {
       get: {
-        tags: ['Infra'],
+        tags: [infraTagName],
         summary: 'Liveness check',
         responses: {
           200: jsonRef('HealthResponse', 'Service status.'),
@@ -128,7 +131,7 @@ export function buildOpenApiDocument() {
     },
     '/api/health/ready': {
       get: {
-        tags: ['Infra'],
+        tags: [infraTagName],
         summary: 'Readiness check',
         description: 'Probes PostgreSQL and Redis.',
         responses: {
@@ -159,11 +162,11 @@ export function buildOpenApiDocument() {
       { url: '/', description: 'Same origin: docs, spec, and API share one host.' },
     ],
     tags: [
-      { name: 'Meta', description: 'Version registry and API documentation.' },
+      { name: metaTagName, description: 'Version registry and API documentation.' },
       ...[...new Set(apiVersions.flatMap(version => versionedOperations[version].map(operation => operation.tag)))]
         .map(name => ({ name, description: `${name} operations.` })),
       auth.tag,
-      { name: 'Infra', description: 'Unversioned health checks.' },
+      { name: infraTagName, description: 'Unversioned health checks.' },
     ],
     paths,
     components: {
