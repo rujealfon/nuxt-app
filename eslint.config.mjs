@@ -27,6 +27,19 @@ export default antfu({
     'pnpm/yaml-enforce-settings': 'off',
   },
 }, {
+  name: 'nuxt-app/vue-template-formatting',
+  files: ['**/*.vue'],
+  rules: {
+    'vue/object-curly-newline': ['error', {
+      multiline: true,
+      minProperties: 3,
+      consistent: true,
+    }],
+    'vue/object-property-newline': ['error', {
+      allowAllPropertiesOnSameLine: false,
+    }],
+  },
+}, {
   files: ['**/seed.ts', '**/test-db.ts'],
   rules: {
     'no-console': 'off',
