@@ -23,7 +23,7 @@
     "vue-router": "^5.3.1"
   },
   "devDependencies": {
-    "@iconify-json/lucide": "^1.2.137",
+    "@iconify-json/lucide": "^1.2.140",
     "typescript": "^6.0.3",
     "vite-doctor": "^0.0.12",
     "vue-tsc": "^3.3.11"
