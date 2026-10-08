@@ -3,7 +3,10 @@ import { fileURLToPath } from 'node:url'
 import { parseEnv } from 'node:util'
 import { defineVitestProject } from '@nuxt/test-utils/config'
 import { defineConfig } from 'vitest/config'
-import { assertTestDatabaseUrl, defaultTestDatabaseUrl } from './apps/api/server/database/test-database-url.ts'
+import {
+  assertTestDatabaseUrl,
+  defaultTestDatabaseUrl,
+} from './apps/api/server/database/test-database-url.ts'
 
 function dir(path: string) {
   return fileURLToPath(new URL(path, import.meta.url))

@@ -97,7 +97,11 @@ describe('the production session source', () => {
 
   it('forwards the request headers to the session lookup', async () => {
     getSession.mockResolvedValue(null)
-    const headers = new Headers({ 'authorization': 'Bearer session-token', 'cookie': 'session=cookie', 'x-auth-client-ip': '198.51.100.1' })
+    const headers = new Headers({
+      'authorization': 'Bearer session-token',
+      'cookie': 'session=cookie',
+      'x-auth-client-ip': '198.51.100.1',
+    })
 
     await getActor({ headers } as never)
 

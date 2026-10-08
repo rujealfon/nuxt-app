@@ -30,7 +30,11 @@ describe('app register page', () => {
     await wrapper.find('form').trigger('submit')
     await flushPromises()
 
-    expect(auth.signUp).toHaveBeenCalledWith({ name: 'A', email: 'user@example.com', password: 'longenough' })
+    expect(auth.signUp).toHaveBeenCalledWith({
+      name: 'A',
+      email: 'user@example.com',
+      password: 'longenough',
+    })
     expect(auth.navigateTo).toHaveBeenCalledWith('/')
   })
 

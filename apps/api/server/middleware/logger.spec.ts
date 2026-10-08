@@ -26,7 +26,12 @@ interface EventOptions {
   logger?: Record<string, (...args: unknown[]) => void>
 }
 
-function makeEvent({ path = '/api/v1/hello', method = 'GET', status = 200, logger }: EventOptions = {}) {
+function makeEvent({
+  path = '/api/v1/hello',
+  method = 'GET',
+  status = 200,
+  logger,
+}: EventOptions = {}) {
   let finish: (() => void) | undefined
 
   const event = {

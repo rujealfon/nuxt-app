@@ -23,7 +23,10 @@ describe('defineVersionedHandler', () => {
 
   it('advertises the version and forwards the event', () => {
     const handler = vi.fn((event: unknown) => event)
-    const wrapped = defineVersionedHandler('v1', handler as never) as unknown as (event: unknown) => unknown
+    const wrapped = defineVersionedHandler(
+      'v1',
+      handler as never,
+    ) as unknown as (event: unknown) => unknown
     const event = { id: 1 }
 
     const result = wrapped(event)
@@ -34,7 +37,10 @@ describe('defineVersionedHandler', () => {
   })
 
   it('omits deprecation headers for the live version', () => {
-    const wrapped = defineVersionedHandler('v1', (() => 'ok') as never) as unknown as (event: unknown) => unknown
+    const wrapped = defineVersionedHandler(
+      'v1',
+      (() => 'ok') as never,
+    ) as unknown as (event: unknown) => unknown
 
     wrapped({})
 

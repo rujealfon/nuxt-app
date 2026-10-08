@@ -51,17 +51,28 @@ export default defineNitroPlugin(() => {
     assertAuthOrigins([new URL(parsed.data.betterAuthUrl).origin])
   }
   catch {
-    throw new Error('Invalid environment configuration:\n  - corsOrigins/betterAuthUrl/BETTER_AUTH_TRUSTED_ORIGINS: authentication requires explicit origins without wildcards or paths')
+    throw new Error(
+      'Invalid environment configuration:\n'
+      + '  - corsOrigins/betterAuthUrl/BETTER_AUTH_TRUSTED_ORIGINS: '
+      + 'authentication requires explicit origins without wildcards or paths',
+    )
   }
 
   if (parsed.data.authBearerEnabled) {
     const origins = bearerOrigins(parsed.data.authBearerOrigins)
     if (!origins.length) {
-      throw new Error('Invalid environment configuration:\n  - authBearerOrigins: AUTH_BEARER_ORIGINS is required when bearer auth is enabled')
+      throw new Error(
+        'Invalid environment configuration:\n'
+        + '  - authBearerOrigins: AUTH_BEARER_ORIGINS is required when bearer auth is enabled',
+      )
     }
 
     if (origins.some(origin => !isExplicitOrigin(origin) || !allowed.includes(origin))) {
-      throw new Error('Invalid environment configuration:\n  - authBearerOrigins: every bearer origin must be an explicit origin allowed by CORS_ORIGINS')
+      throw new Error(
+        'Invalid environment configuration:\n'
+        + '  - authBearerOrigins: every bearer origin must be an explicit origin '
+        + 'allowed by CORS_ORIGINS',
+      )
     }
   }
 })

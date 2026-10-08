@@ -1,5 +1,21 @@
 import { describe, expect, it } from 'vitest'
-import { apiBaseFor, apiVersions, appPorts, authMount, currentApiVersion, defaultSessionTransport, deprecatedApiVersions, isBearerTransport, parseOrigins, sessionEndpoint, sessionTokenHeader, sessionTransportFor, siteUrls, versionedOperations, versionMeta } from '../index'
+import {
+  apiBaseFor,
+  apiVersions,
+  appPorts,
+  authMount,
+  currentApiVersion,
+  defaultSessionTransport,
+  deprecatedApiVersions,
+  isBearerTransport,
+  parseOrigins,
+  sessionEndpoint,
+  sessionTokenHeader,
+  sessionTransportFor,
+  siteUrls,
+  versionedOperations,
+  versionMeta,
+} from '../index'
 
 describe('apiBaseFor', () => {
   it('falls back to the local API port', () => {

@@ -61,12 +61,16 @@ describe('version parity', () => {
   it('documents every versioned-route handler', () => {
     const documented = new Set(
       apiVersions.flatMap(version =>
-        versionedOperations[version].map(operation => `${version}\t${operation.method}\t${operation.suffix}`),
+        versionedOperations[version].map(operation =>
+          `${version}\t${operation.method}\t${operation.suffix}`,
+        ),
       ),
     )
 
     const handlers = new Set(
-      versionedHandlers().map(handler => `${handler.version}\t${handler.method}\t${handler.suffix}`),
+      versionedHandlers().map(handler =>
+        `${handler.version}\t${handler.method}\t${handler.suffix}`,
+      ),
     )
 
     expect(handlers).toEqual(documented)

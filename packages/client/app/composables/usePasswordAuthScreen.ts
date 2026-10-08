@@ -17,13 +17,25 @@ export interface PasswordAuthField {
 
 const loginFields: PasswordAuthField[] = [
   { name: 'email', type: 'email', label: 'Email', placeholder: 'you@example.com', required: true },
-  { name: 'password', type: 'password', label: 'Password', placeholder: '••••••••', required: true },
+  {
+    name: 'password',
+    type: 'password',
+    label: 'Password',
+    placeholder: '••••••••',
+    required: true,
+  },
 ]
 
 const registerFields: PasswordAuthField[] = [
   { name: 'name', type: 'text', label: 'Name', placeholder: 'Your name', required: true },
   { name: 'email', type: 'email', label: 'Email', placeholder: 'you@example.com', required: true },
-  { name: 'password', type: 'password', label: 'Password', placeholder: '••••••••', required: true },
+  {
+    name: 'password',
+    type: 'password',
+    label: 'Password',
+    placeholder: '••••••••',
+    required: true,
+  },
 ]
 
 export interface PasswordAuthScreenOptions<T> {

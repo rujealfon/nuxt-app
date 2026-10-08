@@ -106,7 +106,10 @@ export function writeAuthToken(token: string): Promise<void> {
 
 export function clearAuthToken(expectedToken?: string): Promise<void> {
   return mutateStore(async () => {
-    if (expectedToken !== undefined && (storageInvalidated || await store.read() !== expectedToken)) {
+    if (
+      expectedToken !== undefined
+      && (storageInvalidated || await store.read() !== expectedToken)
+    ) {
       return
     }
 
@@ -116,7 +119,11 @@ export function clearAuthToken(expectedToken?: string): Promise<void> {
       storageInvalidated = false
     }
     catch (cause) {
-      throw new Error('Unable to remove the saved session token. Please retry signing out before closing the app.', { cause })
+      throw new Error(
+        'Unable to remove the saved session token. '
+        + 'Please retry signing out before closing the app.',
+        { cause },
+      )
     }
   })
 }

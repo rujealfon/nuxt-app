@@ -48,7 +48,8 @@ describe('authentication origin boundary', () => {
     })).toThrow(/explicit origins/)
   })
 
-  it('denies a same-site form from an untrusted origin and accepts explicit browser and native origins', async () => {
+  it('denies a same-site form from an untrusted origin and accepts explicit browser and native '
+    + 'origins', async () => {
     const auth = createAuth({} as never, {
       secret: 'test-secret-test-secret-test-secret',
       baseURL: 'https://api.example.com',
@@ -62,7 +63,11 @@ describe('authentication origin boundary', () => {
     ] as const) {
       const response = await auth.handler(new Request('https://api.example.com/api/auth/sign-in/email', {
         method: 'POST',
-        headers: { origin, 'sec-fetch-site': 'same-site', 'content-type': 'application/x-www-form-urlencoded' },
+        headers: {
+          origin,
+          'sec-fetch-site': 'same-site',
+          'content-type': 'application/x-www-form-urlencoded',
+        },
         body: 'email=invalid&password=invalid',
       }))
       expect(response.status).toBe(status)

@@ -15,7 +15,9 @@ vi.mock('nitropack/runtime', () => ({
   useStorage: () => ({ getItem: mocks.getItem }),
 }))
 
-const handler = (await import('./standalone.js.get')).default as unknown as (event: unknown) => Promise<string>
+const handler = (await import('./standalone.js.get')).default as unknown as (
+  event: unknown,
+) => Promise<string>
 
 async function caughtFrom(event: unknown): Promise<unknown> {
   return handler(event).then(() => undefined, (error: unknown) => error)
@@ -31,7 +33,11 @@ describe('get /api/docs-assets/standalone.js', () => {
     const event = {}
 
     await expect(handler(event)).resolves.toBe('console.log("scalar")')
-    expect(mocks.setHeader).toHaveBeenCalledWith(event, 'content-type', 'text/javascript; charset=utf-8')
+    expect(mocks.setHeader).toHaveBeenCalledWith(
+      event,
+      'content-type',
+      'text/javascript; charset=utf-8',
+    )
     expect(mocks.setHeader).toHaveBeenCalledWith(event, 'cache-control', 'no-store')
   })
 

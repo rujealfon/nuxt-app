@@ -65,7 +65,10 @@ function authPaths(): Record<string, OpenApiPathItem> {
       post: {
         tags: [authTagName],
         summary: 'Sign in with email and password',
-        description: 'Better Auth email/password sign-in. Success sets the HttpOnly session cookie. Browser responses omit the session token from JSON; explicitly allowed native origins can receive it.',
+        description:
+          'Better Auth email/password sign-in. Success sets the HttpOnly session cookie. '
+          + 'Browser responses omit the session token from JSON; explicitly allowed native '
+          + 'origins can receive it.',
         requestBody: authRequestBody('LoginCredentials'),
         responses: {
           200: jsonRef('AuthSignInResponse', 'Signed in; session cookie set.'),
@@ -77,7 +80,11 @@ function authPaths(): Record<string, OpenApiPathItem> {
       post: {
         tags: [authTagName],
         summary: 'Register with email and password',
-        description: 'Better Auth email/password registration. Success signs the new user in and sets the session cookie. Browser responses omit non-null session tokens from JSON. A body that fails the shared `RegisterCredentials` schema answers `invalid_input` with `details`.',
+        description:
+          'Better Auth email/password registration. Success signs the new user in and sets '
+          + 'the session cookie. Browser responses omit non-null session tokens from JSON. '
+          + 'A body that fails the shared `RegisterCredentials` schema answers '
+          + '`invalid_input` with `details`.',
         requestBody: authRequestBody('RegisterCredentials'),
         responses: {
           200: jsonRef('AuthSignUpResponse', 'Registered and signed in; session cookie set.'),
@@ -89,7 +96,9 @@ function authPaths(): Record<string, OpenApiPathItem> {
       get: {
         tags: [authTagName],
         summary: 'Current session',
-        description: 'Returns the active session and user, or `null` when signed out. Browser responses omit `session.token`. Useful to confirm a Scalar sign-in took effect.',
+        description:
+          'Returns the active session and user, or `null` when signed out. Browser '
+          + 'responses omit `session.token`. Useful to confirm a Scalar sign-in took effect.',
         responses: {
           200: jsonRef('AuthSessionResponse', 'Active session, or `null` when signed out.'),
           default: apiErrorResponse(),
@@ -100,7 +109,9 @@ function authPaths(): Record<string, OpenApiPathItem> {
       post: {
         tags: [authTagName],
         summary: 'Sign out',
-        description: 'Clears the session and the session cookie. Better Auth requires a JSON `Content-Type`, so an empty object body (`{}`) is sent; all fields are optional.',
+        description:
+          'Clears the session and the session cookie. Better Auth requires a JSON '
+          + '`Content-Type`, so an empty object body (`{}`) is sent; all fields are optional.',
         requestBody: authRequestBody('AuthSignOutRequest'),
         responses: {
           200: jsonRef('AuthSignOutResponse', 'Signed out; session cookie cleared.'),
@@ -124,7 +135,9 @@ export function buildAuthOpenApi() {
   return {
     tag: {
       name: authTagName,
-      description: 'Better Auth email/password sign-in, sign-up, session, and sign-out. Same-origin try-it stores the session cookie. Failures use the API error contract.',
+      description:
+        'Better Auth email/password sign-in, sign-up, session, and sign-out. '
+        + 'Same-origin try-it stores the session cookie. Failures use the API error contract.',
     },
     paths: authPaths(),
     schemas: {
@@ -141,12 +154,16 @@ export function buildAuthOpenApi() {
         type: 'apiKey',
         in: 'cookie',
         name: 'better-auth.session_token',
-        description: 'Better Auth session cookie, set by `/api/auth/*` and HttpOnly. HTTPS deployments prefix it with `__Secure-`. Paste the cookie value to authenticate try-it requests.',
+        description:
+          'Better Auth session cookie, set by `/api/auth/*` and HttpOnly. HTTPS deployments '
+          + 'prefix it with `__Secure-`. Paste the cookie value to authenticate try-it requests.',
       },
       bearerAuth: {
         type: 'http',
         scheme: 'bearer',
-        description: 'Opaque session token in an `Authorization: Bearer <token>` header. Only available when the deployment enables bearer transport (`AUTH_BEARER_ENABLED=true`).',
+        description:
+          'Opaque session token in an `Authorization: Bearer <token>` header. Only available '
+          + 'when the deployment enables bearer transport (`AUTH_BEARER_ENABLED=true`).',
       },
     },
   }

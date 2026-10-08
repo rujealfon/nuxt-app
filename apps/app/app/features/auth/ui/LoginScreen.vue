@@ -22,7 +22,10 @@ const { screenProps } = usePasswordAuthScreen({
     <template #footer>
       <p class="mt-4 text-center text-sm text-muted">
         New here?
-        <NuxtLink to="/register" class="font-medium text-primary">
+        <NuxtLink
+          to="/register"
+          class="font-medium text-primary"
+        >
           Create an account
         </NuxtLink>
       </p>

@@ -35,7 +35,9 @@ vi.mock('h3', () => ({
 
 vi.mock('nitropack/runtime', () => ({ useRuntimeConfig: () => mocks.config }))
 vi.mock('#server/utils/auth', () => ({ useAuth: mocks.useAuth }))
-vi.mock('#server/utils/rate-limit', () => ({ createRateLimitStorage: () => ({ consume: mocks.consume }) }))
+vi.mock('#server/utils/rate-limit', () => ({
+  createRateLimitStorage: () => ({ consume: mocks.consume }),
+}))
 vi.mock('./read-auth-body', () => ({ readAuthBody: mocks.readAuthBody, closeAuthUpload: vi.fn() }))
 
 const { handleAuthRequest } = await import('./handle-auth-request')
@@ -75,7 +77,8 @@ describe('handleAuthRequest', () => {
     })
   })
 
-  it('preserves valid registration bytes, optional fields and credentials when delegating', async () => {
+  it('preserves valid registration bytes, optional fields and credentials '
+    + 'when delegating', async () => {
     const payload = { name: 'Example User', email: 'user@example.com', password: 'password123', callbackURL: 'https://app.example.com/welcome', rememberMe: false }
     mocks.toWebRequest.mockReturnValue(request('/api/auth/sign-up/email', {
       method: 'POST',
@@ -94,18 +97,27 @@ describe('handleAuthRequest', () => {
   it('uses one fallback IP budget and denies before reading the password body', async () => {
     mocks.config.rateLimitEnabled = true
     mocks.getRequestIP.mockReturnValue(undefined)
-    mocks.toWebRequest.mockReturnValue(request('/api/auth/sign-in/email', { method: 'POST', body: '{}' }))
+    mocks.toWebRequest.mockReturnValue(request('/api/auth/sign-in/email', {
+      method: 'POST',
+      body: '{}',
+    }))
     mocks.consume.mockResolvedValue({ allowed: false, retryAfter: 60 })
     const caught = await caughtFrom({ path: '/api/auth/sign-in/email' })
     expect((caught as DomainFailure).error).toBe('rate_limited')
-    expect(mocks.consume).toHaveBeenCalledWith('unknown:auth-prevalidation', { window: 60, max: 100 })
+    expect(mocks.consume).toHaveBeenCalledWith('unknown:auth-prevalidation', {
+      window: 60,
+      max: 100,
+    })
     expect(mocks.readAuthBody).not.toHaveBeenCalled()
     expect(mocks.handler).not.toHaveBeenCalled()
   })
 
   it('uses a zero Retry-After when a denied password request has no retry hint', async () => {
     mocks.config.rateLimitEnabled = true
-    mocks.toWebRequest.mockReturnValue(request('/api/auth/sign-in/email', { method: 'POST', body: '{}' }))
+    mocks.toWebRequest.mockReturnValue(request('/api/auth/sign-in/email', {
+      method: 'POST',
+      body: '{}',
+    }))
     mocks.consume.mockResolvedValue({ allowed: false, retryAfter: null })
     const event = { path: '/api/auth/sign-in/email' }
 
@@ -117,7 +129,8 @@ describe('handleAuthRequest', () => {
     expect(mocks.handler).not.toHaveBeenCalled()
   })
 
-  it('replaces a caller-supplied private IP header without changing credentials or the original request', async () => {
+  it('replaces a caller-supplied private IP header without changing credentials '
+    + 'or the original request', async () => {
     const original = request('/api/auth/ok', {
       headers: {
         'x-auth-client-ip': '198.51.100.1',
@@ -173,7 +186,9 @@ describe('handleAuthRequest', () => {
     const response = new Response(null, { status: 200 })
     mocks.handler.mockResolvedValue(response)
 
-    await expect(handleAuthRequest({ path: '/api/auth/sign-in/email' } as never)).resolves.toBe(response)
+    await expect(
+      handleAuthRequest({ path: '/api/auth/sign-in/email' } as never),
+    ).resolves.toBe(response)
     expect(mocks.handler).toHaveBeenCalledWith(expect.any(Request))
   })
 
@@ -185,18 +200,23 @@ describe('handleAuthRequest', () => {
     })
     mocks.handler.mockResolvedValue(response)
 
-    await expect(handleAuthRequest({ path: '/api/auth/get-session' } as never)).resolves.toBe(response)
+    await expect(
+      handleAuthRequest({ path: '/api/auth/get-session' } as never),
+    ).resolves.toBe(response)
   })
 
   it('preserves retry and cookie headers on a Better Auth failure', async () => {
     mocks.toWebRequest.mockReturnValue(request('/api/auth/get-session'))
-    const response = new Response(JSON.stringify({ code: 'INVALID_EMAIL_OR_PASSWORD', message: 'bad' }), {
-      status: 401,
-      headers: {
-        'x-retry-after': '30',
-        'set-cookie': 'better-auth.session_token=; Max-Age=0',
+    const response = new Response(
+      JSON.stringify({ code: 'INVALID_EMAIL_OR_PASSWORD', message: 'bad' }),
+      {
+        status: 401,
+        headers: {
+          'x-retry-after': '30',
+          'set-cookie': 'better-auth.session_token=; Max-Age=0',
+        },
       },
-    })
+    )
     mocks.handler.mockResolvedValue(response)
     const event = { path: '/api/auth/get-session' }
 
@@ -293,7 +313,9 @@ describe('handleAuthRequest', () => {
     const path = '/api/auth/sign-up/email'
     const payload = { token: null, user: { id: 'user-1' } }
     mocks.toWebRequest.mockReturnValue(request(path, { headers: { origin: 'https://app.example.com' } }))
-    const original = new Response(JSON.stringify(payload), { headers: { 'content-type': 'application/json' } })
+    const original = new Response(JSON.stringify(payload), {
+      headers: { 'content-type': 'application/json' },
+    })
     mocks.handler.mockResolvedValue(original)
 
     await expect(handleAuthRequest({ path } as never)).resolves.toBe(original)
@@ -312,7 +334,9 @@ describe('handleAuthRequest', () => {
     const path = '/api/auth/verify-email'
     const payload = { status: true, token: 'other-token' }
     mocks.toWebRequest.mockReturnValue(request(path, { headers: { origin: 'https://app.example.com' } }))
-    mocks.handler.mockResolvedValue(new Response(JSON.stringify(payload), { headers: { 'content-type': 'application/json' } }))
+    mocks.handler.mockResolvedValue(new Response(JSON.stringify(payload), {
+      headers: { 'content-type': 'application/json' },
+    }))
 
     const response = await handleAuthRequest({ path } as never) as Response
 
@@ -320,13 +344,41 @@ describe('handleAuthRequest', () => {
   })
 
   it.each([
-    ['/api/auth/sign-in/email', { redirect: false, token: 'session-secret', user: { id: 'user-1' } }, { redirect: false, user: { id: 'user-1' } }],
-    ['/api/auth/sign-up/email', { token: 'session-secret', user: { id: 'user-1' } }, { user: { id: 'user-1' } }],
-    ['/api/auth/sign-in/social', { redirect: false, token: 'session-secret', user: { id: 'user-1' } }, { redirect: false, user: { id: 'user-1' } }],
-    ['/api/auth/change-password', { token: 'session-secret', user: { id: 'user-1' } }, { user: { id: 'user-1' } }],
-    ['/api/auth/list-sessions', [{ id: 'session-1', token: 'session-secret' }, { id: 'session-2', token: 'other-secret' }], [{ id: 'session-1' }, { id: 'session-2' }]],
-    ['/api/auth/update-session', { session: { id: 'session-1', token: 'session-secret' } }, { session: { id: 'session-1' } }],
-  ] as const)('removes session tokens from %s for a browser origin', async (path, payload, expected) => {
+    [
+      '/api/auth/sign-in/email',
+      { redirect: false, token: 'session-secret', user: { id: 'user-1' } },
+      { redirect: false, user: { id: 'user-1' } },
+    ],
+    [
+      '/api/auth/sign-up/email',
+      { token: 'session-secret', user: { id: 'user-1' } },
+      { user: { id: 'user-1' } },
+    ],
+    [
+      '/api/auth/sign-in/social',
+      { redirect: false, token: 'session-secret', user: { id: 'user-1' } },
+      { redirect: false, user: { id: 'user-1' } },
+    ],
+    [
+      '/api/auth/change-password',
+      { token: 'session-secret', user: { id: 'user-1' } },
+      { user: { id: 'user-1' } },
+    ],
+    [
+      '/api/auth/list-sessions',
+      [
+        { id: 'session-1', token: 'session-secret' },
+        { id: 'session-2', token: 'other-secret' },
+      ],
+      [{ id: 'session-1' }, { id: 'session-2' }],
+    ],
+    [
+      '/api/auth/update-session',
+      { session: { id: 'session-1', token: 'session-secret' } },
+      { session: { id: 'session-1' } },
+    ],
+  ] as const)('removes session tokens from %s '
+    + 'for a browser origin', async (path, payload, expected) => {
     mocks.toWebRequest.mockReturnValue(request(path, { headers: { origin: 'https://app.example.com' } }))
     mocks.handler.mockResolvedValue(new Response(JSON.stringify(payload), {
       headers: { 'content-type': 'application/json' },
@@ -341,7 +393,8 @@ describe('handleAuthRequest', () => {
 describe('authentication rate-limit boundary', () => {
   afterEach(() => vi.unstubAllEnvs())
 
-  it('keeps rotating forged forwarding headers in one budget and permits another real client', async () => {
+  it('keeps rotating forged forwarding headers in one budget '
+    + 'and permits another real client', async () => {
     vi.stubEnv('VERCEL', '')
     const { createAuth } = await import('#server/database/auth')
     const counts = new Map<string, number>()

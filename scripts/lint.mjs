@@ -39,7 +39,15 @@ const groups = [
   // Shared packages and root tests share tsconfig.test.json.
   [...sharedPackages.map(pkg => `packages/${pkg}`), 'test'],
   // Everything else (root configs, docs, scripts, .github, .vscode).
-  ['.', '--ignore-pattern', 'apps/**', '--ignore-pattern', 'packages/**', '--ignore-pattern', 'test/**'],
+  [
+    '.',
+    '--ignore-pattern',
+    'apps/**',
+    '--ignore-pattern',
+    'packages/**',
+    '--ignore-pattern',
+    'test/**',
+  ],
 ]
 
 const concurrency = Math.max(1, Math.min(4, availableParallelism(), groups.length))

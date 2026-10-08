@@ -9,7 +9,9 @@ interface VersionRegistry {
   versions: Array<{ version: string, deprecated: boolean, sunset?: string }>
 }
 
-const handler = (await import('./index.get')).default as unknown as (event: unknown) => VersionRegistry
+const handler = (await import('./index.get')).default as unknown as (
+  event: unknown,
+) => VersionRegistry
 
 describe('get /api', () => {
   it('reports the version registry', () => {

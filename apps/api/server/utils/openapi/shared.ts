@@ -21,7 +21,9 @@ export interface OpenApiOperation {
   responses: Record<string, OpenApiResponse>
 }
 
-export type OpenApiPathItem = Partial<Record<'get' | 'put' | 'post' | 'delete' | 'patch' | 'options' | 'head', OpenApiOperation>>
+export type OpenApiPathItem = Partial<
+  Record<'get' | 'put' | 'post' | 'delete' | 'patch' | 'options' | 'head', OpenApiOperation>
+>
 
 export function toJsonSchema(schema: z.ZodType) {
   const { $schema: _, ...json } = z.toJSONSchema(schema, {
@@ -39,7 +41,9 @@ export function toJsonSchema(schema: z.ZodType) {
   return json
 }
 
-export function apiErrorResponse(description = 'API error contract. Clients branch on `error`, not message text.'): OpenApiResponse {
+export function apiErrorResponse(
+  description = 'API error contract. Clients branch on `error`, not message text.',
+): OpenApiResponse {
   return {
     description,
     content: {
@@ -50,7 +54,11 @@ export function apiErrorResponse(description = 'API error contract. Clients bran
   }
 }
 
-export function jsonRef(schemaName: string, description: string, headers?: OpenApiResponse['headers']): OpenApiResponse {
+export function jsonRef(
+  schemaName: string,
+  description: string,
+  headers?: OpenApiResponse['headers'],
+): OpenApiResponse {
   return {
     description,
     ...(headers ? { headers } : {}),

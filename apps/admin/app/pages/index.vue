@@ -15,7 +15,10 @@ useHead({ title: 'Admin · nuxt-app' })
     <p class="mt-3 text-muted">
       Internal operations console served from admin.nuxt-app.com.
     </p>
-    <p v-if="actor" class="mt-3 text-default">
+    <p
+      v-if="actor"
+      class="mt-3 text-default"
+    >
       Signed in as <strong>{{ actor.email }}</strong>
     </p>
     <UButton

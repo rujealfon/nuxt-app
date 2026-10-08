@@ -25,7 +25,10 @@ describe('selectUserSchema', () => {
   })
 
   it('requires ISO timestamps rather than Date instances', () => {
-    expect(selectUserSchema.safeParse({ ...userRow, createdAt: new Date(userRow.createdAt) }).success).toBe(false)
+    expect(selectUserSchema.safeParse({
+      ...userRow,
+      createdAt: new Date(userRow.createdAt),
+    }).success).toBe(false)
   })
 
   it('rejects a payload missing a column', () => {

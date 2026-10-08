@@ -20,7 +20,9 @@ beforeEach(() => {
   request.cookie = ''
   request.transport = 'cookie'
   fetchMock.mockReset()
-  fetchMock.mockImplementation(async () => new Response('{}', { headers: { 'content-type': 'application/json' } }))
+  fetchMock.mockImplementation(async () => new Response('{}', {
+    headers: { 'content-type': 'application/json' },
+  }))
 })
 
 function sentCookies() {

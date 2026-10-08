@@ -12,14 +12,25 @@ useHead({ title: 'App · nuxt-app' })
     <h1 class="text-2xl font-bold text-highlighted">
       App
     </h1>
-    <p v-if="actor" class="mt-3 text-default">
+    <p
+      v-if="actor"
+      class="mt-3 text-default"
+    >
       Signed in as <strong>{{ actor.email }}</strong>
     </p>
-    <div v-else class="mt-3 flex items-center gap-3">
+    <div
+      v-else
+      class="mt-3 flex items-center gap-3"
+    >
       <p class="text-muted">
         You are not signed in.
       </p>
-      <UButton to="/login" variant="outline" color="neutral" label="Sign in" />
+      <UButton
+        to="/login"
+        variant="outline"
+        color="neutral"
+        label="Sign in"
+      />
     </div>
     <UButton
       v-if="actor"

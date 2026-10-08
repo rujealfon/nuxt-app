@@ -20,7 +20,11 @@ function event(remoteAddress?: string, forwarded = '198.51.100.1, 198.51.100.2')
 describe('authHeaders', () => {
   afterEach(() => vi.unstubAllEnvs())
 
-  it.each(['198.51.100.1', '198.51.100.1, 198.51.100.2', '2001:db8::1'])('ignores direct-ingress forged address %s', (forwarded) => {
+  it.each([
+    '198.51.100.1',
+    '198.51.100.1, 198.51.100.2',
+    '2001:db8::1',
+  ])('ignores direct-ingress forged address %s', (forwarded) => {
     vi.stubEnv('VERCEL', '')
     const incoming = event('203.0.113.7', forwarded)
     const headers = authHeaders(incoming)

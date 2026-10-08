@@ -21,9 +21,12 @@ describe('api docs (dev server)', async () => {
 
     expect(document.openapi).toMatch(/^3\./)
     expect(document.info.version).toBe('v1')
-    expect(document.tags.map((tag: { name: string }) => tag.name)).toEqual(built.tags.map(tag => tag.name))
-    expect(document.paths['/api/v1/hello'].get.tags).toEqual(built.paths['/api/v1/hello']?.get?.tags)
-    expect(document.paths['/api/auth/sign-in/email'].post.tags).toEqual(built.paths['/api/auth/sign-in/email']?.post?.tags)
+    expect(document.tags.map((tag: { name: string }) => tag.name))
+      .toEqual(built.tags.map(tag => tag.name))
+    expect(document.paths['/api/v1/hello'].get.tags)
+      .toEqual(built.paths['/api/v1/hello']?.get?.tags)
+    expect(document.paths['/api/auth/sign-in/email'].post.tags)
+      .toEqual(built.paths['/api/auth/sign-in/email']?.post?.tags)
     expect(document.paths['/api/v1/hello'].get.responses['200']).toMatchObject({
       headers: { 'x-api-version': { schema: { type: 'string', enum: ['v1'] } } },
     })
@@ -35,7 +38,10 @@ describe('api docs (dev server)', async () => {
       sessionCookie: { type: 'apiKey', in: 'cookie', name: 'better-auth.session_token' },
       bearerAuth: { type: 'http', scheme: 'bearer' },
     })
-    expect(document.paths['/api/auth/sign-in/email'].post.requestBody.content['application/json'].schema).toEqual({
+    expect(
+      document.paths['/api/auth/sign-in/email'].post.requestBody
+        .content['application/json'].schema,
+    ).toEqual({
       $ref: '#/components/schemas/LoginCredentials',
     })
   })

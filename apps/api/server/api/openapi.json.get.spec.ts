@@ -10,7 +10,9 @@ interface OpenApiDocument {
   components: { schemas: Record<string, unknown> }
 }
 
-const handler = (await import('./openapi.json.get')).default as unknown as (event: unknown) => OpenApiDocument
+const handler = (await import('./openapi.json.get')).default as unknown as (
+  event: unknown,
+) => OpenApiDocument
 
 describe('get /api/openapi.json', () => {
   it('serves the OpenAPI document', () => {

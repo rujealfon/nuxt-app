@@ -25,7 +25,10 @@ describe('defineVersionedHandler deprecation headers', () => {
 
   it('sets every deprecation header', () => {
     const event = {}
-    const wrapped = defineVersionedHandler('v1', (() => 'ok') as never) as unknown as (event: unknown) => unknown
+    const wrapped = defineVersionedHandler(
+      'v1',
+      (() => 'ok') as never,
+    ) as unknown as (event: unknown) => unknown
 
     wrapped(event)
 

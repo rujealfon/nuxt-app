@@ -26,7 +26,11 @@ vi.mock('#server/utils/auth', () => ({ useAuth: () => mocks.auth }))
 vi.mock('#server/utils/redis', () => ({ useRedis: () => ({ eval: mocks.eval }) }))
 vi.mock('#server/utils/logger', () => ({ useLogger: () => ({ error: mocks.loggerError }) }))
 vi.mock('nitropack/runtime', () => ({
-  useRuntimeConfig: () => ({ authBearerEnabled: false, authBearerOrigins: '', rateLimitEnabled: true }),
+  useRuntimeConfig: () => ({
+    authBearerEnabled: false,
+    authBearerOrigins: '',
+    rateLimitEnabled: true,
+  }),
 }))
 
 describe('auth rate limiting through the Nitro request boundary', () => {
@@ -62,7 +66,12 @@ describe('auth rate limiting through the Nitro request boundary', () => {
     vi.clearAllMocks()
     vi.stubEnv('VERCEL', '')
     counters.clear()
-    mocks.eval.mockImplementation(async (_script: string, _keys: number, key: string, window: number) => {
+    mocks.eval.mockImplementation(async (
+      _script: string,
+      _keys: number,
+      key: string,
+      window: number,
+    ) => {
       const count = (counters.get(key) ?? 0) + 1
       counters.set(key, count)
       return [count, window]
@@ -78,7 +87,9 @@ describe('auth rate limiting through the Nitro request boundary', () => {
 
   afterAll(async () => {
     server.closeAllConnections()
-    await new Promise<void>((resolve, reject) => server.close(error => error ? reject(error) : resolve()))
+    await new Promise<void>((resolve, reject) => {
+      server.close(error => error ? reject(error) : resolve())
+    })
     vi.unstubAllEnvs()
   })
 
@@ -103,7 +114,10 @@ describe('auth rate limiting through the Nitro request boundary', () => {
       statuses.push((await signIn(`198.51.100.${i}`)).status)
     }
     expect(statuses).toEqual([401, 401, 401, 429])
-    expect([...counters.keys()]).toEqual(['rate-limit:127.0.0.1:auth-prevalidation', 'rate-limit:127.0.0.1|/sign-in/email'])
+    expect([...counters.keys()]).toEqual([
+      'rate-limit:127.0.0.1:auth-prevalidation',
+      'rate-limit:127.0.0.1|/sign-in/email',
+    ])
   })
 
   it('puts arbitrary unknown paths in one bounded bucket and preserves JSON failures', async () => {
@@ -120,12 +134,20 @@ describe('auth rate limiting through the Nitro request boundary', () => {
     expect([...counters.keys()]).toEqual(['rate-limit:127.0.0.1|unknown'])
   })
 
-  it('bounds encoded, oversized, repeated-slash and special-prefix unknown paths with one policy', async () => {
-    for (const path of ['/sign-in/unknown', '/%73ign-in/nope', '//missing', `/missing-${'x'.repeat(2000)}`, '/nope?next=/ok']) {
+  it('bounds encoded, oversized, repeated-slash and special-prefix unknown paths '
+    + 'with one policy', async () => {
+    for (const path of [
+      '/sign-in/unknown',
+      '/%73ign-in/nope',
+      '//missing',
+      `/missing-${'x'.repeat(2000)}`,
+      '/nope?next=/ok',
+    ]) {
       expect((await fetch(`${baseURL}/api/auth${path}`)).status).toBe(404)
     }
     expect([...counters.keys()]).toEqual(['rate-limit:127.0.0.1|unknown'])
-    expect(mocks.eval.mock.calls.map(call => call[3])).toEqual(Array.from({ length: 5 }).fill(60_000))
+    expect(mocks.eval.mock.calls.map(call => call[3]))
+      .toEqual(Array.from({ length: 5 }).fill(60_000))
   })
 
   it('uses route templates for password-reset tokens and OAuth provider parameters', async () => {
@@ -150,7 +172,8 @@ describe('auth rate limiting through the Nitro request boundary', () => {
     ])
   })
 
-  it('uses platform forwarding only on Vercel and preserves the strict endpoint policy', async () => {
+  it('uses platform forwarding only on Vercel '
+    + 'and preserves the strict endpoint policy', async () => {
     vi.stubEnv('VERCEL', '1')
     for (let i = 0; i < 3; i++) {
       expect((await signIn('198.51.100.10')).status).toBe(401)
@@ -163,22 +186,31 @@ describe('auth rate limiting through the Nitro request boundary', () => {
       'rate-limit:198.51.100.11:auth-prevalidation',
       'rate-limit:198.51.100.11|/sign-in/email',
     ])
-    expect(mocks.eval.mock.calls.filter(call => call[2].includes('|')).every(call => call[3] === 10_000)).toBe(true)
+    expect(mocks.eval.mock.calls.filter(call => call[2].includes('|'))
+      .every(call => call[3] === 10_000)).toBe(true)
   })
 
-  it('charges schema-invalid bodies across both password flows before parsing, despite spoofed headers', async () => {
+  it('charges schema-invalid bodies across both password flows before parsing, '
+    + 'despite spoofed headers', async () => {
     for (let i = 0; i <= 100; i++) {
       const path = i % 2 ? '/sign-up/email?source=web' : '/sign-in/email'
       const response = await fetch(`${baseURL}/api/auth${path}`, {
         method: 'POST',
-        headers: { 'content-type': 'application/json', 'x-forwarded-for': `198.51.100.${i}`, 'x-auth-client-ip': `198.51.100.${i}` },
+        headers: {
+          'content-type': 'application/json',
+          'x-forwarded-for': `198.51.100.${i}`,
+          'x-auth-client-ip': `198.51.100.${i}`,
+        },
         body: JSON.stringify({ name: '', email: 'invalid', password: '' }),
       })
       expect(response.status).toBe(i < 100 ? 400 : 429)
       const failure = await response.json()
       expect(failure.error).toBe(i < 100 ? 'invalid_input' : 'rate_limited')
       if (i < 100) {
-        expect(failure.details).toContainEqual({ path: ['email'], message: 'Enter a valid email address' })
+        expect(failure.details).toContainEqual({
+          path: ['email'],
+          message: 'Enter a valid email address',
+        })
       }
       else {
         expect(response.headers.get('retry-after')).toBe('60')
@@ -188,10 +220,19 @@ describe('auth rate limiting through the Nitro request boundary', () => {
     expect([...counters.keys()]).toEqual(['rate-limit:127.0.0.1:auth-prevalidation'])
   })
 
-  it('rejects oversized JSON and UTF-8 form bodies before Better Auth or field validation', async () => {
+  it('rejects oversized JSON and UTF-8 form bodies '
+    + 'before Better Auth or field validation', async () => {
     for (const [path, contentType, body] of [
-      ['/sign-up/email', 'application/json', JSON.stringify({ name: 'x'.repeat(16 * 1024), email: 'invalid', password: '' })],
-      ['/sign-in/email', 'application/x-www-form-urlencoded', `email=invalid&password=${'é'.repeat(9 * 1024)}`],
+      [
+        '/sign-up/email',
+        'application/json',
+        JSON.stringify({ name: 'x'.repeat(16 * 1024), email: 'invalid', password: '' }),
+      ],
+      [
+        '/sign-in/email',
+        'application/x-www-form-urlencoded',
+        `email=invalid&password=${'é'.repeat(9 * 1024)}`,
+      ],
     ]) {
       const response = await fetch(`${baseURL}/api/auth${path}`, {
         method: 'POST',
@@ -199,7 +240,10 @@ describe('auth rate limiting through the Nitro request boundary', () => {
         body,
       })
       expect(response.status).toBe(400)
-      await expect(response.json()).resolves.toEqual({ error: 'invalid_input', message: 'The authentication request body is too large' })
+      await expect(response.json()).resolves.toEqual({
+        error: 'invalid_input',
+        message: 'The authentication request body is too large',
+      })
     }
     expect([...counters.keys()]).toEqual(['rate-limit:127.0.0.1:auth-prevalidation'])
   })
@@ -220,14 +264,20 @@ describe('auth rate limiting through the Nitro request boundary', () => {
       body: JSON.stringify({ name: 'x'.repeat(17 * 1024) }),
     })
     expect(response.status).toBe(400)
-    await expect(response.json()).resolves.toEqual({ error: 'invalid_input', message: 'The authentication request body is too large' })
+    await expect(response.json()).resolves.toEqual({
+      error: 'invalid_input',
+      message: 'The authentication request body is too large',
+    })
     expect(mocks.eval).not.toHaveBeenCalled()
   })
 
   it.each(['/sign-up/email', '/sign-out', '/unknown', '/x/../update-user'])(
     'rejects a chunked overflow on %s before the upload ends and safely closes the connection',
     async (path) => {
-      const result = await new Promise<{ status: number | undefined, body: string }>((resolve, reject) => {
+      const result = await new Promise<{
+        status: number | undefined
+        body: string
+      }>((resolve, reject) => {
         const request = httpRequest(baseURL, {
           path: `/api/auth${path}`,
           method: 'POST',
@@ -243,12 +293,16 @@ describe('auth rate limiting through the Nitro request boundary', () => {
         // Deliberately never end: rejection must not await the rest of the body.
       })
       expect(result.status).toBe(400)
-      expect(JSON.parse(result.body)).toEqual({ error: 'invalid_input', message: 'The authentication request body is too large' })
+      expect(JSON.parse(result.body)).toEqual({
+        error: 'invalid_input',
+        message: 'The authentication request body is too large',
+      })
       expect((await fetch(`${baseURL}/api/auth/ok`)).status).toBe(200)
     },
   )
 
-  it('preserves a bounded non-password upload at the byte limit and ordinary endpoint failures', async () => {
+  it('preserves a bounded non-password upload at the byte limit '
+    + 'and ordinary endpoint failures', async () => {
     const body = JSON.stringify({ name: '' }).replace('""', `"${'x'.repeat(16 * 1024 - 11)}"`)
     expect(Buffer.byteLength(body)).toBe(16 * 1024)
     const signOut = await fetch(`${baseURL}/api/auth/sign-out`, {
@@ -269,7 +323,9 @@ describe('auth rate limiting through the Nitro request boundary', () => {
   })
 
   it('preserves bodyless native Web POST requests', async () => {
-    const response = await webHandler(new Request(`${baseURL}/api/auth/sign-out`, { method: 'POST' }))
+    const response = await webHandler(new Request(`${baseURL}/api/auth/sign-out`, {
+      method: 'POST',
+    }))
     expect(response.status).toBe(200)
     await expect(response.json()).resolves.toEqual({ success: true })
   })
@@ -295,8 +351,15 @@ describe('auth rate limiting through the Nitro request boundary', () => {
 
   it('bounds raw dot-segment aliases before H3 canonicalizes the destination', async () => {
     for (const path of ['/api/auth/x/../sign-in/email', '/api/auth/x/%2e%2e/sign-up/email']) {
-      const result = await new Promise<{ status: number | undefined, body: string }>((resolve, reject) => {
-        const request = httpRequest(baseURL, { path, method: 'POST', headers: { 'content-type': 'application/json' } }, (response) => {
+      const result = await new Promise<{
+        status: number | undefined
+        body: string
+      }>((resolve, reject) => {
+        const request = httpRequest(baseURL, {
+          path,
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+        }, (response) => {
           let body = ''
           response.on('data', chunk => body += chunk)
           response.on('end', () => resolve({ status: response.statusCode, body }))
@@ -305,12 +368,16 @@ describe('auth rate limiting through the Nitro request boundary', () => {
         request.end(JSON.stringify({ email: 'invalid', password: 'x'.repeat(17 * 1024) }))
       })
       expect(result.status).toBe(400)
-      expect(JSON.parse(result.body)).toEqual({ error: 'invalid_input', message: 'The authentication request body is too large' })
+      expect(JSON.parse(result.body)).toEqual({
+        error: 'invalid_input',
+        message: 'The authentication request body is too large',
+      })
     }
     expect([...counters.keys()]).toEqual(['rate-limit:127.0.0.1:auth-prevalidation'])
   })
 
-  it('preserves supported form credentials and charges malformed JSON to the same pre-parse budget', async () => {
+  it('preserves supported form credentials and charges malformed JSON '
+    + 'to the same pre-parse budget', async () => {
     const form = await fetch(`${baseURL}/api/auth/sign-in/email`, {
       method: 'POST',
       headers: { 'content-type': 'application/x-www-form-urlencoded', 'origin': baseURL },

@@ -19,7 +19,10 @@ export function isExplicitOrigin(origin: string): boolean {
   }
 }
 
-export function canExposeBearerToken(origin: string | null | undefined, config: BearerOriginConfig): boolean {
+export function canExposeBearerToken(
+  origin: string | null | undefined,
+  config: BearerOriginConfig,
+): boolean {
   return Boolean(
     config.authBearerEnabled
     && origin
@@ -60,7 +63,12 @@ function removeSessionTokens(value: unknown): boolean {
 
 // Better Auth emits the session token in both headers and JSON responses.
 // Only explicitly configured native origins may receive either representation.
-export async function restrictBearerTokenResponse(response: Response, origin: string | null, config: BearerOriginConfig, path = ''): Promise<Response> {
+export async function restrictBearerTokenResponse(
+  response: Response,
+  origin: string | null,
+  config: BearerOriginConfig,
+  path = '',
+): Promise<Response> {
   if (canExposeBearerToken(origin, config)) {
     return response
   }
@@ -70,7 +78,9 @@ export async function restrictBearerTokenResponse(response: Response, origin: st
   headers.delete(sessionTokenHeader)
   const exposed = headers.get('access-control-expose-headers')
   if (exposed) {
-    const remaining = exposed.split(',').map(header => header.trim()).filter(header => header.toLowerCase() !== sessionTokenHeader)
+    const remaining = exposed.split(',')
+      .map(header => header.trim())
+      .filter(header => header.toLowerCase() !== sessionTokenHeader)
     if (remaining.length !== exposed.split(',').length) {
       changed = true
     }

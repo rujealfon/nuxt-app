@@ -96,7 +96,10 @@ describe('rate-limit middleware', () => {
     ])
   })
 
-  it.each(['/api/authentic/sign-in', '/api/healthful'])('does not exempt lookalike path %s', async (path) => {
+  it.each([
+    '/api/authentic/sign-in',
+    '/api/healthful',
+  ])('does not exempt lookalike path %s', async (path) => {
     await handler(event(path))
 
     expect(consume).toHaveBeenCalledWith('203.0.113.7:unknown', { window: 60, max: 100 })

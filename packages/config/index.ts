@@ -94,7 +94,10 @@ export interface VersionMeta {
 
 // Derives version metadata from the registry. Takes an explicit registry so
 // tests never mutate the shared one.
-export function versionMeta(version: ApiVersion, deprecated: DeprecatedApiVersions = deprecatedApiVersions): VersionMeta {
+export function versionMeta(
+  version: ApiVersion,
+  deprecated: DeprecatedApiVersions = deprecatedApiVersions,
+): VersionMeta {
   const meta = deprecated[version]
 
   return {

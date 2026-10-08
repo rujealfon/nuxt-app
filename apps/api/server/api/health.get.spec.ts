@@ -10,7 +10,9 @@ interface HealthResponse {
   timestamp: string
 }
 
-const handler = (await import('./health.get')).default as unknown as (event: unknown) => HealthResponse
+const handler = (await import('./health.get')).default as unknown as (
+  event: unknown,
+) => HealthResponse
 
 describe('get /api/health', () => {
   it('reports liveness with an ISO timestamp', () => {

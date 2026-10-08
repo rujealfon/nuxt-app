@@ -18,7 +18,15 @@ const root = fileURLToPath(new URL('..', import.meta.url))
 // layer publishes to apps. Compared with exact equality, so adding or renaming
 // a public symbol must update this list deliberately, and nothing joins the
 // interface by accident.
-const clientComposables = ['useApi', 'useApiFetch', 'useAuth', 'useAuthForm', 'useAuthTokenStore', 'usePasswordAuthScreen', 'useSignOut']
+const clientComposables = [
+  'useApi',
+  'useApiFetch',
+  'useAuth',
+  'useAuthForm',
+  'useAuthTokenStore',
+  'usePasswordAuthScreen',
+  'useSignOut',
+]
 const uiComposables = ['useSite']
 const uiComponents = ['AppHeader', 'AppShell', 'AuthScreen']
 
@@ -26,7 +34,11 @@ const uiComponents = ['AppHeader', 'AppShell', 'AuthScreen']
 // export form (declarations, re-exports) instead of guessing with a regex.
 async function exportedSymbols(dir: string): Promise<string[]> {
   const files = readdirSync(dir, { withFileTypes: true })
-    .filter(entry => entry.isFile() && entry.name.endsWith('.ts') && !entry.name.endsWith('.spec.ts'))
+    .filter(entry =>
+      entry.isFile()
+      && entry.name.endsWith('.ts')
+      && !entry.name.endsWith('.spec.ts'),
+    )
 
   const names = new Set<string>()
 
@@ -52,7 +64,9 @@ function componentNames(dir: string): string[] {
 
 describe('package public exports', () => {
   it('publishes exactly the authored client composables', async () => {
-    expect(await exportedSymbols(`${root}/packages/client/app/composables`)).toEqual(clientComposables)
+    expect(
+      await exportedSymbols(`${root}/packages/client/app/composables`),
+    ).toEqual(clientComposables)
   })
 
   it('publishes exactly the authored ui exports', async () => {

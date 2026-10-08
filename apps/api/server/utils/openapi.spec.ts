@@ -50,7 +50,9 @@ describe('buildOpenApiDocument', () => {
       type: 'object',
       properties: { message: { type: 'string' } },
     })
-    expect(document.paths['/api/health']?.get?.responses['200']?.content?.['application/json']?.schema).toEqual({
+    expect(
+      document.paths['/api/health']?.get?.responses['200']?.content?.['application/json']?.schema,
+    ).toEqual({
       $ref: '#/components/schemas/HealthResponse',
     })
     expect(document.components.schemas.HealthResponse).toMatchObject({
