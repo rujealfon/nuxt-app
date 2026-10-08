@@ -13,6 +13,9 @@ const openApiDocumentSchema = z.looseObject({
   openapi: z.string(),
 })
 
+const metaTagName = 'Meta'
+const infraTagName = 'Infra'
+
 // Every versioned response advertises its version (mirroring
 // `defineVersionedHandler`). Deprecation headers share `deprecationHeaders`.
 function versionResponseHeaders(version: ApiVersion) {
@@ -55,7 +58,8 @@ export function buildVersionedPaths(
         `/api/${version}${operation.suffix}`,
         {
           [operation.method]: {
-            tags: [version],
+            tags: [operation.tag],
+            ...(versionMeta(version).deprecated ? { deprecated: true } : {}),
             summary: operation.summary,
             ...(operation.description ? { description: operation.description } : {}),
             ...(operation.authenticated ? { security: authenticatedSecurity() } : {}),
@@ -90,7 +94,7 @@ export function buildOpenApiDocument() {
   const paths: Record<string, OpenApiPathItem> = {
     '/api': {
       get: {
-        tags: ['meta'],
+        tags: [metaTagName],
         summary: 'Version registry',
         description: 'Reports the current version and per-version deprecation metadata.',
         responses: {
@@ -101,7 +105,7 @@ export function buildOpenApiDocument() {
     },
     '/api/openapi.json': {
       get: {
-        tags: ['meta'],
+        tags: [metaTagName],
         summary: 'OpenAPI document',
         description: 'This document. Rendered by the Scalar UI at `/api/docs`.',
         responses: {
@@ -117,7 +121,7 @@ export function buildOpenApiDocument() {
     ...auth.paths,
     '/api/health': {
       get: {
-        tags: ['infra'],
+        tags: [infraTagName],
         summary: 'Liveness check',
         responses: {
           200: jsonRef('HealthResponse', 'Service status.'),
@@ -127,7 +131,7 @@ export function buildOpenApiDocument() {
     },
     '/api/health/ready': {
       get: {
-        tags: ['infra'],
+        tags: [infraTagName],
         summary: 'Readiness check',
         description: 'Probes PostgreSQL and Redis.',
         responses: {
@@ -152,16 +156,17 @@ export function buildOpenApiDocument() {
     info: {
       title: 'nuxt-app API',
       version: currentApiVersion,
-      description: 'Versioned routes live under `/api/<version>/` and advertise it via `X-Api-Version`. Infra routes (`/api/auth/*`, `/api/health*`, `GET /api`, `/api/docs*`, `/api/openapi.json`) are unversioned. Failures use the API error contract: `/api/auth/*` normalizes Better Auth failures onto it, and `invalid_input` may carry `details`. Health 200s are custom liveness/readiness bodies; health failures use the API error contract. Protected operations accept either the Better Auth session cookie or, on deployments that enable it, a bearer token. The `auth` tag documents the email/password sign-in flow so a local Scalar session can authenticate before calling protected routes.',
+      description: 'Versioned routes live under `/api/<version>/` and advertise it via `X-Api-Version`. Infra routes (`/api/auth/*`, `/api/health*`, `GET /api`, `/api/docs*`, `/api/openapi.json`) are unversioned. Failures use the API error contract: `/api/auth/*` normalizes Better Auth failures onto it, and `invalid_input` may carry `details`. Health 200s are custom liveness/readiness bodies; health failures use the API error contract. Protected operations accept either the Better Auth session cookie or, on deployments that enable it, a bearer token. The `Auth` tag documents the email/password sign-in flow so a local Scalar session can authenticate before calling protected routes.',
     },
     servers: [
       { url: '/', description: 'Same origin: docs, spec, and API share one host.' },
     ],
     tags: [
-      { name: 'meta', description: 'Version registry and API documentation.' },
-      ...apiVersions.map(version => ({ name: version, description: `Versioned-route operations (${versionMeta(version).deprecated ? 'deprecated' : 'current'}).` })),
+      { name: metaTagName, description: 'Version registry and API documentation.' },
+      ...[...new Set(apiVersions.flatMap(version => versionedOperations[version].map(operation => operation.tag)))]
+        .map(name => ({ name, description: `${name} operations.` })),
       auth.tag,
-      { name: 'infra', description: 'Unversioned health checks.' },
+      { name: infraTagName, description: 'Unversioned health checks.' },
     ],
     paths,
     components: {

@@ -1,6 +1,7 @@
 import { fileURLToPath } from 'node:url'
 import { fetch, setup } from '@nuxt/test-utils/e2e'
 import { describe, expect, it } from 'vitest'
+import { buildOpenApiDocument } from '../../server/utils/openapi'
 
 describe('api docs (dev server)', async () => {
   await setup({
@@ -16,9 +17,13 @@ describe('api docs (dev server)', async () => {
     expect(response.headers.get('content-type')).toMatch(/json/)
 
     const document = await response.json()
+    const built = buildOpenApiDocument()
 
     expect(document.openapi).toMatch(/^3\./)
     expect(document.info.version).toBe('v1')
+    expect(document.tags.map((tag: { name: string }) => tag.name)).toEqual(built.tags.map(tag => tag.name))
+    expect(document.paths['/api/v1/hello'].get.tags).toEqual(built.paths['/api/v1/hello']?.get?.tags)
+    expect(document.paths['/api/auth/sign-in/email'].post.tags).toEqual(built.paths['/api/auth/sign-in/email']?.post?.tags)
     expect(document.paths['/api/v1/hello'].get.responses['200']).toMatchObject({
       headers: { 'x-api-version': { schema: { type: 'string', enum: ['v1'] } } },
     })

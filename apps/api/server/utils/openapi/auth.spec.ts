@@ -22,7 +22,7 @@ describe('buildAuthOpenApi', () => {
   it('documents the Better Auth email/password flow for same-origin try-it', () => {
     const auth = buildAuthOpenApi()
 
-    expect(auth.tag.name).toBe('auth')
+    expect(auth.tag.name).toBe('Auth')
     expect(auth.paths['/api/auth/sign-in/email']?.post?.requestBody?.content?.['application/json']?.schema)
       .toEqual({ $ref: '#/components/schemas/LoginCredentials' })
     expect(auth.paths['/api/auth/sign-up/email']?.post?.requestBody?.content?.['application/json']?.schema)

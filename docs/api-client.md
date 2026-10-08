@@ -21,13 +21,17 @@ For endpoint implementation, follow the [API guide](../apps/api/AGENTS.md).
 `defineVersionedHandler` sets `X-Api-Version` and adds `Deprecation` and `Sunset`
 headers for entries in `deprecatedApiVersions`.
 
+Scalar groups operations by the capitalized module `tag` in each contract,
+such as `Greeting` or `Auth`. Versions remain in paths and response headers.
+Deprecated versions mark each operation as deprecated without changing its module group.
+
 To ship a new version:
 
 1. Add `server/api/v2/**` handlers, reusing `server/services/` where behavior is
    unchanged.
 2. Append `'v2'` to `apiVersions` and set `currentApiVersion = 'v2'`.
 3. Add and export the `v2` contracts namespace in `packages/types`, including its
-   `operations` list. Register it in `packages/config`'s `versionedOperations`.
+   `operations` list with a module `tag` on each entry. Register it in `packages/config`'s `versionedOperations`.
 4. Mark the old version in `deprecatedApiVersions` with a sunset date. Preserve
    the registry's `Object.freeze` wrapper.
 5. Run `pnpm test --project unit test/version-parity.spec.ts` to check that

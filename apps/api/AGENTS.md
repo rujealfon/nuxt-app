@@ -42,8 +42,10 @@ and Better Auth failure conversion to `server/services/auth`.
 
 ## Persistence and configuration
 
-Keep database code in `server/database/`. For generation, migrations, seeding,
-and test-database commands, follow [database operations](../../docs/database.md).
+Keep database code in `server/database/`. Derive row-shaped payload schemas
+from the tables with drizzle-zod in `server/database/row-schemas.ts`; see
+[backend patterns](../../docs/backend-patterns.md). For generation, migrations,
+seeding, and test-database commands, follow [database operations](../../docs/database.md).
 Review the generated schema and SQL before applying migrations.
 
 Before changing drivers or transactions, read

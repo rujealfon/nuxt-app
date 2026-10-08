@@ -19,6 +19,7 @@ a concrete benefit.
 | Use-case functions and pure rules | A business action has rules beyond request parsing | The operation is callable without an HTTP event; business-rule tests cover its outcomes. |
 | Authorization policies | An operation reads or changes protected resources | Tests cover anonymous, allowed, and denied actors, including ownership or organization scope where applicable. |
 | Domain failures and the error adapter | Versioned routes need consistent failure handling | Shared response schemas and HTTP tests verify codes, statuses, and safe messages. |
+| Table-derived row schemas | A versioned route validates or returns a table row | The derivation spec proves parity with the table columns and OpenAPI conversion. |
 | Repositories and provider adapters | Queries become complex/reused, or external integrations appear | Tests exercise the real adapter; business tests substitute dependencies where useful. |
 | Transactions and concurrency control | Related writes must be atomic or simultaneous edits can conflict | Database integration tests prove rollback, constraints, and conflict behavior. |
 | State machines | A lifecycle has restricted transitions | Tests cover allowed and rejected transitions. |
@@ -105,6 +106,35 @@ an established version. `/api/auth/*` also uses this contract, with `details`
 for the two password flows ([ADR 0004](adr/0004-auth-error-contract.md)). Health
 200 responses have their own bodies; health failures use the API error contract.
 
+## Table-derived row schemas
+
+When a versioned route validates or returns a payload shaped like a table row,
+derive the zod schema from the table with drizzle-zod instead of maintaining a
+hand-written copy. Keep derivations in
+`apps/api/server/database/row-schemas.ts`, next to the tables they read. A
+column change then flows through validation, inferred types, and the OpenAPI
+document without a second edit.
+
+Follow two rules when writing a derivation.
+
+Payloads are JSON, so override timestamp columns to `z.iso.datetime()`. A
+`Date` column otherwise produces `z.date()`, which rejects the ISO strings
+real payloads carry. `toJsonSchema` renders a stray `Date` contract as a
+date-time string in the document, but rendering is not validation, so keep
+the override. Attach narrowing rules such as length or format constraints in
+the same derivation argument, not in the table column. For a nullable
+column, override with a function, `(column) => z.iso.datetime().nullable()`,
+so nullability survives; a literal replacement bypasses it. See the
+[drizzle-zod docs](https://orm.drizzle.team/docs/zod).
+
+Keep schemas that are not row shapes hand-written in `packages/types`: the
+auth flow bodies validate shared client form contracts, and Better Auth
+validates its own copies. When a route responds with a row, register the
+contract through the `VersionedOperation` table and let the route's HTTP spec
+pin the actual body, so drift fails a test rather than the document. If row
+contracts keep duplicating table shapes, moving the tables into a shared
+package removes the copy; treat that as a separate written decision.
+
 ## Persistence, transactions, and adapters
 
 Use Drizzle directly for straightforward operations. Extract a domain-specific
@@ -154,7 +184,9 @@ access and retention appropriate to their contents. Record only necessary data.
 Before coding, define the operation, actors, resource ownership, invariants,
 atomic writes, and external effects. Then deliver one complete path:
 
-1. Add request/response contracts and any required schema migration.
+1. Add request/response contracts and any required schema migration. Derive
+   row-shaped payload schemas from the table; see
+   [Table-derived row schemas](#table-derived-row-schemas).
 2. Implement the business operation, policy, and persistence code it needs.
 3. Add the versioned route; raise domain failures so the error adapter can render the API error contract.
 4. Test business rules, denied access, database constraints/rollback, and the

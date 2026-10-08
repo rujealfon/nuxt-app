@@ -11,14 +11,18 @@ describe('buildOpenApiDocument', () => {
     expect(document.info.version).toBe(currentApiVersion)
   })
 
-  it('covers every registered version with tags and versioned paths', () => {
+  it('groups operations by module while preserving versioned paths', () => {
     const document = buildOpenApiDocument()
 
-    expect(document.tags.map(tag => tag.name)).toContain('infra')
-    expect(document.paths['/api/health']?.get?.tags).toEqual(['infra'])
+    expect(document.tags.map(tag => tag.name)).toContain('Infra')
+    expect(document.paths['/api/health']?.get?.tags).toEqual(['Infra'])
+
+    expect(document.tags.map(tag => tag.name)).toEqual(['Meta', 'Greeting', 'Auth', 'Infra'])
+    expect(document.paths['/api/v1/hello']?.get?.tags).toEqual(['Greeting'])
+    expect(document.paths['/api/v1/hello']?.get?.deprecated).toBeUndefined()
 
     for (const version of apiVersions) {
-      expect(document.tags.map(tag => tag.name)).toContain(version)
+      expect(document.tags.map(tag => tag.name)).not.toContain(version)
       expect(
         Object.keys(document.paths).some(path => path.startsWith(`/api/${version}/`)),
         `expected a documented path for ${version}`,
@@ -89,8 +93,8 @@ describe('buildOpenApiDocument', () => {
   it('composes the auth OpenAPI fragment', () => {
     const document = buildOpenApiDocument()
 
-    expect(document.tags.map(tag => tag.name)).toContain('auth')
-    expect(document.paths['/api/auth/sign-in/email']?.post?.tags).toEqual(['auth'])
+    expect(document.tags.map(tag => tag.name)).toContain('Auth')
+    expect(document.paths['/api/auth/sign-in/email']?.post?.tags).toEqual(['Auth'])
     expect(document.components.securitySchemes.bearerAuth.scheme).toBe('bearer')
   })
 
@@ -107,6 +111,7 @@ describe('buildOpenApiDocument', () => {
           suffix: '/secret',
           method: 'get',
           summary: 'Secret operation',
+          tag: 'Secret',
           responseName: 'HelloResponse',
           responseSchema: v1.helloResponseSchema,
           authenticated: true,
@@ -116,6 +121,7 @@ describe('buildOpenApiDocument', () => {
 
     const operation = paths['/api/v1/secret']?.get
 
+    expect(operation?.tags).toEqual(['Secret'])
     expect(operation?.security).toEqual([{ sessionCookie: [] }, { bearerAuth: [] }])
     expect(operation?.responses['401']?.content?.['application/json']?.schema).toEqual({
       $ref: '#/components/schemas/ApiError',
