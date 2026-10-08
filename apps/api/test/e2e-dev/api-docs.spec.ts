@@ -19,6 +19,9 @@ describe('api docs (dev server)', async () => {
 
     expect(document.openapi).toMatch(/^3\./)
     expect(document.info.version).toBe('v1')
+    expect(document.tags.map((tag: { name: string }) => tag.name)).toEqual(['Meta', 'Greeting', 'Auth', 'Infra'])
+    expect(document.paths['/api/v1/hello'].get.tags).toEqual(['Greeting'])
+    expect(document.paths['/api/auth/sign-in/email'].post.tags).toEqual(['Auth'])
     expect(document.paths['/api/v1/hello'].get.responses['200']).toMatchObject({
       headers: { 'x-api-version': { schema: { type: 'string', enum: ['v1'] } } },
     })

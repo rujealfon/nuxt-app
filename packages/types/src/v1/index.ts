@@ -13,6 +13,8 @@ export interface VersionedOperation {
   suffix: string
   method: 'get' | 'put' | 'post' | 'delete' | 'patch' | 'options' | 'head'
   summary: string
+  // Documentation module, independent of the API version.
+  tag: string
   description?: string
   responseName: string
   responseSchema: z.ZodType
@@ -24,6 +26,7 @@ export const operations: readonly VersionedOperation[] = [
     suffix: '/hello',
     method: 'get',
     summary: 'Greeting operation',
+    tag: 'Greeting',
     description: 'Example versioned operation. Versioned routes require an explicit version.',
     responseName: 'HelloResponse',
     responseSchema: helloResponseSchema,

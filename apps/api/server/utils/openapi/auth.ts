@@ -61,7 +61,7 @@ function authPaths(): Record<string, OpenApiPathItem> {
   return {
     '/api/auth/sign-in/email': {
       post: {
-        tags: ['auth'],
+        tags: ['Auth'],
         summary: 'Sign in with email and password',
         description: 'Better Auth email/password sign-in. Success sets the HttpOnly session cookie. Browser responses omit the session token from JSON; explicitly allowed native origins can receive it.',
         requestBody: authRequestBody('LoginCredentials'),
@@ -73,7 +73,7 @@ function authPaths(): Record<string, OpenApiPathItem> {
     },
     '/api/auth/sign-up/email': {
       post: {
-        tags: ['auth'],
+        tags: ['Auth'],
         summary: 'Register with email and password',
         description: 'Better Auth email/password registration. Success signs the new user in and sets the session cookie. Browser responses omit non-null session tokens from JSON. A body that fails the shared `RegisterCredentials` schema answers `invalid_input` with `details`.',
         requestBody: authRequestBody('RegisterCredentials'),
@@ -85,7 +85,7 @@ function authPaths(): Record<string, OpenApiPathItem> {
     },
     '/api/auth/get-session': {
       get: {
-        tags: ['auth'],
+        tags: ['Auth'],
         summary: 'Current session',
         description: 'Returns the active session and user, or `null` when signed out. Browser responses omit `session.token`. Useful to confirm a Scalar sign-in took effect.',
         responses: {
@@ -96,7 +96,7 @@ function authPaths(): Record<string, OpenApiPathItem> {
     },
     '/api/auth/sign-out': {
       post: {
-        tags: ['auth'],
+        tags: ['Auth'],
         summary: 'Sign out',
         description: 'Clears the session and the session cookie. Better Auth requires a JSON `Content-Type`, so an empty object body (`{}`) is sent; all fields are optional.',
         requestBody: authRequestBody('AuthSignOutRequest'),
@@ -121,7 +121,7 @@ export function authenticatedSecurity(): Array<Record<string, string[]>> {
 export function buildAuthOpenApi() {
   return {
     tag: {
-      name: 'auth',
+      name: 'Auth',
       description: 'Better Auth email/password sign-in, sign-up, session, and sign-out. Same-origin try-it stores the session cookie. Failures use the API error contract.',
     },
     paths: authPaths(),

@@ -15,6 +15,7 @@ export interface OpenApiOperation {
   tags: string[]
   summary: string
   description?: string
+  deprecated?: boolean
   security?: Array<Record<string, string[]>>
   requestBody?: OpenApiRequestBody
   responses: Record<string, OpenApiResponse>

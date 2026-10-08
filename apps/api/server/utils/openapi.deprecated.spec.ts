@@ -24,9 +24,11 @@ describe('deprecated version documentation', () => {
     expect(headers?.sunset).toBeDefined()
   })
 
-  it('labels the version tag as deprecated', () => {
+  it('marks deprecated operations within their module group', () => {
     const document = buildOpenApiDocument()
 
-    expect(document.tags.find(tag => tag.name === 'v1')?.description).toContain('deprecated')
+    expect(document.paths['/api/v1/hello']?.get?.deprecated).toBe(true)
+    expect(document.paths['/api/v1/hello']?.get?.tags).toEqual(['Greeting'])
+    expect(document.tags.map(tag => tag.name)).not.toContain('v1')
   })
 })
