@@ -104,31 +104,29 @@ Use these hostnames with the same app ports. Update the frontend URLs,
 
 ## Managed services
 
-- **Postgres on Neon.** Use the pooled connection string. `useDb()` selects
-  `drizzle-orm/neon-http` when `DATABASE_DRIVER` is `neon` or, if unset, when
-  the URL hostname is `*.neon.tech`. An explicit `DATABASE_DRIVER=pg` keeps the
-  TCP driver even on a Neon host. neon-http has no TCP pool and is
-  suited to serverless requests. `withTransaction()` throws on this driver.
-  Select `DATABASE_DRIVER=pg` for operations that need interactive transactions.
-  The repository supports `pg` and `neon` drivers; no WebSocket driver is wired.
+- **Postgres over TCP.** `useDb()` uses node-postgres (`pg`) with a
+  `drizzle-orm/node-postgres` pool, the only supported driver. Point
+  `DATABASE_URL` at any Postgres server; managed providers should expose a
+  pooled connection string.
 - **Redis for rate limiting.** `useRedis()` (ioredis) backs the Better Auth
   rate limiter through a custom `consume` implementation in
   `apps/api/server/utils/rate-limit.ts` (atomic `INCR` + `PEXPIRE` via Lua).
   Postgres stores sessions. Point `REDIS_URL` at any TCP Redis;
   managed providers expose a TLS URL (`rediss://...`).
 
-The database helper returns a `Database` type without `.transaction()`. Use
-`withTransaction(fn)` for atomic writes and verify rollback with the deployment
-driver.
-Better Auth receives the raw Drizzle handle, but the current auth configuration
-does not enable the adapter's optional transaction mode. Verify auth persistence
-against the deployment driver when changing that configuration. See
+Use `withTransaction(fn)` for atomic writes; the `pg` pool supports interactive
+transactions. `useDb()` and the `tx` passed to `withTransaction` are typed
+without `.transaction()`, so `withTransaction` is the only way to open one.
+Better Auth, `seed.ts`, and `better-auth.config.ts` take the full Drizzle client
+(`useRawDb()` or `createDb(...).rawDb`). The current auth configuration does
+not enable the adapter's optional transaction mode. Verify auth persistence
+when changing that configuration. See
 [ADR 0002](adr/0002-database-capability-seam.md).
 
 ## Migrations
 
 `drizzle-kit` connects over TCP, so run migrations from your machine or CI
-against the Neon pooled URL (not from the Vercel build):
+against the production database URL (not from the Vercel build):
 
 ```bash
 pnpm db:generate

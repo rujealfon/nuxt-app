@@ -1,9 +1,5 @@
-import type { NeonHttpQueryResultHKT } from 'drizzle-orm/neon-http'
-import type { NodePgQueryResultHKT } from 'drizzle-orm/node-postgres'
-import type { PgDatabase } from 'drizzle-orm/pg-core'
-import { neon } from '@neondatabase/serverless'
-import { drizzle as drizzleNeon } from 'drizzle-orm/neon-http'
-import { drizzle as drizzlePg } from 'drizzle-orm/node-postgres'
+import type { NodePgDatabase } from 'drizzle-orm/node-postgres'
+import { drizzle } from 'drizzle-orm/node-postgres'
 import { Pool } from 'pg'
 import * as schema from '#server/database/schema'
 
@@ -12,69 +8,55 @@ import * as schema from '#server/database/schema'
 // not import `nitropack/runtime`: those scripts run outside Nitro, where the
 // package's virtual `#nitro-internal-virtual/*` modules do not resolve.
 
-// The database interface callers see: the query methods both drivers implement.
-// The neon-http driver declares `.transaction()` but throws at runtime, so
-// transactions stay off this type. Use `withTransaction`, which throws when the
-// driver cannot support one.
-export type Database = Omit<
-  PgDatabase<NodePgQueryResultHKT | NeonHttpQueryResultHKT, typeof schema>,
-  'transaction'
->
+// The full Drizzle client. Only Better Auth's adapter, `seed.ts` and
+// `better-auth.config.ts` take it (through `DbHandle.rawDb`); everything else
+// uses `Database`.
+export type RawDatabase = NodePgDatabase<typeof schema>
 
-export type DatabaseDriver = 'pg' | 'neon'
+// What services and handlers see: the client without `.transaction()`. The only
+// way to run a transaction is `withTransaction(fn)`, whose `tx` is a `Database`
+// too, so a transaction cannot be nested through the public type. See
+// docs/adr/0002-database-capability-seam.md.
+export type Database = Omit<RawDatabase, 'transaction'>
 
 export interface DbConfig {
   url: string
-  driver?: DatabaseDriver
-}
-
-// Narrows an untrusted driver value (env var, runtime config) to a driver.
-// Anything else defers to host-based detection in `selectDriver`.
-export function parseDriver(value: unknown): DatabaseDriver | undefined {
-  return value === 'pg' || value === 'neon' ? value : undefined
+  // Called when an idle pool client errors (a Postgres restart, a dropped
+  // connection). `pg` emits that as an `error` event on the pool, and an
+  // unhandled one crashes the process. Defaults to `console.error`; the Nitro
+  // runtime passes its logger (`db.ts`), since this module stays framework-free.
+  onError?: (error: Error) => void
 }
 
 export interface DbHandle {
   db: Database
+  rawDb: RawDatabase
   withTransaction: <T>(fn: (tx: Database) => Promise<T>) => Promise<T>
 }
 
-function neonHostname(url: string): boolean {
-  try {
-    // Hostnames are case-insensitive; `postgres:` is a non-special URL scheme
-    // so the URL parser preserves the case as written.
-    const host = new URL(url).hostname.toLowerCase()
-    return host === 'neon.tech' || host.endsWith('.neon.tech')
-  }
-  catch {
-    return false
-  }
+function logIdleClientError(error: Error): void {
+  console.error('Idle database client error', error)
 }
 
-export function selectDriver(config: DbConfig): DatabaseDriver {
-  return config.driver ?? (neonHostname(config.url) ? 'neon' : 'pg')
-}
-
-// Driver selection is `selectDriver`; this only constructs the matching client.
 export function createDb(config: DbConfig): DbHandle {
-  if (selectDriver(config) === 'neon') {
-    return {
-      db: drizzleNeon(neon(config.url), { schema, casing: 'snake_case' }),
-      withTransaction: () => Promise.reject(
-        new Error('Transactions are not supported by the neon-http driver'),
-      ),
-    }
-  }
-
-  // The pg driver uses a TCP pool and supports interactive transactions.
-  const db = drizzlePg(new Pool({
+  const pool = new Pool({
     connectionString: config.url,
     max: 10,
     allowExitOnIdle: true,
-  }), { schema, casing: 'snake_case' })
+    // Fail an acquire that waits this long instead of hanging the request.
+    connectionTimeoutMillis: 10_000,
+  })
+  const onError = config.onError ?? logIdleClientError
+
+  // A listener keeps a failed idle client from becoming an uncaught exception;
+  // the pool discards that client and opens a new one on the next query.
+  pool.on('error', onError)
+
+  const rawDb = drizzle(pool, { schema, casing: 'snake_case' })
 
   return {
-    db,
-    withTransaction: <T>(fn: (tx: Database) => Promise<T>) => db.transaction(tx => fn(tx)),
+    db: rawDb,
+    rawDb,
+    withTransaction: <T>(fn: (tx: Database) => Promise<T>) => rawDb.transaction(tx => fn(tx)),
   }
 }

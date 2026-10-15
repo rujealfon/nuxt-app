@@ -182,7 +182,7 @@ read [Releases](docs/releases.md).
 
 ## Operational guides
 
-- Database setup, migrations, seeding, or managed drivers:
+- Database setup, migrations, seeding, or managed services:
   [Database operations](docs/database.md).
 - API version changes or native bearer transport:
   [API clients](docs/api-client.md).

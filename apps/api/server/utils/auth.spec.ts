@@ -9,7 +9,7 @@ const mocks = vi.hoisted(() => {
     auth,
     storage,
     createAuth: vi.fn((_db: unknown, _config: unknown) => auth),
-    useDb: vi.fn(() => ({ tag: 'db' })),
+    useRawDb: vi.fn(() => ({ tag: 'db' })),
     createRateLimitStorage: vi.fn((_options: unknown) => storage),
     state: {
       betterAuthSecret: 'secret-secret-secret-secret-secret',
@@ -22,7 +22,7 @@ const mocks = vi.hoisted(() => {
 
 vi.mock('nitropack/runtime', () => ({ useRuntimeConfig: () => mocks.state }))
 vi.mock('#server/database/auth', () => ({ createAuth: mocks.createAuth }))
-vi.mock('./db', () => ({ useDb: mocks.useDb }))
+vi.mock('./db', () => ({ useRawDb: mocks.useRawDb }))
 vi.mock('./rate-limit', () => ({ createRateLimitStorage: mocks.createRateLimitStorage }))
 
 let mod: typeof import('./auth')
@@ -42,7 +42,7 @@ describe('useAuth', () => {
 
     const [db, config] = mocks.createAuth.mock.calls[0]!
 
-    expect(db).toBe(mocks.useDb.mock.results[0]!.value)
+    expect(db).toBe(mocks.useRawDb.mock.results[0]!.value)
     expect(config).toMatchObject({
       secret: mocks.state.betterAuthSecret,
       baseURL: mocks.state.betterAuthUrl,

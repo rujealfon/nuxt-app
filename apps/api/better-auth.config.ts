@@ -1,5 +1,5 @@
 import { createAuth } from './server/database/auth'
-import { createDb, parseDriver } from './server/utils/db-core'
+import { createDb } from './server/utils/db-core'
 
 try {
   process.loadEnvFile()
@@ -11,10 +11,7 @@ catch {
 // Config used only by the Better Auth CLI (`pnpm db:auth:generate`) to emit the
 // Drizzle schema/migration. Runtime auth lives in `server/utils/auth.ts`.
 export const auth = createAuth(
-  createDb({
-    url: process.env.DATABASE_URL ?? '',
-    driver: parseDriver(process.env.DATABASE_DRIVER),
-  }).db,
+  createDb({ url: process.env.DATABASE_URL ?? '' }).rawDb,
   {
     secret: process.env.BETTER_AUTH_SECRET ?? '',
     baseURL: process.env.BETTER_AUTH_URL ?? '',

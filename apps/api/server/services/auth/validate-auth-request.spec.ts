@@ -27,7 +27,7 @@ describe('validateAuthRequest', () => {
       password: 'longenough',
     })
 
-    expect(result).toBeUndefined()
+    expect(result).toEqual({ ok: true, value: undefined })
   })
 
   it('rejects a registration body with field details', () => {
@@ -37,8 +37,9 @@ describe('validateAuthRequest', () => {
       password: 'short',
     })
 
-    expect(result?.error).toBe('invalid_input')
-    expect(result?.details).toEqual([
+    expect(result.ok).toBe(false)
+    expect(!result.ok && result.error.error).toBe('invalid_input')
+    expect(!result.ok && result.error.details).toEqual([
       { path: ['name'], message: 'Name is required' },
       { path: ['email'], message: 'Enter a valid email address' },
       { path: ['password'], message: 'Password must be at least 8 characters' },
@@ -50,17 +51,19 @@ describe('validateAuthRequest', () => {
     expect(validateAuthRequest('/api/auth/sign-in/email', {
       email: 'ada@example.com',
       password: 'x',
-    })).toBeUndefined()
+    }).ok).toBe(true)
 
-    expect(validateAuthRequest('/api/auth/sign-in/email', {
+    const rejected = validateAuthRequest('/api/auth/sign-in/email', {
       email: 'nope',
       password: 'x',
-    })?.details).toEqual([
+    })
+
+    expect(!rejected.ok && rejected.error.details).toEqual([
       { path: ['email'], message: 'Enter a valid email address' },
     ])
   })
 
   it('ignores paths outside the password flows', () => {
-    expect(validateAuthRequest('/api/auth/get-session', {})).toBeUndefined()
+    expect(validateAuthRequest('/api/auth/get-session', {}).ok).toBe(true)
   })
 })

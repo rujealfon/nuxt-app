@@ -43,7 +43,6 @@ export default defineNuxtConfig({
   },
   runtimeConfig: {
     databaseUrl: process.env.DATABASE_URL || '',
-    databaseDriver: process.env.DATABASE_DRIVER || '',
     betterAuthSecret: process.env.BETTER_AUTH_SECRET || '',
     betterAuthUrl: process.env.BETTER_AUTH_URL || '',
     redisUrl: process.env.REDIS_URL || '',

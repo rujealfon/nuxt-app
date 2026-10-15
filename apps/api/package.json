@@ -25,7 +25,6 @@
     "clean": "nuxt cleanup"
   },
   "dependencies": {
-    "@neondatabase/serverless": "^1.1.0",
     "@nuxt-app/config": "workspace:*",
     "@nuxt-app/logger": "workspace:*",
     "@nuxt-app/types": "workspace:*",
