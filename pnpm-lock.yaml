@@ -150,9 +150,6 @@ importers:
 
   apps/api:
     dependencies:
-      '@neondatabase/serverless':
-        specifier: ^1.1.0
-        version: 1.2.0
       '@nuxt-app/config':
         specifier: workspace:*
         version: link:../../packages/config
@@ -10990,7 +10987,8 @@ snapshots:
       '@tybys/wasm-util': 0.10.4
     optional: true
 
-  '@neondatabase/serverless@1.2.0': {}
+  '@neondatabase/serverless@1.2.0':
+    optional: true
 
   '@noble/ciphers@2.4.0': {}
 

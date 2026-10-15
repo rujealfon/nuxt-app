@@ -1,4 +1,4 @@
-import type { Database } from '#server/utils/db-core'
+import type { RawDatabase } from '#server/utils/db-core'
 import type { RateLimitStorage } from '#server/utils/rate-limit-policy'
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
@@ -18,7 +18,7 @@ export interface AuthConfig {
 }
 
 export function createAuth(
-  db: Database,
+  db: RawDatabase,
   config: AuthConfig,
 ) {
   const trustedOrigins = config.trustedOrigins ?? []

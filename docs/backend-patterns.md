@@ -2,29 +2,34 @@
 
 ## Status and scope
 
-Use this guide when adding backend behavior. Frontend feature modules and API
-service entrypoints are implemented, as are import rules and the API error
-contract. The policies, repositories, and jobs below are guidance for future
-work. They are not runtime helpers yet.
+Use this guide when adding backend behavior.
 
-The current versioned route is a greeting. Better Auth owns authentication and
-its persistence adapter. Add the other patterns when domain operations need
-them. Keep the API as one deployable application until separate deployment has
-a concrete benefit.
+Implemented: frontend feature modules, service entrypoints, import rules, the API error contract,
+`Result` for expected domain failures with `defineResultHandler` and `defineVersionedHandler`
+([ADR 0005](adr/0005-result-for-domain-failures.md)), the service layout with an injected database
+([ADR 0006](adr/0006-service-layout-and-injected-database.md)), `withTransaction` without a public
+`.transaction()` ([ADR 0002](adr/0002-database-capability-seam.md)), and table-derived row schemas.
+
+Guidance only, not runtime helpers yet: authorization policies, repositories and provider
+adapters, concurrency control, state machines, idempotency, jobs and an outbox, and tracing and
+audit records. The current versioned route is a greeting, and the services (`hello`, `auth`)
+have no persistence. Better Auth owns authentication and its persistence adapter. Add the other
+patterns when domain operations need them. Keep the API as one deployable application until
+separate deployment has a concrete benefit.
 
 ## Adoption order
 
-| Pattern | Introduce when | Completion evidence |
-| --- | --- | --- |
-| Use-case functions and pure rules | A business action has rules beyond request parsing | The operation is callable without an HTTP event; business-rule tests cover its outcomes. |
-| Authorization policies | An operation reads or changes protected resources | Tests cover anonymous, allowed, and denied actors, including ownership or organization scope where applicable. |
-| Domain failures and the error adapter | Versioned routes need consistent failure handling | Shared response schemas and HTTP tests verify codes, statuses, and safe messages. |
-| Table-derived row schemas | A versioned route validates or returns a table row | The derivation spec proves parity with the table columns and OpenAPI conversion. |
-| Repositories and provider adapters | Queries become complex/reused, or external integrations appear | Tests exercise the real adapter; business tests substitute dependencies where useful. |
-| Transactions and concurrency control | Related writes must be atomic or simultaneous edits can conflict | Database integration tests prove rollback, constraints, and conflict behavior. |
-| State machines | A lifecycle has restricted transitions | Tests cover allowed and rejected transitions. |
-| Idempotency, jobs, and an outbox | Retries or durable external effects are required | Tests cover duplicate/concurrent attempts and recovery after failure. |
-| Tracing and audit records | Work spans requests/jobs or sensitive mutations need accountability | A workflow can be traced; audit records identify actor, action, resource, and outcome. |
+| Pattern | Status | Introduce when | Completion evidence |
+| --- | --- | --- | --- |
+| Use-case functions and pure rules | Layout and lint guards exist; no use case yet | A business action has rules beyond request parsing | The operation is callable without an HTTP event; business-rule tests cover its outcomes. |
+| Authorization policies | Guidance | An operation reads or changes protected resources | Tests cover anonymous, allowed, and denied actors, including ownership or organization scope where applicable. |
+| Domain failures (`Result`) and the error adapter | Implemented | Versioned routes need consistent failure handling | Shared response schemas and HTTP tests verify codes, statuses, and safe messages. |
+| Table-derived row schemas | Implemented | A versioned route validates or returns a table row | The derivation spec proves parity with the table columns and OpenAPI conversion. |
+| Repositories and provider adapters | Guidance | Queries become complex/reused, or external integrations appear | Tests exercise the real adapter; business tests substitute dependencies where useful. |
+| Transactions and concurrency control | `withTransaction` implemented; concurrency checks guidance | Related writes must be atomic or simultaneous edits can conflict | Database integration tests prove rollback, constraints, and conflict behavior. |
+| State machines | Guidance | A lifecycle has restricted transitions | Tests cover allowed and rejected transitions. |
+| Idempotency, jobs, and an outbox | Guidance | Retries or durable external effects are required | Tests cover duplicate/concurrent attempts and recovery after failure. |
+| Tracing and audit records | Guidance | Work spans requests/jobs or sensitive mutations need accountability | A workflow can be traced; audit records identify actor, action, resource, and outcome. |
 
 ## Business operations and policies
 
@@ -39,28 +44,37 @@ Neither linter checks that an unused service directory has an `index.ts`. Add
 one for each service and check new service directories in review. Steiger checks
 frontend features only.
 
-An illustrative future module could contain:
+A service with persistence is laid out by responsibility
+([ADR 0006](adr/0006-service-layout-and-injected-database.md)):
 
 ```text
 server/services/invitations/
-├── index.ts
-├── invite-member.ts
+├── index.ts                  # public commands and queries only
+├── commands/
+│   └── invite-member.ts      # policy check, rules, transaction, persistence; returns Result
+├── queries/
+│   └── get-invitation.ts     # Drizzle read returning the contract shape
+├── domain/
+│   └── invitation-rules.ts   # pure functions, status unions, transitions
 ├── invitation-policy.ts
-├── invitation-repository.ts
+├── invitation-repository.ts  # private; purpose-named operations
+├── ports.ts                  # small vendor interfaces
 └── invite-member.spec.ts
 ```
 
-Create each file when its responsibility exists. Keep repositories private to
-the module. Shared database schemas, migrations, and connection setup remain in
-`server/database/` and `server/utils/db.ts`. Cross-domain orchestration belongs in
-`server/workflows/`, consistent with the existing import rules.
+Create each file or folder when its responsibility exists, and keep repositories private to the
+module. Import rules inside a service, and the ban on a service reading `useDb()`, runtime
+config, or a driver, are in [architecture](architecture.md#dependency-rules) and ADR 0006.
+Services receive `db` or a transaction handle as an argument; route handlers or workflows wire
+`useDb()` and `withTransaction` and pass runtime config in. Shared database schemas, migrations,
+and connection setup stay in `server/database/` and `server/utils/db.ts`. Cross-domain
+orchestration belongs in `server/workflows/`.
 
-`requireActor(event)` establishes authentication only. Resource policies decide
-whether that actor may perform the operation. Derive ownership, roles, and
-membership from trusted data; scope reads as well as writes. Enforce policies
-inside business operations so jobs and other entrypoints cannot bypass them.
-Keep frontend access checks for navigation and presentation. Deny unmatched
-permissions and check every protected request, following
+`requireActor(event)` establishes authentication only. Resource policies decide whether that actor
+may perform the operation. Derive ownership, roles, and membership from trusted data; scope reads as
+well as writes. Enforce policies inside business operations so jobs and other entrypoints cannot
+bypass them. Keep frontend access checks for navigation and presentation. Deny unmatched permissions
+and check every protected request, following
 [OWASP authorization guidance](https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Cheat_Sheet.html).
 
 ## API error contract
@@ -73,8 +87,8 @@ Preserve this API error contract shape:
 
 `invalid_input` may include `details: { path, message }[]` when it has a usable
 input detail. Otherwise, omit the key. Clients branch on `error`, not message
-text, and use details to identify invalid fields. The error adapter reads domain
-failures only. A thrown `ZodError` stays `internal_error`. A blank message
+text, and use details to identify invalid fields. The error adapter reads thrown
+`DomainFailure`s only. A thrown `ZodError` stays `internal_error`. A blank message
 override keeps `error` and the default safe message. Never join detail messages
 into `message`.
 Define the shared schema and inferred types in `packages/types`. Keep
@@ -97,14 +111,27 @@ Log unexpected failures with a correlation ID and return a safe generic message.
 Keep stack traces, SQL details, credentials, and internal provider errors out of
 responses. Preserve existing rate-limit status and retry headers.
 
-Domain code raises a domain failure. `server/error-adapter.ts` renders the
-contract and maps unexpected failures to `internal_error`.
-`useApi().parseApiError` reads caught versioned-route failures; screens use
-`error` and, for `invalid_input`, input details. `X-Api-Version` headers set
-before a failure remain on the response. Assess compatibility before changing
-an established version. `/api/auth/*` also uses this contract, with `details`
-for the two password flows ([ADR 0004](adr/0004-auth-error-contract.md)). Health
-200 responses have their own bodies; health failures use the API error contract.
+Domain code returns `err(failure(code, message?, details?))` for an expected failure and
+`ok(value)` otherwise; unexpected faults throw. Handlers unwrap at the HTTP edge:
+
+- `defineVersionedHandler(version, fn)` accepts a plain body or a `Result<T>` (sync or async)
+  and unwraps it; version headers set before the handler stay on a failure response.
+- `defineResultHandler(fn)` does the same for an unversioned route that returns a `Result`.
+- Both throw an `err` as a `DomainFailure`. A body that holds a `Result` (`{ data: ok(1) }`,
+  `ok(ok(1))`) does not compile; a cast past the types fails as `internal_error`.
+- ESLint rejects a plain `defineEventHandler` or `eventHandler` in `server/api/`. Only the seven
+  unversioned infra routes listed in ADR 0005 are exempt.
+
+Middleware and session guards such as `requireActor` run inside h3 and throw `DomainFailure`
+directly. `server/error-adapter.ts` reads those failures, renders the contract, and maps
+unexpected thrown errors to `internal_error`. The decision and its limits are in
+[ADR 0005](adr/0005-result-for-domain-failures.md).
+
+`useApi().parseApiError` reads caught versioned-route failures; screens use `error` and, for
+`invalid_input`, input details. Assess compatibility before changing an established version.
+`/api/auth/*` also uses this contract, with `details` for the two password flows
+([ADR 0004](adr/0004-auth-error-contract.md)). Health 200 responses have their own bodies;
+health failures use the API error contract.
 
 ## Table-derived row schemas
 
@@ -147,9 +174,10 @@ constraints to enforce uniqueness and relationships; use conditional updates or
 version checks when concurrent edits must be detected. Avoid external network
 calls inside database transactions.
 
-The `Database` type omits `.transaction()`. Use `withTransaction(fn)` for
-transactions; it throws on the neon-http driver. Before implementing a workflow
-with several writes, verify rollback with the database configuration it will use.
+Use `withTransaction(fn)` for transactions; `Database` and the `tx` it passes
+have no `.transaction()`, so it is the only way to open one. Only Better Auth's adapter,
+`seed.ts`, and `better-auth.config.ts` take the full client (`useRawDb()`). Before implementing
+a workflow with several writes, verify rollback against a test database.
 
 Keep vendor SDK calls inside adapters for email, payments, or storage. Inject
 the small interface needed by the business operation through function arguments
@@ -163,16 +191,16 @@ require them. Start with a typed state and a transition function; add a state
 machine library when orchestration warrants it. Persist transitions atomically
 with concurrency checks when several actors can advance the same workflow.
 
-For retryable mutations, define an idempotency key scoped to the actor or tenant
-and operation. Persist the request identity and outcome, reject reuse with a
-different payload, and coordinate concurrent attempts atomically. Define expiry
-and replay behavior. See [AWS guidance on safe retries](https://aws.amazon.com/builders-library/making-retries-safe-with-idempotent-APIs/).
+For retryable mutations, define an idempotency key scoped to the actor or tenant and operation.
+Persist the request identity and outcome, reject reuse with a different payload, and coordinate
+concurrent attempts atomically. Define expiry and replay behavior. See
+[AWS guidance on safe retries](https://aws.amazon.com/builders-library/making-retries-safe-with-idempotent-APIs/).
 
-Use durable jobs for work that must survive a request or process restart. When
-a database change must trigger a job, write an outbox record in the same
-transaction. A worker publishes committed records and tracks delivery. Consumers
-must tolerate duplicates; define bounded retries and a recovery path for failed
-jobs. See the [transactional outbox pattern](https://docs.aws.amazon.com/en_en/prescriptive-guidance/latest/cloud-design-patterns/transactional-outbox.html).
+Use durable jobs for work that must survive a request or process restart. When a database change
+must trigger a job, write an outbox record in the same transaction. A worker publishes committed
+records and tracks delivery. Consumers must tolerate duplicates; define bounded retries and a
+recovery path for failed jobs. See the
+[transactional outbox pattern](https://docs.aws.amazon.com/en_en/prescriptive-guidance/latest/cloud-design-patterns/transactional-outbox.html).
 
 Carry correlation IDs from HTTP requests into jobs and external calls. Build on
 the existing logger and introduce tracing as workflows span multiple operations.
@@ -188,7 +216,8 @@ atomic writes, and external effects. Then deliver one complete path:
    row-shaped payload schemas from the table; see
    [Table-derived row schemas](#table-derived-row-schemas).
 2. Implement the business operation, policy, and persistence code it needs.
-3. Add the versioned route; raise domain failures so the error adapter can render the API error contract.
+3. Add the versioned route. Return `err(failure(...))` from the operation and return its
+   `Result` from the route's `defineVersionedHandler`, which unwraps it for the error adapter.
 4. Test business rules, denied access, database constraints/rollback, and the
    versioned HTTP contract. Use a dedicated test database with deterministic
    setup and cleanup for persistence tests; mocks cannot prove SQL semantics.

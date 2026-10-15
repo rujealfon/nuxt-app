@@ -7,6 +7,7 @@ import { createAuth } from '#server/database/auth'
 import { DomainFailure } from '#server/utils/domain-failure'
 import { statusByError } from '#server/utils/failure-contract'
 import { createRateLimitStorage } from '#server/utils/rate-limit'
+import { unwrapOrThrow } from '#server/utils/result'
 import { handleAuthRequest } from './handle-auth-request'
 
 const mocks = vi.hoisted(() => ({
@@ -25,13 +26,12 @@ vi.mock('h3', async () => {
 vi.mock('#server/utils/auth', () => ({ useAuth: () => mocks.auth }))
 vi.mock('#server/utils/redis', () => ({ useRedis: () => ({ eval: mocks.eval }) }))
 vi.mock('#server/utils/logger', () => ({ useLogger: () => ({ error: mocks.loggerError }) }))
-vi.mock('nitropack/runtime', () => ({
-  useRuntimeConfig: () => ({
-    authBearerEnabled: false,
-    authBearerOrigins: '',
-    rateLimitEnabled: true,
-  }),
-}))
+
+const config = {
+  authBearerEnabled: false,
+  authBearerOrigins: '',
+  rateLimitEnabled: true,
+}
 
 describe('auth rate limiting through the Nitro request boundary', () => {
   let server: Server
@@ -42,7 +42,7 @@ describe('auth rate limiting through the Nitro request boundary', () => {
   beforeAll(async () => {
     const app = createApp().use(eventHandler(async (event) => {
       try {
-        return await handleAuthRequest(event)
+        return unwrapOrThrow(await handleAuthRequest(event, config))
       }
       catch (error) {
         if (!(error instanceof DomainFailure)) {

@@ -1,7 +1,7 @@
 import { parseOrigins } from '@nuxt-app/config'
 import { useRuntimeConfig } from 'nitropack/runtime'
 import { createAuth } from '#server/database/auth'
-import { useDb } from './db'
+import { useRawDb } from './db'
 import { createRateLimitStorage } from './rate-limit'
 
 let instance: ReturnType<typeof createAuth> | undefined
@@ -9,7 +9,7 @@ let instance: ReturnType<typeof createAuth> | undefined
 function createInstance() {
   const config = useRuntimeConfig()
 
-  return createAuth(useDb(), {
+  return createAuth(useRawDb(), {
     secret: config.betterAuthSecret,
     baseURL: config.betterAuthUrl,
     trustedOrigins: parseOrigins(config.corsOrigins || ''),
