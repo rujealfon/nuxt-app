@@ -1,7 +1,8 @@
-import type { DomainFailure } from '#server/utils/domain-failure'
+import type { Result } from '#server/utils/result'
 import { authMount } from '@nuxt-app/config'
 import { loginSchema, registerSchema } from '@nuxt-app/types'
 import { invalidInputFromZod } from '#server/utils/domain-failure'
+import { err, ok } from '#server/utils/result'
 
 // The password flows the API documents, keyed by the path relative to
 // `/api/auth`. The request bodies are the same shared schemas the client forms
@@ -35,14 +36,16 @@ export function isPasswordFlowPath(path: string): boolean {
   return schemaFor(path) !== undefined
 }
 
-export function validateAuthRequest(path: string, body: unknown): DomainFailure | undefined {
+// `ok` for a body that satisfies the password-flow schema and for any path
+// outside the password flows; `err` carries `invalid_input` with field details.
+export function validateAuthRequest(path: string, body: unknown): Result<void> {
   const schema = schemaFor(path)
 
   if (!schema) {
-    return undefined
+    return ok(undefined)
   }
 
   const result = schema.safeParse(body)
 
-  return result.success ? undefined : invalidInputFromZod(result.error)
+  return result.success ? ok(undefined) : err(invalidInputFromZod(result.error))
 }

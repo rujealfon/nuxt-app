@@ -1,18 +1,26 @@
 import type { H3Event } from 'h3'
+import type { BearerOriginConfig } from '#server/utils/bearer-origin'
+import type { Result } from '#server/utils/result'
 import { appendResponseHeader, getRequestIP, getRequestURL, setResponseHeader } from 'h3'
-import { useRuntimeConfig } from 'nitropack/runtime'
 import { requestPath } from '#server/utils/api-paths'
 import { useAuth } from '#server/utils/auth'
 import { authHeaders } from '#server/utils/auth-headers'
 import { restrictBearerTokenResponse } from '#server/utils/bearer-origin'
-import { domainFailure } from '#server/utils/domain-failure'
+import { failure } from '#server/utils/domain-failure'
 import { createRateLimitStorage } from '#server/utils/rate-limit'
 import { rateLimitPolicy } from '#server/utils/rate-limit-policy'
+import { err, ok } from '#server/utils/result'
 import { authFailureFromResponse } from './auth-error-contract'
 import { closeAuthUpload, readAuthBody } from './read-auth-body'
 import { isPasswordFlowPath, validateAuthRequest } from './validate-auth-request'
 
 const prevalidationStorage = createRateLimitStorage({ failClosed: true })
+
+// The runtime configuration the pipeline reads. The route supplies it so the service
+// stays free of the Nitro runtime (ADR 0006).
+export interface AuthRequestConfig extends BearerOriginConfig {
+  rateLimitEnabled: boolean
+}
 
 async function jsonBody(source: Request | Response): Promise<unknown> {
   try {
@@ -27,7 +35,8 @@ async function jsonBody(source: Request | Response): Promise<unknown> {
 
 // Better Auth's retry hint on rate limiting and any cookie it wants to clear on
 // a failed request must survive onto the API error contract. Headers set on the
-// event are not cleared by the error adapter, so copy them before throwing.
+// event are not cleared by the error adapter, so copy them before returning the
+// failure.
 function preserveAuthErrorHeaders(event: H3Event, headers: Headers) {
   const retryAfter = headers.get('x-retry-after')
 
@@ -45,8 +54,13 @@ function preserveAuthErrorHeaders(event: H3Event, headers: Headers) {
 // Better Auth answers with its own error shape (`{ message, code }`) and drops
 // the field issues. This module normalizes every failure onto the API error
 // contract and re-validates the two password flows so `invalid_input` carries
-// `details`. See docs/adr/0004-auth-error-contract.md.
-export async function handleAuthRequest(event: H3Event): Promise<Response | undefined> {
+// `details`. Expected failures return `err`; the route unwraps them at the HTTP
+// edge. See docs/adr/0004-auth-error-contract.md and
+// docs/adr/0005-result-for-domain-failures.md.
+export async function handleAuthRequest(
+  event: H3Event,
+  config: AuthRequestConfig,
+): Promise<Result<Response>> {
   const path = requestPath(event)
   // Request/URL canonicalizes dot segments before Better Auth routes it. Guard
   // that destination as well as H3's decoded path before any body stream starts.
@@ -57,7 +71,7 @@ export async function handleAuthRequest(event: H3Event): Promise<Response | unde
   // caller supply Better Auth's identity, including through the private header.
   const ip = getRequestIP(event, { xForwardedFor: process.env.VERCEL === '1' })
   if (passwordFlow) {
-    if (useRuntimeConfig(event).rateLimitEnabled) {
+    if (config.rateLimitEnabled) {
       const { allowed, retryAfter } = await prevalidationStorage.consume(
         `${ip || 'unknown'}:auth-prevalidation`,
         rateLimitPolicy,
@@ -66,13 +80,20 @@ export async function handleAuthRequest(event: H3Event): Promise<Response | unde
         setResponseHeader(event, 'x-retry-after', String(retryAfter))
         setResponseHeader(event, 'retry-after', retryAfter ?? 0)
         closeAuthUpload(event)
-        throw domainFailure('rate_limited')
+        return err(failure('rate_limited'))
       }
     }
   }
   // Bound every upload before constructing a Request. H3's Node stream adapter
   // starts buffering even if Better Auth later rejects the route or caller.
-  const bodyBytes = ['GET', 'HEAD'].includes(event.method) ? undefined : await readAuthBody(event)
+  let bodyBytes: Uint8Array | undefined
+  if (!['GET', 'HEAD'].includes(event.method)) {
+    const read = await readAuthBody(event)
+    if (!read.ok) {
+      return read
+    }
+    bodyBytes = read.value
+  }
   const headers = authHeaders(event, event.web?.request?.headers ?? event.headers)
   const request = new Request(requestURL, {
     method: event.method,
@@ -90,25 +111,25 @@ export async function handleAuthRequest(event: H3Event): Promise<Response | unde
       body = JSON.parse(new TextDecoder().decode(bodyBytes))
     }
     catch {}
-    const failure = body === undefined ? undefined : validateAuthRequest(validationPath, body)
+    const validated = body === undefined ? ok(undefined) : validateAuthRequest(validationPath, body)
 
-    if (failure) {
-      throw failure
+    if (!validated.ok) {
+      return validated
     }
   }
 
   const response = await useAuth().handler(request)
 
   if (response.status < 400) {
-    return restrictBearerTokenResponse(
+    return ok(await restrictBearerTokenResponse(
       response,
       request.headers.get('origin'),
-      useRuntimeConfig(event),
+      config,
       path,
-    )
+    ))
   }
 
   preserveAuthErrorHeaders(event, response.headers)
 
-  throw authFailureFromResponse(response.status, await jsonBody(response))
+  return err(authFailureFromResponse(response.status, await jsonBody(response)))
 }

@@ -2,7 +2,7 @@
 
 ## API versioning
 
-Versioned routes are path-versioned under `/api/<version>/`. Infrastructure routes are
+Versioned routes are path-versioned under `/api/<version>/`. Infra routes are
 unversioned: `/api/auth/*` (Better Auth), `/api/health*` (monitoring),
 `GET /api` (version registry), and `/api/docs` + `/api/openapi.json` (Scalar
 API docs, development-only, self-hosted from the installed `@scalar/api-reference`
@@ -30,8 +30,8 @@ To ship a new version:
 1. Add `server/api/v2/**` handlers, reusing `server/services/` where behavior is
    unchanged.
 2. Append `'v2'` to `apiVersions` and set `currentApiVersion = 'v2'`.
-3. Add and export the `v2` contracts namespace in `packages/types`, including its
-   `operations` list with a module `tag` on each entry. Register it in `packages/config`'s `versionedOperations`.
+3. Add and export the `v2` contracts namespace in `packages/types`, including its `operations` list
+   with a module `tag` on each entry. Register it in `packages/config`'s `versionedOperations`.
 4. Mark the old version in `deprecatedApiVersions` with a sunset date. Preserve
    the registry's `Object.freeze` wrapper.
 5. Run `pnpm test --project unit test/version-parity.spec.ts` to check that

@@ -9,23 +9,23 @@
     },
     "build": {
       "dependsOn": ["^build", "^nuxt:prepare"],
-      "outputs": [".output/**", ".nuxt/**"],
+      "outputs": [".output/**", ".nuxt/**", ".vercel/output/**"],
       "env": [
-        "DATABASE_URL",
-        "DATABASE_DRIVER",
-        "BETTER_AUTH_SECRET",
-        "BETTER_AUTH_URL",
-        "REDIS_URL",
-        "CORS_ORIGINS",
         "AUTH_BEARER_ENABLED",
         "AUTH_BEARER_ORIGINS",
-        "RATE_LIMIT_ENABLED",
+        "BETTER_AUTH_SECRET",
+        "BETTER_AUTH_URL",
+        "CORS_ORIGINS",
+        "DATABASE_URL",
+        "NUXT_PUBLIC_ADMIN_URL",
         "NUXT_PUBLIC_API_BASE",
         "NUXT_PUBLIC_API_VERSION",
+        "NUXT_PUBLIC_APP_URL",
         "NUXT_PUBLIC_SESSION_TRANSPORT",
         "NUXT_PUBLIC_WEB_URL",
-        "NUXT_PUBLIC_APP_URL",
-        "NUXT_PUBLIC_ADMIN_URL"
+        "RATE_LIMIT_ENABLED",
+        "REDIS_URL",
+        "VERCEL"
       ]
     },
     "dev": {

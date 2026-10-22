@@ -2,6 +2,7 @@ import { EventEmitter, once } from 'node:events'
 import { PassThrough } from 'node:stream'
 import { createEvent } from 'h3'
 import { describe, expect, it, vi } from 'vitest'
+import { ok } from '#server/utils/result'
 import { authBodyLimit, readAuthBody } from './read-auth-body'
 
 vi.mock('h3', async () => {
@@ -17,12 +18,25 @@ function fixture(headers: Record<string, string> = {}, stream = new PassThrough(
   return { req, res, event }
 }
 
+// An expected failure is a returned `err`, not a rejection.
+const invalidInput = { ok: false, error: { error: 'invalid_input' } }
+
+async function valueOf(event: ReturnType<typeof fixture>['event']): Promise<Uint8Array> {
+  const result = await readAuthBody(event)
+
+  if (!result.ok) {
+    throw new Error('Expected the body to be read')
+  }
+
+  return result.value
+}
+
 describe('bounded auth body reading', () => {
   it('returns an empty body for a bodyless native Web Request '
     + 'without reading the Node shim', async () => {
     const { event, req } = fixture()
     event.web = { request: new Request('http://localhost/api/auth/sign-out', { method: 'POST' }) }
-    await expect(readAuthBody(event)).resolves.toEqual(new Uint8Array())
+    await expect(readAuthBody(event)).resolves.toEqual(ok(new Uint8Array()))
     expect(req.listenerCount('data')).toBe(0)
   })
 
@@ -30,13 +44,13 @@ describe('bounded auth body reading', () => {
     const { event, req } = fixture({ 'content-type': 'application/json' })
     const body = { email: 'user@example.com', password: 'password123' }
     Object.assign(req, { body })
-    expect(new TextDecoder().decode(await readAuthBody(event))).toBe(JSON.stringify(body))
+    expect(new TextDecoder().decode(await valueOf(event))).toBe(JSON.stringify(body))
   })
 
   it('returns an empty resolved cached body without starting the Node stream', async () => {
     const { event, req } = fixture()
     Object.assign(event, { _requestBody: Promise.resolve(undefined) })
-    await expect(readAuthBody(event)).resolves.toEqual(new Uint8Array())
+    await expect(readAuthBody(event)).resolves.toEqual(ok(new Uint8Array()))
     expect(req.listenerCount('data')).toBe(0)
   })
 
@@ -45,7 +59,7 @@ describe('bounded auth body reading', () => {
     const body = new Blob([new Uint8Array(authBodyLimit + 1)])
     const stream = vi.spyOn(body, 'stream')
     event._requestBody = body
-    await expect(readAuthBody(event)).rejects.toMatchObject({ error: 'invalid_input' })
+    await expect(readAuthBody(event)).resolves.toMatchObject(invalidInput)
     expect(stream).not.toHaveBeenCalled()
     expect(req.listenerCount('data')).toBe(0)
     res.emit('close')
@@ -57,18 +71,18 @@ describe('bounded auth body reading', () => {
     const { event } = fixture({ 'content-length': '1' })
     const bytes = Buffer.alloc(authBodyLimit, 'x')
     event._requestBody = bytes
-    expect(await readAuthBody(event)).toEqual(bytes)
+    expect(await valueOf(event)).toEqual(bytes)
   })
 
   it('rejects actual cached bytes over the limit even with a small Content-Length', async () => {
     const { event } = fixture({ 'content-length': '1' })
     event._requestBody = Buffer.alloc(authBodyLimit + 1)
-    await expect(readAuthBody(event)).rejects.toMatchObject({ error: 'invalid_input' })
+    await expect(readAuthBody(event)).resolves.toMatchObject(invalidInput)
   })
 
   it('rejects a declared overflow without starting the Node body stream', async () => {
     const { event, req, res } = fixture({ 'content-length': String(authBodyLimit + 1) })
-    await expect(readAuthBody(event)).rejects.toMatchObject({ error: 'invalid_input' })
+    await expect(readAuthBody(event)).resolves.toMatchObject(invalidInput)
     expect(req.listenerCount('data')).toBe(0)
     expect(res.setHeader).toHaveBeenCalledWith('connection', 'close')
     res.emit('finish')
@@ -91,7 +105,7 @@ describe('bounded auth body reading', () => {
       body: stream,
       duplex: 'half',
     } as RequestInit) }
-    await expect(readAuthBody(event)).rejects.toMatchObject({ error: 'invalid_input' })
+    await expect(readAuthBody(event)).resolves.toMatchObject(invalidInput)
     expect(cancel).toHaveBeenCalledOnce()
   })
 
@@ -110,14 +124,14 @@ describe('bounded auth body reading', () => {
       }),
       duplex: 'half',
     } as RequestInit) }
-    await expect(readAuthBody(event)).rejects.toMatchObject({ error: 'invalid_input' })
+    await expect(readAuthBody(event)).resolves.toMatchObject(invalidInput)
     expect(cancel).toHaveBeenCalledOnce()
   })
 
   it('rejects an already destroyed Node upload without installing listeners', async () => {
     const { event, req } = fixture()
     req.destroy()
-    await expect(readAuthBody(event)).rejects.toMatchObject({ error: 'invalid_input' })
+    await expect(readAuthBody(event)).resolves.toMatchObject(invalidInput)
     expect(req.listenerCount('data')).toBe(0)
     expect(req.listenerCount('end')).toBe(0)
   })
@@ -129,7 +143,7 @@ describe('bounded auth body reading', () => {
     req.resume()
     req.end()
     await ended
-    await expect(readAuthBody(event)).resolves.toEqual(Buffer.alloc(0))
+    await expect(readAuthBody(event)).resolves.toEqual(ok(Buffer.alloc(0)))
     expect(req.listenerCount('data')).toBe(0)
     expect(req.listenerCount('end')).toBe(0)
   })
@@ -139,8 +153,16 @@ describe('bounded auth body reading', () => {
     const reading = readAuthBody(event)
     req.write('partial')
     req.emit('aborted')
-    await expect(reading).rejects.toMatchObject({ error: 'invalid_input' })
+    await expect(reading).resolves.toMatchObject(invalidInput)
     expect(req.listenerCount('data')).toBe(0)
     expect(req.listenerCount('end')).toBe(0)
+  })
+
+  it('still rejects on a Node stream fault, which is not an expected failure', async () => {
+    const { event, req } = fixture()
+    const reading = readAuthBody(event)
+    req.emit('error', new Error('socket reset'))
+    await expect(reading).rejects.toThrow('socket reset')
+    expect(req.listenerCount('data')).toBe(0)
   })
 })

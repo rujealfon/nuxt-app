@@ -6,7 +6,6 @@ import { bearerOrigins, isExplicitOrigin } from '#server/utils/bearer-origin'
 
 export const envSchema = z.object({
   databaseUrl: z.string().min(1, 'DATABASE_URL is required'),
-  databaseDriver: z.enum(['', 'pg', 'neon']).default(''),
   betterAuthSecret: z.string().min(32, 'BETTER_AUTH_SECRET must be at least 32 characters'),
   betterAuthUrl: z.url('BETTER_AUTH_URL must be a valid URL'),
   redisUrl: z.string().min(1, 'REDIS_URL is required'),
@@ -27,7 +26,6 @@ export default defineNitroPlugin(() => {
 
   const parsed = compiledEnvSchema.safeParse({
     databaseUrl: config.databaseUrl,
-    databaseDriver: config.databaseDriver,
     betterAuthSecret: config.betterAuthSecret,
     betterAuthUrl: config.betterAuthUrl,
     redisUrl: config.redisUrl,

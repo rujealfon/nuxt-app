@@ -16,6 +16,12 @@ For every project:
    pins `iad1`; the other apps leave region selection to Vercel. Configure the
    API's region to match your database deployment.
 
+When a project's Build Command runs `turbo run build`, keep `.vercel/output/**`
+in the `build` task's `outputs` and `VERCEL` in its `env` in `turbo.json`.
+Nitro writes the Vercel Build Output API directory there and selects the preset
+from `VERCEL`, so a cached build without them fails with
+`No Output Directory named "dist"`.
+
 ## Manual production deployment
 
 The deployment job runs only when `VERCEL_DEPLOYMENT_ENABLED=true`. With that
@@ -39,14 +45,14 @@ Before the first manual deployment, configure GitHub's `production` environment
 in Settings, Environments. Restrict its deployment branches to `main`.
 Add these settings there, or as repository secrets and variables:
 
-| Kind | Name | Value |
-| --- | --- | --- |
-| Secret | `VERCEL_TOKEN` | Vercel token with access to the four projects |
-| Variable | `VERCEL_ORG_ID` | Vercel team ID, or account ID for personal projects |
-| Variable | `VERCEL_PROJECT_ID_API` | Project ID for `apps/api` |
-| Variable | `VERCEL_PROJECT_ID_WEB` | Project ID for `apps/web` |
-| Variable | `VERCEL_PROJECT_ID_APP` | Project ID for `apps/app` |
-| Variable | `VERCEL_PROJECT_ID_ADMIN` | Project ID for `apps/admin` |
+| Kind     | Name                      | Value                                               |
+| -------- | ------------------------- | --------------------------------------------------- |
+| Secret   | `VERCEL_TOKEN`            | Vercel token with access to the four projects       |
+| Variable | `VERCEL_ORG_ID`           | Vercel team ID, or account ID for personal projects |
+| Variable | `VERCEL_PROJECT_ID_API`   | Project ID for `apps/api`                           |
+| Variable | `VERCEL_PROJECT_ID_WEB`   | Project ID for `apps/web`                           |
+| Variable | `VERCEL_PROJECT_ID_APP`   | Project ID for `apps/app`                           |
+| Variable | `VERCEL_PROJECT_ID_ADMIN` | Project ID for `apps/admin`                         |
 
 Find each project ID and the team ID in Vercel settings or its linked
 `.vercel/project.json`. Keep the application environment variables in Vercel;
@@ -100,8 +106,7 @@ NUXT_PUBLIC_API_VERSION=v1          # optional; defaults to the current version
 Set server-only values for the API in each environment:
 
 ```dotenv
-DATABASE_URL=postgresql://...@ep-xxx-pooler.<region>.aws.neon.tech/neondb?sslmode=require
-DATABASE_DRIVER=neon
+DATABASE_URL=postgresql://user:password@host:5432/db?sslmode=require
 BETTER_AUTH_URL=https://api.nuxt-app.com
 BETTER_AUTH_SECRET=            # openssl rand -base64 32
 REDIS_URL=rediss://default:password@host:port

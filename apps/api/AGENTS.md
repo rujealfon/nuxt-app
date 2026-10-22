@@ -10,8 +10,18 @@ hooks in `server/plugins/`. Export each service's public operations through
 `index.ts`. Keep peer services independent; cross-domain orchestration belongs
 in `server/workflows/`.
 
-Use `#server/...` across server folders and `./...` within the same folder.
-ESLint rejects parent-relative server imports. Import framework helpers from
+Inside a service, use `commands/<verb-noun>.ts` for use cases that return
+`Result`, `queries/` for reads, `domain/<thing>-rules.ts` for pure rules, and a
+private `<thing>-repository.ts`; create each only when needed. Services receive
+`db` or a transaction handle as an argument. ESLint rejects importing
+`#server/utils/db`, `nitropack/runtime`, `#imports`, `pg`, `drizzle-orm/node-postgres`, and
+`createDb` there (types stay allowed); handlers or workflows wire `useDb()` and
+pass runtime config, as the auth route does with `useRuntimeConfig(event)`. See
+[ADR 0006](../../docs/adr/0006-service-layout-and-injected-database.md).
+
+Use `#server/...` across server folders, including between subfolders of one
+service, and `./...` within the same folder. ESLint rejects parent-relative
+server imports. Outside services, import framework helpers from
 `h3` or `nitropack/runtime`. Before adding business operations, follow
 [backend patterns](../../docs/backend-patterns.md).
 
@@ -33,12 +43,24 @@ the business operation. The guard establishes authentication only. Set
 `authenticated: true` in the matching contract operation so OpenAPI includes
 its security requirement and 401 response.
 
-For error-envelope changes, read [ADR 0001](../../docs/adr/0001-api-error-contract.md)
-and [ADR 0004](../../docs/adr/0004-auth-error-contract.md).
-Convert request validation failures with `invalidInputFromZod`; an unhandled
-`ZodError` becomes `internal_error`. Preserve usable input details, retry headers,
-and cookies. The auth catch-all delegates password validation, bearer filtering,
-and Better Auth failure conversion to `server/services/auth`.
+For error-envelope changes, read [ADR 0001](../../docs/adr/0001-api-error-contract.md),
+[ADR 0004](../../docs/adr/0004-auth-error-contract.md), and
+[ADR 0005](../../docs/adr/0005-result-for-domain-failures.md).
+Services return `Result` (`ok`, `err`, `failure` from `server/utils/`) for
+expected failures and throw only for unexpected ones. Handlers unwrap at the HTTP
+edge: `defineResultHandler(fn)` (`server/utils/result-handler.ts`) for unversioned
+routes that return a `Result`; `defineVersionedHandler(version, fn)` unwraps a
+returned `Result<T>` itself, so a versioned handler returns the service's result
+directly. ESLint
+rejects a plain `defineEventHandler` or `eventHandler` in `server/api/` (specs
+excepted); the seven exempt infra routes are listed in ADR 0005 and need no
+`Result`. A handler that returns a raw `Result` fails as `internal_error`.
+Middleware and guards such as `requireActor` throw `DomainFailure` at the h3 boundary.
+Convert request validation failures with `invalidInputFromZod` and return it in
+`err(...)`; an unhandled `ZodError` becomes `internal_error`. Preserve usable
+input details, retry headers, and cookies. The auth catch-all delegates password
+validation, bearer filtering, and Better Auth failure conversion to
+`server/services/auth`, which returns a `Result` that `defineResultHandler` unwraps.
 
 ## Persistence and configuration
 
@@ -48,11 +70,12 @@ from the tables with drizzle-zod in `server/database/row-schemas.ts`; see
 seeding, and test-database commands, follow [database operations](../../docs/database.md).
 Review the generated schema and SQL before applying migrations.
 
-Before changing drivers or transactions, read
+Before changing database access or transactions, read
 [ADR 0002](../../docs/adr/0002-database-capability-seam.md).
-Use `withTransaction(fn)`; `useDb()` omits `.transaction()` and neon-http cannot
-run interactive transactions. Better Auth receives the raw Drizzle adapter;
-verify its persistence requirements against the deployment driver.
+Use `withTransaction(fn)` for transactions: `useDb()` and the transaction handle
+have no `.transaction()`. Only Better Auth, `seed.ts`, and `better-auth.config.ts`
+take the raw Drizzle client (`useRawDb()`, `createDb(...).rawDb`); verify auth
+persistence against the test database.
 
 `server/plugins/validate-env.ts` checks startup configuration. Keep secrets on
 the server. For bearer auth changes, read

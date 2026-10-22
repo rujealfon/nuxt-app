@@ -1,7 +1,13 @@
 import antfu from '@antfu/eslint-config'
 import betterTailwindcss from 'eslint-plugin-better-tailwindcss'
 import vuejsAccessibility from 'eslint-plugin-vuejs-accessibility'
-import { architecture, serverAliasGuard, workspaceResolvers } from './eslint.architecture.mjs'
+import {
+  architecture,
+  handlerGuards,
+  serverAliasGuard,
+  serviceDatabaseGuard,
+  workspaceResolvers,
+} from './eslint.architecture.mjs'
 
 export default antfu({
   type: 'app',
@@ -140,4 +146,4 @@ export default antfu({
       entryPoint: 'app/assets/css/main.css',
     },
   },
-}, architecture, serverAliasGuard, ...workspaceResolvers)
+}, architecture, serverAliasGuard, serviceDatabaseGuard, ...handlerGuards, ...workspaceResolvers)

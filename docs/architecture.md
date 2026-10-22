@@ -1,13 +1,12 @@
 # Architecture
 
-Use the [Feature-Sliced Design skill](../.agents/skills/feature-sliced-design/SKILL.md)
-to decide where frontend code belongs. It adapts
+Use the [Feature-Sliced Design skill](../.agents/skills/feature-sliced-design/SKILL.md) to decide
+where frontend code belongs. It adapts
 [feature-sliced/skills at fd71da4](https://github.com/feature-sliced/skills/tree/fd71da42a89e916f2ced63e5349fd865c87070a6/feature-sliced-design)
-to this Nuxt 4 monorepo. Follow this guide and each app's `AGENTS.md` for paths
-and import rules. Keep route files in `app/pages/`. Put substantial screen
-behavior in `app/features/` even when one route uses it. Keep peer features
-independent and share code through `packages/`. Run `pnpm lint:structure` for
-Steiger.
+to this Nuxt 4 monorepo. Follow this guide and each app's `AGENTS.md` for paths and import rules.
+Keep route files in `app/pages/`. Put substantial screen behavior in `app/features/` even when one
+route uses it. Keep peer features independent and share code through `packages/`. Run
+`pnpm lint:structure` for Steiger.
 
 ## Organization and ownership
 
@@ -18,7 +17,8 @@ in Nuxt's `app/pages/` directory.
 
 Current examples are `apps/app/app/features/auth` (sign-in and registration),
 `apps/admin/app/features/auth` (administrator sign-in), and
-`apps/api/server/services/hello` (the greeting operation). Auth transport and
+`apps/api/server/services/hello` (the greeting operation), and
+`apps/api/server/services/auth` (the auth request pipeline). Auth transport and
 session state live in `packages/client`; validation contracts live in
 `packages/types`.
 
@@ -35,14 +35,18 @@ import { getHelloMessage } from '#server/services/hello'
 import { LoginScreen } from '~/features/auth'
 ```
 
-Inside the module, use relative imports to implementation files. In
-`apps/api/server`, import across folders with the `#server/...` alias and keep
-`./...` for files in the same folder; ESLint rejects parent-relative server
-imports. Keep tests
-beside the implementation when they exercise internal behavior; route-level
-integration tests can remain in an app's `test/` directory and mount the real
-route. Implementation files should import one another by relative path to avoid
-cycles through their own `index.ts`.
+Inside an API service, group files by responsibility (`commands/`, `queries/`,
+`domain/`; see [backend patterns](backend-patterns.md)). Inside the module,
+import implementation files directly, never through the service's own
+`index.ts`, to avoid cycles. In `apps/api/server`, use `./...` for a file in the
+same folder and the `#server/...` alias for everything else, including a sibling
+subfolder of the same service (`commands/invite-member.ts` imports
+`#server/services/invitations/domain/invitation-rules`). ESLint rejects
+parent-relative (`../`) server imports and allows the alias inside the same
+service; other code still imports a service only through its `index.ts`. Keep
+tests beside the implementation when they exercise internal behavior;
+route-level integration tests can remain in an app's `test/` directory and
+mount the real route.
 
 Nuxt registers pages and middleware by convention. This repository disables
 auto-imports (`imports.autoImport: false` and `components.dirs: []`). Import Vue
@@ -59,7 +63,14 @@ and `packages/`. It enforces these import rules:
   Compose multiple features in pages or app-level workflows.
 - API services are independent of peer domains and versioned-route handlers. Put
   cross-domain orchestration in `server/workflows/` when needed. Services may
-  use server utilities and database code.
+  use server utilities and database types.
+- API services do not import `#server/utils/db`, `nitropack/runtime`, `#imports`, `pg`,
+  `drizzle-orm/node-postgres`, or `createDb` (types stay allowed; `serviceDatabaseGuard`). They
+  receive `db` or a transaction handle as an argument, and handlers or workflows wire `useDb()`
+  and pass runtime config in ([ADR 0006](adr/0006-service-layout-and-injected-database.md)).
+- API route handlers in `server/api/` use `defineResultHandler` or `defineVersionedHandler`, not a
+  plain h3 event handler (`handlerFactoryGuard`). Only the seven unversioned infra routes listed in
+  [ADR 0005](adr/0005-result-for-domain-failures.md) are exempt.
 - Applications share code through workspace packages, not direct app imports.
 - Shared packages remain independent of applications.
 - Frontend code accesses server operations through HTTP and shared contracts.
@@ -106,8 +117,8 @@ not need their own layer.
 
 For protected business operations, API error contracts, persistence,
 multi-write transactions, and durable external effects, follow
-[backend patterns](backend-patterns.md). It distinguishes implemented behavior
-from guidance for future work and states when to adopt each pattern.
+[backend patterns](backend-patterns.md). It marks each pattern as implemented or guidance
+and states when to adopt it.
 
 ## Verification
 

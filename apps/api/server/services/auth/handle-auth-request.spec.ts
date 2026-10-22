@@ -1,5 +1,7 @@
+import type { Failure } from '#server/utils/domain-failure'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { DomainFailure } from '#server/utils/domain-failure'
+import { failure } from '#server/utils/domain-failure'
+import { err, ok } from '#server/utils/result'
 
 const mocks = vi.hoisted(() => {
   const handler = vi.fn()
@@ -33,7 +35,6 @@ vi.mock('h3', () => ({
   appendResponseHeader: mocks.appendResponseHeader,
 }))
 
-vi.mock('nitropack/runtime', () => ({ useRuntimeConfig: () => mocks.config }))
 vi.mock('#server/utils/auth', () => ({ useAuth: mocks.useAuth }))
 vi.mock('#server/utils/rate-limit', () => ({
   createRateLimitStorage: () => ({ consume: mocks.consume }),
@@ -42,8 +43,25 @@ vi.mock('./read-auth-body', () => ({ readAuthBody: mocks.readAuthBody, closeAuth
 
 const { handleAuthRequest } = await import('./handle-auth-request')
 
-function caughtFrom(event: unknown): Promise<unknown> {
-  return handleAuthRequest(event as never).then(() => undefined, (error: unknown) => error)
+// An expected failure is a returned `err`; its value is the failure.
+async function failureFrom(event: unknown): Promise<Failure> {
+  const result = await handleAuthRequest(event as never, mocks.config)
+
+  if (result.ok) {
+    throw new Error('Expected a failure')
+  }
+
+  return result.error
+}
+
+async function responseFrom(event: unknown): Promise<Response> {
+  const result = await handleAuthRequest(event as never, mocks.config)
+
+  if (!result.ok) {
+    throw new Error(`Expected a response, got ${result.error.error}`)
+  }
+
+  return result.value
 }
 
 function request(path: string, init?: RequestInit): Request {
@@ -73,7 +91,7 @@ describe('handleAuthRequest', () => {
       const original = mocks.toWebRequest() as Request
       event.method = original.method
       event.headers = original.headers
-      return new Uint8Array(await original.clone().arrayBuffer())
+      return ok(new Uint8Array(await original.clone().arrayBuffer()))
     })
   })
 
@@ -86,7 +104,7 @@ describe('handleAuthRequest', () => {
       body: JSON.stringify(payload),
     }))
     mocks.handler.mockResolvedValue(new Response(null))
-    await handleAuthRequest({ path: '/api/auth/sign-up/email' } as never)
+    await handleAuthRequest({ path: '/api/auth/sign-up/email' } as never, mocks.config)
     const delegated = mocks.handler.mock.calls[0]![0] as Request
     expect(delegated.method).toBe('POST')
     expect(delegated.headers.get('cookie')).toBe('existing=value')
@@ -102,8 +120,8 @@ describe('handleAuthRequest', () => {
       body: '{}',
     }))
     mocks.consume.mockResolvedValue({ allowed: false, retryAfter: 60 })
-    const caught = await caughtFrom({ path: '/api/auth/sign-in/email' })
-    expect((caught as DomainFailure).error).toBe('rate_limited')
+    const failed = await failureFrom({ path: '/api/auth/sign-in/email' })
+    expect(failed.error).toBe('rate_limited')
     expect(mocks.consume).toHaveBeenCalledWith('unknown:auth-prevalidation', {
       window: 60,
       max: 100,
@@ -121,9 +139,9 @@ describe('handleAuthRequest', () => {
     mocks.consume.mockResolvedValue({ allowed: false, retryAfter: null })
     const event = { path: '/api/auth/sign-in/email' }
 
-    const caught = await caughtFrom(event)
+    const failed = await failureFrom(event)
 
-    expect((caught as DomainFailure).error).toBe('rate_limited')
+    expect(failed.error).toBe('rate_limited')
     expect(mocks.setResponseHeader).toHaveBeenCalledWith(event, 'retry-after', 0)
     expect(mocks.readAuthBody).not.toHaveBeenCalled()
     expect(mocks.handler).not.toHaveBeenCalled()
@@ -142,7 +160,7 @@ describe('handleAuthRequest', () => {
     })
     mocks.toWebRequest.mockReturnValue(original)
     mocks.handler.mockResolvedValue(new Response(null))
-    await handleAuthRequest({ path: '/api/auth/ok' } as never)
+    await handleAuthRequest({ path: '/api/auth/ok' } as never, mocks.config)
     const delegated = mocks.handler.mock.calls[0]![0] as Request
     expect(delegated.headers.get('x-auth-client-ip')).toBe('192.0.2.10')
     expect(delegated.headers.get('authorization')).toBe('Bearer session-secret')
@@ -157,7 +175,7 @@ describe('handleAuthRequest', () => {
       headers: { 'x-auth-client-ip': '198.51.100.1' },
     }))
     mocks.handler.mockResolvedValue(new Response(null))
-    await handleAuthRequest({ path: '/api/auth/ok' } as never)
+    await handleAuthRequest({ path: '/api/auth/ok' } as never, mocks.config)
     const delegated = mocks.handler.mock.calls[0]![0] as Request
     expect(delegated.headers.has('x-auth-client-ip')).toBe(false)
   })
@@ -169,11 +187,11 @@ describe('handleAuthRequest', () => {
       body: JSON.stringify({ name: '', email: 'not-an-email', password: '' }),
     }))
 
-    const caught = await caughtFrom({ path: '/api/auth/sign-up/email' })
+    const failed = await failureFrom({ path: '/api/auth/sign-up/email' })
 
-    expect(caught).toBeInstanceOf(DomainFailure)
-    expect((caught as DomainFailure).error).toBe('invalid_input')
-    expect((caught as DomainFailure).details).toEqual([
+    expect(failed).not.toBeInstanceOf(Error)
+    expect(failed.error).toBe('invalid_input')
+    expect(failed.details).toEqual([
       { path: ['name'], message: 'Name is required' },
       { path: ['email'], message: 'Enter a valid email address' },
       { path: ['password'], message: 'Password must be at least 8 characters' },
@@ -186,10 +204,27 @@ describe('handleAuthRequest', () => {
     const response = new Response(null, { status: 200 })
     mocks.handler.mockResolvedValue(response)
 
-    await expect(
-      handleAuthRequest({ path: '/api/auth/sign-in/email' } as never),
-    ).resolves.toBe(response)
+    await expect(responseFrom({ path: '/api/auth/sign-in/email' })).resolves.toBe(response)
     expect(mocks.handler).toHaveBeenCalledWith(expect.any(Request))
+  })
+
+  it('returns a body-reading failure without reaching Better Auth', async () => {
+    mocks.toWebRequest.mockReturnValue(request('/api/auth/sign-in/email', { method: 'POST' }))
+    mocks.readAuthBody.mockResolvedValue(err(failure('invalid_input', 'Too large')))
+
+    const failed = await failureFrom({ path: '/api/auth/sign-in/email' })
+
+    expect(failed).toMatchObject({ error: 'invalid_input', message: 'Too large' })
+    expect(mocks.handler).not.toHaveBeenCalled()
+  })
+
+  it('still throws an unexpected Better Auth fault', async () => {
+    mocks.toWebRequest.mockReturnValue(request('/api/auth/get-session'))
+    mocks.handler.mockRejectedValue(new Error('database down'))
+
+    await expect(handleAuthRequest({ path: '/api/auth/get-session' } as never, mocks.config))
+      .rejects
+      .toThrow('database down')
   })
 
   it('returns the Better Auth response on success', async () => {
@@ -200,9 +235,7 @@ describe('handleAuthRequest', () => {
     })
     mocks.handler.mockResolvedValue(response)
 
-    await expect(
-      handleAuthRequest({ path: '/api/auth/get-session' } as never),
-    ).resolves.toBe(response)
+    await expect(responseFrom({ path: '/api/auth/get-session' })).resolves.toBe(response)
   })
 
   it('preserves retry and cookie headers on a Better Auth failure', async () => {
@@ -220,7 +253,7 @@ describe('handleAuthRequest', () => {
     mocks.handler.mockResolvedValue(response)
     const event = { path: '/api/auth/get-session' }
 
-    const caught = await caughtFrom(event)
+    const failed = await failureFrom(event)
 
     expect(mocks.setResponseHeader).toHaveBeenCalledWith(event, 'x-retry-after', '30')
     expect(mocks.appendResponseHeader).toHaveBeenCalledWith(
@@ -228,8 +261,8 @@ describe('handleAuthRequest', () => {
       'set-cookie',
       expect.stringContaining('session_token'),
     )
-    expect(caught).toBeInstanceOf(DomainFailure)
-    expect((caught as DomainFailure).error).toBe('unauthenticated')
+    expect(failed).not.toBeInstanceOf(Error)
+    expect(failed.error).toBe('unauthenticated')
   })
 
   it('preserves cookies even without a retry hint', async () => {
@@ -243,11 +276,11 @@ describe('handleAuthRequest', () => {
       clone: () => ({ json: async () => ({ message: 'nope' }) }),
     })
 
-    const caught = await caughtFrom({ path: '/api/auth/get-session' })
+    const failed = await failureFrom({ path: '/api/auth/get-session' })
 
     expect(mocks.setResponseHeader).not.toHaveBeenCalled()
     expect(mocks.appendResponseHeader).toHaveBeenCalledTimes(2)
-    expect(caught).toBeInstanceOf(DomainFailure)
+    expect(failed).not.toBeInstanceOf(Error)
   })
 
   it('tolerates a headers object without getSetCookie', async () => {
@@ -258,10 +291,10 @@ describe('handleAuthRequest', () => {
       clone: () => ({ json: async () => ({ message: 'nope' }) }),
     })
 
-    const caught = await caughtFrom({ path: '/api/auth/get-session' })
+    const failed = await failureFrom({ path: '/api/auth/get-session' })
 
     expect(mocks.appendResponseHeader).not.toHaveBeenCalled()
-    expect((caught as DomainFailure).error).toBe('forbidden')
+    expect(failed.error).toBe('forbidden')
   })
 
   it('keeps a cookie session but removes the bearer token for a browser origin', async () => {
@@ -270,7 +303,7 @@ describe('handleAuthRequest', () => {
     }))
     mocks.handler.mockResolvedValue(sessionResponse())
 
-    const response = await handleAuthRequest({ path: '/api/auth/get-session' } as never) as Response
+    const response = await responseFrom({ path: '/api/auth/get-session' })
 
     expect(response.headers.get('set-cookie')).toContain('HttpOnly')
     expect(response.headers.get('set-auth-token')).toBeNull()
@@ -287,7 +320,7 @@ describe('handleAuthRequest', () => {
     }))
     mocks.handler.mockResolvedValue(sessionResponse())
 
-    const response = await handleAuthRequest({ path: '/api/auth/get-session' } as never) as Response
+    const response = await responseFrom({ path: '/api/auth/get-session' })
 
     expect(response.headers.get('set-auth-token')).toBe('session-secret')
     expect(response.headers.get('access-control-expose-headers')).toBe('set-auth-token')
@@ -301,7 +334,7 @@ describe('handleAuthRequest', () => {
     mocks.toWebRequest.mockReturnValue(request('/api/auth/get-session'))
     mocks.handler.mockResolvedValue(sessionResponse())
 
-    const response = await handleAuthRequest({ path: '/api/auth/get-session' } as never) as Response
+    const response = await responseFrom({ path: '/api/auth/get-session' })
 
     await expect(response.json()).resolves.toEqual({
       session: { id: 'session-1', userId: 'user-1' },
@@ -318,7 +351,7 @@ describe('handleAuthRequest', () => {
     })
     mocks.handler.mockResolvedValue(original)
 
-    await expect(handleAuthRequest({ path } as never)).resolves.toBe(original)
+    await expect(responseFrom({ path })).resolves.toBe(original)
   })
 
   it('preserves a social sign-in redirect without parsing it as JSON', async () => {
@@ -327,7 +360,7 @@ describe('handleAuthRequest', () => {
     const original = new Response(null, { status: 302, headers: { location: 'https://idp.example.com' } })
     mocks.handler.mockResolvedValue(original)
 
-    await expect(handleAuthRequest({ path } as never)).resolves.toBe(original)
+    await expect(responseFrom({ path })).resolves.toBe(original)
   })
 
   it('keeps the JSON body for a non-session auth response', async () => {
@@ -338,7 +371,7 @@ describe('handleAuthRequest', () => {
       headers: { 'content-type': 'application/json' },
     }))
 
-    const response = await handleAuthRequest({ path } as never) as Response
+    const response = await responseFrom({ path })
 
     await expect(response.json()).resolves.toEqual(payload)
   })
@@ -384,7 +417,7 @@ describe('handleAuthRequest', () => {
       headers: { 'content-type': 'application/json' },
     }))
 
-    const response = await handleAuthRequest({ path } as never) as Response
+    const response = await responseFrom({ path })
 
     await expect(response.json()).resolves.toEqual(expected)
   })
@@ -422,17 +455,17 @@ describe('authentication rate-limit boundary', () => {
         },
         body: 'email=invalid&password=invalid',
       }))
-      return caughtFrom({ path: '/api/auth/sign-in/email' })
+      return failureFrom({ path: '/api/auth/sign-in/email' })
     }
     for (let i = 1; i <= 3; i++) {
-      expect((await attempt(`198.51.100.${i}`) as DomainFailure).error).toBe('unauthenticated')
+      expect((await attempt(`198.51.100.${i}`)).error).toBe('unauthenticated')
     }
-    expect((await attempt('198.51.100.4') as DomainFailure).error).toBe('rate_limited')
+    expect((await attempt('198.51.100.4')).error).toBe('rate_limited')
     expect(counts.size).toBe(1)
     expect(mocks.getRequestIP).toHaveBeenCalledWith(expect.anything(), { xForwardedFor: false })
 
     mocks.getRequestIP.mockReturnValue('203.0.113.8')
-    expect((await attempt('198.51.100.5') as DomainFailure).error).toBe('unauthenticated')
+    expect((await attempt('198.51.100.5')).error).toBe('unauthenticated')
     expect(counts.size).toBe(2)
   })
 })

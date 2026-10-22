@@ -15,7 +15,6 @@ const { compiledEnvSchema, envSchema } = validateEnvModule
 
 const valid = {
   databaseUrl: 'postgres://user:pass@localhost:5432/db',
-  databaseDriver: '',
   betterAuthSecret: 'a'.repeat(32),
   betterAuthUrl: 'http://localhost:3003',
   redisUrl: 'redis://localhost:6379',
@@ -40,7 +39,6 @@ describe('validate-env plugin', () => {
     ['redisUrl', { redisUrl: '' }],
     ['betterAuthSecret', { betterAuthSecret: 'too-short' }],
     ['betterAuthUrl', { betterAuthUrl: 'not-a-url' }],
-    ['databaseDriver', { databaseDriver: 'mysql' }],
   ])('rejects an invalid %s', (_field, override) => {
     Object.assign(mocks.state, override)
 
@@ -125,7 +123,6 @@ describe('compiled env schema', () => {
     }],
     ['an empty required field', { ...valid, databaseUrl: '' }],
     ['a malformed URL', { ...valid, betterAuthUrl: 'not-a-url' }],
-    ['an unknown enum member', { ...valid, databaseDriver: 'mysql' }],
     [
       'several failures at once',
       { ...valid, databaseUrl: '', redisUrl: '', betterAuthUrl: 'nope' },

@@ -1,6 +1,9 @@
 import type { H3Event } from 'h3'
+import type { Failure } from '#server/utils/domain-failure'
+import type { Result } from '#server/utils/result'
 import { setResponseHeader } from 'h3'
-import { domainFailure } from '#server/utils/domain-failure'
+import { failure } from '#server/utils/domain-failure'
+import { err, ok } from '#server/utils/result'
 
 export const authBodyLimit = 16 * 1024
 const rawBodySymbol = Symbol.for('h3RawBody')
@@ -16,15 +19,15 @@ export function closeAuthUpload(event: H3Event) {
   res.once('close', destroy)
 }
 
-function tooLarge(event: H3Event) {
+function tooLarge(event: H3Event): Failure {
   closeAuthUpload(event)
-  return domainFailure('invalid_input', 'The authentication request body is too large')
+  return failure('invalid_input', 'The authentication request body is too large')
 }
 
 async function readWebBody(
   event: H3Event,
   stream: ReadableStream<Uint8Array>,
-): Promise<Uint8Array> {
+): Promise<Result<Uint8Array>> {
   const reader = stream.getReader()
   const chunks: Uint8Array[] = []
   let size = 0
@@ -32,13 +35,13 @@ async function readWebBody(
     while (true) {
       const { value, done } = await reader.read()
       if (done) {
-        return Buffer.concat(chunks, size)
+        return ok(Buffer.concat(chunks, size))
       }
       size += value.byteLength
       if (size > authBodyLimit) {
         // Cancellation can wait for the peer; rejection must not wait for it.
         void reader.cancel().catch(() => {})
-        throw tooLarge(event)
+        return err(tooLarge(event))
       }
       chunks.push(value)
     }
@@ -50,17 +53,19 @@ async function readWebBody(
 
 // Read before toWebRequest: H3's Node stream adapter starts flowing immediately
 // and has neither backpressure nor cancellation cleanup. Only accepted, bounded
-// bytes are replayed to Better Auth and inspected for field errors.
-export async function readAuthBody(event: H3Event): Promise<Uint8Array> {
+// bytes are replayed to Better Auth and inspected for field errors. An
+// oversized or aborted upload is an expected failure and returns `err`; a
+// stream fault still rejects.
+export async function readAuthBody(event: H3Event): Promise<Result<Uint8Array>> {
   const length = event.headers.get('content-length')
   if (length && Number(length) > authBodyLimit) {
-    throw tooLarge(event)
+    return err(tooLarge(event))
   }
 
   // Web runtimes use a synthetic Node request whose stream may never end.
   // A native Request with no body is already the authoritative empty upload.
   if (event.web?.request && !event.web.request.body) {
-    return new Uint8Array()
+    return ok(new Uint8Array())
   }
 
   const req = event.node.req as typeof event.node.req & {
@@ -82,13 +87,13 @@ export async function readAuthBody(event: H3Event): Promise<Uint8Array> {
         ? body.byteLength
         : body instanceof Blob ? body.size : 0
     if (size > authBodyLimit) {
-      throw tooLarge(event)
+      return err(tooLarge(event))
     }
     const stream = new Response(body as BodyInit).body
-    return stream ? readWebBody(event, stream) : new Uint8Array()
+    return stream ? readWebBody(event, stream) : ok(new Uint8Array())
   }
 
-  return new Promise((resolve, reject) => {
+  return new Promise<Result<Uint8Array>>((resolve, reject) => {
     const chunks: Uint8Array[] = []
     let size = 0
     function cleanup() {
@@ -102,17 +107,18 @@ export async function readAuthBody(event: H3Event): Promise<Uint8Array> {
       reject(cause)
     }
     function aborted() {
-      error(domainFailure('invalid_input', 'The authentication request was aborted'))
+      cleanup()
+      resolve(err(failure('invalid_input', 'The authentication request was aborted')))
     }
     function end() {
       cleanup()
-      resolve(Buffer.concat(chunks, size))
+      resolve(ok(Buffer.concat(chunks, size)))
     }
     function data(chunk: Uint8Array) {
       size += chunk.byteLength
       if (size > authBodyLimit) {
         cleanup()
-        reject(tooLarge(event))
+        resolve(err(tooLarge(event)))
         return
       }
       chunks.push(chunk)

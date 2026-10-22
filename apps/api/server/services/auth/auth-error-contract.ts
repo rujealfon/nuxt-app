@@ -1,6 +1,6 @@
 import type { ApiErrorCode } from '@nuxt-app/types'
-import type { DomainFailure } from '#server/utils/domain-failure'
-import { domainFailure } from '#server/utils/domain-failure'
+import type { Failure } from '#server/utils/domain-failure'
+import { failure } from '#server/utils/domain-failure'
 import { concealedErrorFromStatus } from '#server/utils/failure-contract'
 
 // Better Auth raises a fixed vocabulary of `code`s. Only the ones whose meaning
@@ -45,10 +45,10 @@ function text(value: unknown): string | undefined {
   return typeof value === 'string' && value.length > 0 ? value : undefined
 }
 
-// Translates a Better Auth failure into a domain failure. The caller reads the
-// response body (or `undefined` when there is none) and throws the result so the
-// error adapter renders the API error contract.
-export function authFailureFromResponse(status: number, body: unknown): DomainFailure {
+// Translates a Better Auth failure into a domain failure value. The caller
+// reads the response body (or `undefined` when there is none) and returns the
+// result in `err(...)`; the HTTP edge renders the API error contract.
+export function authFailureFromResponse(status: number, body: unknown): Failure {
   const record = isRecord(body) ? body : {}
   const mapped = typeof record.code === 'string' ? errorByCode[record.code] : undefined
   const error = mapped ?? concealedErrorFromStatus(status)
@@ -58,5 +58,5 @@ export function authFailureFromResponse(status: number, body: unknown): DomainFa
   // user-facing message.
   const message = error === 'internal_error' ? undefined : text(record.message)
 
-  return domainFailure(error, message)
+  return failure(error, message)
 }
