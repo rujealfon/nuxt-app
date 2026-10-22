@@ -11,13 +11,13 @@
       "source": "onmax/nuxt-skills",
       "sourceType": "github",
       "skillPath": "skills/nuxt/SKILL.md",
-      "computedHash": "fe1e046ff8a01c55d1b1ea68711cadf9161ed846ca0fb27ff883c027d8f3c180"
+      "computedHash": "b6be0d9140c9fffa04f0519f2900e69793bac303597ed9a8e92c7a9008b59e40"
     },
     "nuxt-ui": {
       "source": "onmax/nuxt-skills",
       "sourceType": "github",
       "skillPath": "skills/nuxt-ui/SKILL.md",
-      "computedHash": "d177489e1be5f8acd2cfbf986781694b9a3a3cbad23649d0d83b5288e53d7f20"
+      "computedHash": "54f1702fbcbb49e7bae05cb333d02ccf16bcfb6b54984116021e3aeead24b652"
     },
     "pinia": {
       "source": "onmax/nuxt-skills",
@@ -31,11 +31,23 @@
       "skillPath": "skills/pinia-colada/SKILL.md",
       "computedHash": "7d95bb88a6d87671d74d9dc11c68e373e3dc49023a36260de4b998d33c982061"
     },
+    "vitest": {
+      "source": "onmax/nuxt-skills",
+      "sourceType": "github",
+      "skillPath": "skills/vitest/SKILL.md",
+      "computedHash": "fba4b9670d0447058c65df2549bfe20a15ed734960d717e19026bdaa3cb0497e"
+    },
     "vue-best-practices": {
       "source": "onmax/nuxt-skills",
       "sourceType": "github",
       "skillPath": "skills/vue-best-practices/SKILL.md",
       "computedHash": "c293289935f0a25e63a61d081f571942bd5f67778aa3a3f562aabd74babd8be3"
+    },
+    "vue-router-best-practices": {
+      "source": "onmax/nuxt-skills",
+      "sourceType": "github",
+      "skillPath": "skills/vue-router-best-practices/SKILL.md",
+      "computedHash": "53f3dea89a5b61224126fc25d6d2d1564783dd0c043759270b73de58fa819195"
     },
     "vue-testing-best-practices": {
       "source": "onmax/nuxt-skills",
@@ -44,10 +56,10 @@
       "computedHash": "d2525b29d0aced62b9602c3444613120c43db89fee34f1cd7b6c60d057a97d48"
     },
     "vueuse-functions": {
-      "source": "onmax/nuxt-skills",
+      "source": "vueuse/skills",
       "sourceType": "github",
       "skillPath": "skills/vueuse-functions/SKILL.md",
-      "computedHash": "69a1d8d44fe336f8d5f06f075be8b22c7847d818ad4d15b0605baa45674bf758"
+      "computedHash": "70b65fb127323568380de490290eaf195b165da23c1f4fa27df10b386ca0dab2"
     },
     "zod": {
       "source": "rujealfon/skills",
