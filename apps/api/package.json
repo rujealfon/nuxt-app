@@ -29,15 +29,15 @@
     "@nuxt-app/config": "workspace:*",
     "@nuxt-app/logger": "workspace:*",
     "@nuxt-app/types": "workspace:*",
-    "@scalar/api-reference": "^1.74.0",
-    "better-auth": "^1.7.6",
+    "@scalar/api-reference": "^1.75.1",
+    "better-auth": "^1.7.12",
     "drizzle-orm": "^0.45.4",
     "drizzle-zod": "^0.8.3",
     "h3": "^1.15.11",
     "ioredis": "^6.0.0",
-    "nuxt": "^4.6.1",
+    "nuxt": "^4.6.2",
     "pg": "^8.23.0",
-    "vue": "^3.5.43",
+    "vue": "^3.5.44",
     "vue-router": "^5.4.0",
     "zod": "^4.6.7"
   },
@@ -46,7 +46,7 @@
     "drizzle-kit": "^0.31.11",
     "tsx": "^4.23.15",
     "typescript": "^6.0.3",
-    "vite-doctor": "^0.0.12",
+    "vite-doctor": "^0.1.0",
     "vue-tsc": "^3.3.13"
   }
 }
