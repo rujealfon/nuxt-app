@@ -16,11 +16,11 @@
   },
   "dependencies": {
     "@nuxt-app/config": "workspace:*",
-    "@nuxt/ui": "^4.11.2",
+    "@nuxt/ui": "^4.12.0",
     "@vueuse/nuxt": "^15.0.0",
     "tailwindcss": "^4.3.3"
   },
   "devDependencies": {
-    "vite-doctor": "^0.0.12"
+    "vite-doctor": "^0.1.1"
   }
 }
